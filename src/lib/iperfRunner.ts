@@ -44,8 +44,20 @@ export async function runIperfTest(
         const wifiDataAfter = await scanWifi(settings);
 
         if (!validateWifiDataConsistency(wifiDataBefore, wifiDataAfter)) {
+          console.error(
+            `BSSID: ${wifiDataBefore.bssid} ${wifiDataAfter.bssid}`,
+          );
+          console.error(
+            `SSID: ${wifiDataBefore.frequency} ${wifiDataAfter.frequency}`,
+          );
+          console.error(
+            `FREQUENCY: ${wifiDataBefore.channel} ${wifiDataAfter.channel}`,
+          );
+          console.error(
+            `CHANNEL: ${wifiDataBefore.bssid} ${wifiDataAfter.bssid}`,
+          );
           throw new Error(
-            "Wifi data inconsistency between scans! Cancelling instead of giving wrong results.",
+            "Wifi channel changed between scans. Cancelling instead of giving wrong results.",
           );
         }
 
