@@ -111,3 +111,11 @@ export interface SurveyPointActions {
   update: (point: SurveyPoint, updatedData: Partial<SurveyPoint>) => void;
   delete: (points: SurveyPoint[]) => void;
 }
+
+// functions that return
+export interface WifiInfo {
+  findWifi(): Promise<string>; // return the interface
+  restartWifi(settings: HeatmapSettings): Promise<void>; // "blink" the wifi
+  scanWifi(settings: HeatmapSettings): Promise<WifiNetwork>; // get measurements
+  nameOfWifi: string; // name of the Wifi interface
+}

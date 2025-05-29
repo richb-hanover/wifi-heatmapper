@@ -1,10 +1,9 @@
 // lib/initServer.ts
-import { copyToMediaFolder } from "../lib/actions";
+import { copyToMediaFolder } from "./actions";
 import { getLogger } from "./logger";
 import os from "os";
 import { promises as fs } from "fs";
 
-import { execAsync } from "./server-utils";
 import { initLocalization } from "./localization";
 
 const loadJson = async (filePath: string) => {
@@ -27,12 +26,12 @@ async function logSystemInfo(): Promise<void> {
     logger.info(`OS Version: ${release}`);
     logger.info(`OS Details: ${version}`);
 
-    try {
-      const { stdout } = await execAsync("iperf3 --version");
-      logger.info(`iperf3 version: ${stdout.trim()}`);
-    } catch (error) {
-      logger.warn("Could not determine iperf3 version:", error);
-    }
+    // try {
+    //   const { stdout } = await execAsync("iperf3 --version");
+    //   logger.info(`iperf3 version: ${stdout.trim()}`);
+    // } catch (error) {
+    //   logger.warn("Could not determine iperf3 version:", error);
+    // }
 
     logger.info("=========================");
   } catch (error) {

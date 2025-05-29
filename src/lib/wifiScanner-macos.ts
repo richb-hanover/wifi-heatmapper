@@ -3,55 +3,71 @@ import { execAsync } from "./server-utils";
 import { getLogger } from "./logger";
 import { getDefaultWifiNetwork } from "./wifiScanner";
 import { rssiToPercentage } from "./utils";
-import { isValidMacAddress, normalizeMacAddress } from "./wifiScanner";
+import { isValidMacAddress, normalizeMacAddress } from "./utils";
+import { WifiInfo } from "./types";
 
 const logger = getLogger("wifi-macOS");
+const networkInfo = await getDefaultWifiNetwork();
 
-/**
- * scanWifiMacOS() scan the Wifi for MacOS
- * @param settings - the full set of settings, including sudoerPassword
- * @returns a WiFiNetwork description to be added to the surveyPoints
- */
-export async function scanWifiMacOS(
-  settings: HeatmapSettings,
-): Promise<WifiNetwork> {
-  // toggle WiFi off and on to get fresh data
-  // console.error("Toggling WiFi off ");
-  // let offon = await execAsync(
-  //   `echo ${settings.sudoerPassword} | sudo networksetup -setairportpower en0 off`,
-  // );
-  // console.error("Toggling WiFi on");
-  // offon = await execAsync(
-  //   `echo ${settings.sudoerPassword} | sudo networksetup -setairportpower en0 on`,
-  // );
+export class MacOSSystemInfo implements WifiInfo {
+  nameOfWifi: string = "";
 
-  const wdutilOutput = await execAsync(
-    `echo ${settings.sudoerPassword} | sudo -S wdutil info`,
-  );
-  const wdutilNetworkInfo = parseWdutilOutput(wdutilOutput.stdout);
-  logger.trace("WDUTIL output:", wdutilNetworkInfo);
-
-  if (!isValidMacAddress(wdutilNetworkInfo.ssid)) {
-    logger.trace("Invalid SSID, getting it from ioreg");
-    const ssidOutput = await getIoregSsid();
-    if (isValidMacAddress(ssidOutput)) {
-      wdutilNetworkInfo.ssid = ssidOutput;
-    }
+  // return the wifi interface name (string)
+  async findWifi(): Promise<string> {
+    // Parse macOS output
+    const { stdout } = await execAsync(
+      'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
+    );
+    this.nameOfWifi = stdout;
+    return stdout;
   }
 
-  if (!isValidMacAddress(wdutilNetworkInfo.bssid)) {
-    logger.trace("Invalid BSSID, getting it from ioreg");
-    const bssidOutput = await getIoregBssid();
-    if (isValidMacAddress(bssidOutput)) {
-      wdutilNetworkInfo.bssid = bssidOutput;
-    }
+  // turn wifi off, then on, to get best AP & SSID
+  async restartWifi(settings: HeatmapSettings): Promise<void> {
+    return;
+    await execAsync(
+      `networksetup -setairportpower ${settings.wifiInterface} off`,
+    );
+    await execAsync(
+      `networksetup -setairportpower ${settings.wifiInterface} on`,
+    );
   }
 
-  logger.trace("Final WiFi data:", wdutilNetworkInfo);
-  wdutilNetworkInfo.signalStrength = rssiToPercentage(wdutilNetworkInfo.rssi);
-  return wdutilNetworkInfo;
+  //
+  /**
+   * scanWifi() scan the wifi to get the signal strength, etc.
+   * @param settings - the full set of settings, including sudoerPassword
+   * @returns a WiFiNetwork description to be added to the surveyPoints
+   */
+  async scanWifi(settings: HeatmapSettings): Promise<WifiNetwork> {
+    const wdutilOutput = await execAsync(
+      `echo ${settings.sudoerPassword} | sudo -S wdutil info`,
+    );
+    const wdutilNetworkInfo = parseWdutilOutput(wdutilOutput.stdout);
+    logger.trace("WDUTIL output:", wdutilNetworkInfo);
+
+    if (!isValidMacAddress(wdutilNetworkInfo.ssid)) {
+      logger.trace("Invalid SSID, getting it from ioreg");
+      const ssidOutput = await getIoregSsid();
+      if (isValidMacAddress(ssidOutput)) {
+        wdutilNetworkInfo.ssid = ssidOutput;
+      }
+    }
+
+    if (!isValidMacAddress(wdutilNetworkInfo.bssid)) {
+      logger.trace("Invalid BSSID, getting it from ioreg");
+      const bssidOutput = await getIoregBssid();
+      if (isValidMacAddress(bssidOutput)) {
+        wdutilNetworkInfo.bssid = bssidOutput;
+      }
+    }
+
+    logger.trace("Final WiFi data:", wdutilNetworkInfo);
+    wdutilNetworkInfo.signalStrength = rssiToPercentage(wdutilNetworkInfo.rssi);
+    console.log(`Wifi strength: ${wdutilNetworkInfo.signalStrength}`);
+    return wdutilNetworkInfo;
+  }
 }
-
 const getIoregSsid = async (): Promise<string> => {
   const { stdout } = await execAsync(
     "ioreg -l -n AirPortDriver | grep IO80211SSID | sed 's/^.*= \"\\(.*\\)\".*$/\\1/; s/ /_/g'",
@@ -121,7 +137,6 @@ export function parseWdutilOutput(output: string): WifiNetwork {
   const wifiSection = output.split("WIFI")[1].split("BLUETOOTH")[0];
   const lines = wifiSection.split("\n");
   logger.silly("WDUTIL lines:", lines);
-  const networkInfo = getDefaultWifiNetwork();
 
   lines.forEach((line) => {
     if (line.includes(":")) {
@@ -159,3 +174,23 @@ export function parseWdutilOutput(output: string): WifiNetwork {
   logger.trace("Final WiFi data:", networkInfo);
   return networkInfo;
 }
+
+/**
+//  * blinkWifiMacOS - disassociate, then re-associate the Wi-Fi
+//  */
+
+// export async function blinkWifiMacOS(settings: HeatmapSettings): Promise<void> {
+//   // toggle WiFi off and on to get fresh data
+//   console.error("Toggling WiFi off ");
+//   let offon = await execAsync(
+//     `echo ${settings.sudoerPassword} | sudo -S networksetup -setnetworkserviceenabled "Wi-Fi" off`,
+//   );
+//   console.log(`Toggled off: ${JSON.stringify(offon.stdout)}`);
+//   await delay(3000);
+//   console.error(`Toggling WiFi on: ${JSON.stringify(offon.stdout)}`);
+//   offon = await execAsync(
+//     `echo ${settings.sudoerPassword} | sudo -S networksetup -setnetworkserviceenabled "Wi-Fi" on`,
+//   );
+//   console.log(`offOn: ${JSON.stringify(offon.stdout)}`);
+//   await delay(3000);
+// }

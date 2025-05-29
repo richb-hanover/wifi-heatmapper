@@ -26,6 +26,11 @@ Ideas for making the program better - in no particular order:
 * Add leaflet to make the maps interactive
 * It could be useful to change iperfRunner.ts to default to "null" results
   for all its values, instead of zero. This indicates that no iperf3 test was run.
+* Add a setting for the "Wifi Interface" in advanced configs. Set to default:
+  * macOS: `networksetup -listallhardwareports | grep -A 1 "Wi-Fi\|Airport" | grep "Device" |  sed 's/Device: //'` then `ifconfig en0 | grep 'inet ' | awk '{print $2}'` to wait for not ""
+* During blinkWifi, poll until wifi is back up, and send a SSEMessage stating "Seeking best Wifi"
+* Make the background image in a heatmap greyscale so heatmap colors show correctly
+* Factor wifi routines into an object for "scan", "blink", "find"
 
 ## Bugs
 

@@ -1,4 +1,4 @@
-import { WifiNetwork } from "./types";
+import { WifiNetwork, HeatmapSettings } from "./types";
 import { execAsync } from "./server-utils";
 import { getLogger } from "./logger";
 import { getDefaultWifiNetwork } from "./wifiScanner";
@@ -7,6 +7,13 @@ import { isValidMacAddress } from "./wifiScanner";
 import { reverseLookup } from "./localization";
 
 const logger = getLogger("wifi-Windows");
+
+export async function blinkWifiWindows(
+  settings: HeatmapSettings,
+): Promise<void> {
+  // toggle WiFi off and on to get fresh data
+  console.error(`Toggling WiFi off & on - Windows ${settings.sudoerPassword}`);
+}
 
 /**
  * scanWifiWindows() scan the Wifi for Windows

@@ -56,3 +56,25 @@ export const metricFormatter = (
   }
   return value.toFixed(2);
 };
+
+/**
+ * delay a given number of milliseconds
+ * @param ms:number - number of milliseconds to delay
+ * @returns Promise<void>
+ */
+export async function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export const normalizeMacAddress = (macAddress: string): string => {
+  return macAddress.replace(/[:-]/g, "").toLowerCase();
+};
+
+export const isValidMacAddress = (macAddress: string): boolean => {
+  const cleanedMacAddress = normalizeMacAddress(macAddress);
+  if (cleanedMacAddress === "000000000000") {
+    // sometimes returned by ioreg, for example
+    return false;
+  }
+  return /^[0-9a-f]{12}$/.test(cleanedMacAddress);
+};

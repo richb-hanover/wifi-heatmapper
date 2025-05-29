@@ -7,12 +7,13 @@ import {
   WifiNetwork,
   SurveyPoint,
 } from "./types";
-import { scanWifi } from "./wifiScanner";
+// import { scanWifi, blinkWifi } from "./wifiScanner";
 import { execAsync } from "./server-utils";
-import { getCancelFlag, sendSSEMessage } from "./sseGlobal";
+import { getCancelFlag, sendSSEMessage } from "./server-globals";
 import { percentageToRssi, toMbps } from "./utils";
 import { SSEMessageType } from "@/app/api/events/route";
 import { getLogger } from "./logger";
+import { createWifiInfo } from "./wifiScanner";
 
 const logger = getLogger("iperfRunner");
 
@@ -153,6 +154,11 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
     let results: IperfResults | null = null;
     let wifiData: WifiNetwork | null = null;
 
+    const wifiInfo = createWifiInfo();
+    // const wifiIf = await wifiInfo.findWifi();
+    // console.log(`Blinking Wifi in runIperfTest: ${JSON.stringify(wifiIf)}`);
+    // wifiInfo.restartWifi(settings);
+
     while (attempts < maxRetries && !results) {
       try {
         // set the initial states, then send an event to the client
@@ -177,7 +183,7 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
         let udpDownload = emptyIperfTestProperty;
         let udpUpload = emptyIperfTestProperty;
 
-        const wifiDataBefore = await scanWifi(settings);
+        const wifiDataBefore = await wifiInfo.scanWifi(settings);
         wifiStrengths.push(wifiDataBefore.signalStrength);
         displayStates.strength = arrayAverage(wifiStrengths);
         checkForCancel();
@@ -193,7 +199,7 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
 
-        const wifiDataMiddle = await scanWifi(settings);
+        const wifiDataMiddle = await wifiInfo.scanWifi(settings);
         wifiStrengths.push(wifiDataMiddle.signalStrength);
         displayStates.strength = arrayAverage(wifiStrengths);
         checkForCancel();
@@ -209,10 +215,11 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
 
-        const wifiDataAfter = await scanWifi(settings);
+        const wifiDataAfter = await wifiInfo.scanWifi(settings);
         wifiStrengths.push(wifiDataAfter.signalStrength);
         displayStates.strength = arrayAverage(wifiStrengths);
         checkForCancel();
+        console.log(`wifiStrengths: ${wifiStrengths}`);
 
         // Send the final update - type is "done"
         displayStates.type = "done";

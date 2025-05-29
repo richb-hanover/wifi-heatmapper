@@ -10,6 +10,11 @@ import { normalizeMacAddress } from "./wifiScanner";
 
 const logger = getLogger("wifi-Linux");
 
+export async function blinkWifiLinux(settings: HeatmapSettings): Promise<void> {
+  // toggle WiFi off and on to get fresh data
+  console.error(`Toggling WiFi off & on - Linux ${settings.sudoerPassword}`);
+}
+
 /**
  * scanWifiLinux() scan the Wifi for Linux
  * @returns a WiFiNetwork description to be added to the surveyPoints
