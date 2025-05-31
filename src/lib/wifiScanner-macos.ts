@@ -1,20 +1,22 @@
 import { HeatmapSettings, WifiNetwork } from "./types";
-import { execAsync } from "./server-utils";
+import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
-import { getDefaultWifiNetwork } from "./wifiScanner";
 import { rssiToPercentage } from "./utils";
 import { isValidMacAddress, normalizeMacAddress } from "./utils";
 import { WifiInfo } from "./types";
 
 const logger = getLogger("wifi-macOS");
-const networkInfo = await getDefaultWifiNetwork();
 
 export class MacOSSystemInfo implements WifiInfo {
   nameOfWifi: string = "";
 
-  // return the wifi interface name (string)
+  /**
+   * findWifi() - find the name of the wifi interface
+   * save in an object variable
+   * @returns name of (the first) wifi interface (string)
+   */
   async findWifi(): Promise<string> {
-    // Parse macOS output
+    // logger.info(`Called findWifi():`);
     const { stdout } = await execAsync(
       'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
     );
@@ -22,15 +24,35 @@ export class MacOSSystemInfo implements WifiInfo {
     return stdout;
   }
 
-  // turn wifi off, then on, to get best AP & SSID
+  /**
+   * restartWifi - turn wifi off then on, wait 'til it reassociates
+   * (presumably on the strongest signal)
+   * @param settings
+   */
   async restartWifi(settings: HeatmapSettings): Promise<void> {
-    return;
-    await execAsync(
-      `networksetup -setairportpower ${settings.wifiInterface} off`,
+    // logger.info(`Called restartWifi():`);
+
+    // await delay(20000);
+    if (!this.nameOfWifi) {
+      logger.info(`re-retrieving wifi interface name:`);
+      this.nameOfWifi = await this.findWifi();
+    }
+
+    // console.log(`turned off:`);
+    await loopUntilCondition(
+      // until an error (no ipconfig for the wifi)
+      `networksetup -setairportpower ${this.nameOfWifi} off`,
+      1,
+      5,
     );
-    await execAsync(
-      `networksetup -setairportpower ${settings.wifiInterface} on`,
+
+    // console.log(`turn it back on:`);
+    await loopUntilCondition(
+      `networksetup -setairportpower ${this.nameOfWifi} on`,
+      0,
+      8,
     );
+    // console.log(`turned back on:`);
   }
 
   //
@@ -40,9 +62,11 @@ export class MacOSSystemInfo implements WifiInfo {
    * @returns a WiFiNetwork description to be added to the surveyPoints
    */
   async scanWifi(settings: HeatmapSettings): Promise<WifiNetwork> {
+    // Issue the OS command
     const wdutilOutput = await execAsync(
       `echo ${settings.sudoerPassword} | sudo -S wdutil info`,
     );
+    // parse that command into wdutilNetworkInfo
     const wdutilNetworkInfo = parseWdutilOutput(wdutilOutput.stdout);
     logger.trace("WDUTIL output:", wdutilNetworkInfo);
 
@@ -63,11 +87,14 @@ export class MacOSSystemInfo implements WifiInfo {
     }
 
     logger.trace("Final WiFi data:", wdutilNetworkInfo);
-    wdutilNetworkInfo.signalStrength = rssiToPercentage(wdutilNetworkInfo.rssi);
-    console.log(`Wifi strength: ${wdutilNetworkInfo.signalStrength}`);
+    // console.log(`Wifi strength: ${wdutilNetworkInfo.signalStrength}%`);
     return wdutilNetworkInfo;
   }
 }
+/**
+ * parse `ioreg` commands (used if "wdutil" doesn't work)
+ * @returns
+ */
 const getIoregSsid = async (): Promise<string> => {
   const { stdout } = await execAsync(
     "ioreg -l -n AirPortDriver | grep IO80211SSID | sed 's/^.*= \"\\(.*\\)\".*$/\\1/; s/ /_/g'",
@@ -133,7 +160,11 @@ const parseChannel = (channelString: string): number[] => {
   return [band, channel, channelWidth];
 };
 
+/**
+ * parseWdutilOutput - parses the string from `wdutil` into a WifiNetwork object
+ */
 export function parseWdutilOutput(output: string): WifiNetwork {
+  const partialNetworkInfo: Partial<WifiNetwork> = {};
   const wifiSection = output.split("WIFI")[1].split("BLUETOOTH")[0];
   const lines = wifiSection.split("\n");
   logger.silly("WDUTIL lines:", lines);
@@ -145,52 +176,101 @@ export function parseWdutilOutput(output: string): WifiNetwork {
       const value = line.substring(colonIndex + 1).trim();
       switch (key) {
         case "SSID":
-          networkInfo.ssid = value;
+          partialNetworkInfo.ssid = value;
           break;
         case "BSSID":
-          networkInfo.bssid = normalizeMacAddress(value);
+          partialNetworkInfo.bssid = normalizeMacAddress(value);
           break;
         case "RSSI":
-          networkInfo.rssi = parseInt(value.split(" ")[0]);
+          partialNetworkInfo.rssi = parseInt(value.split(" ")[0]);
+          console.log(`RSSI: ${line} ${partialNetworkInfo.rssi}`);
+          // macOS returns dBm - convert to percentage
+          partialNetworkInfo.signalStrength = rssiToPercentage(
+            partialNetworkInfo.rssi,
+          );
           break;
         case "Channel": {
-          [networkInfo.band, networkInfo.channel, networkInfo.channelWidth] =
-            parseChannel(value);
+          [
+            partialNetworkInfo.band,
+            partialNetworkInfo.channel,
+            partialNetworkInfo.channelWidth,
+          ] = parseChannel(value);
           break;
         }
         case "Tx Rate":
-          networkInfo.txRate = parseFloat(value.split(" ")[0]);
+          partialNetworkInfo.txRate = parseFloat(value.split(" ")[0]);
+          console.log(`tx rate: ${line} ${partialNetworkInfo.txRate}`);
           break;
         case "PHY Mode":
-          networkInfo.phyMode = value;
+          partialNetworkInfo.phyMode = value;
           break;
         case "Security":
-          networkInfo.security = value;
+          partialNetworkInfo.security = value;
           break;
       }
     }
   });
-
-  logger.trace("Final WiFi data:", networkInfo);
-  return networkInfo;
+  if (
+    partialNetworkInfo.ssid &&
+    partialNetworkInfo.bssid &&
+    partialNetworkInfo.rssi &&
+    partialNetworkInfo.signalStrength &&
+    partialNetworkInfo.band &&
+    partialNetworkInfo.channel &&
+    partialNetworkInfo.channelWidth &&
+    partialNetworkInfo.txRate &&
+    partialNetworkInfo.phyMode &&
+    partialNetworkInfo.security
+  ) {
+    const networkInfo: WifiNetwork = partialNetworkInfo as WifiNetwork;
+    // logger.info("Final WiFi data:", partialNetworkInfo);
+    return networkInfo;
+  } else {
+    throw new Error(
+      `Incomplete NetworkInfo data found in wifiScanner: ${JSON.stringify(partialNetworkInfo)}`,
+    );
+  }
 }
 
 /**
-//  * blinkWifiMacOS - disassociate, then re-associate the Wi-Fi
-//  */
+ * loopUntilCondition - execute the command continually
+ *    (every `interval` msec) and exit when the commands return code
+ *    matches the condition
+ * @param cmd - string to be executed
+ * @param condition - 0 - loop until no error; 1 - loop until error
+ * @param timeout - number of seconds
+ */
+async function loopUntilCondition(
+  cmd: string,
+  condition: number, // 0 = loop until no error; 1 = loop until error
+  timeout: number, // seconds
+) {
+  // console.log(`loopUntilCondition: ${cmd} ${condition} ${timeout}`);
 
-// export async function blinkWifiMacOS(settings: HeatmapSettings): Promise<void> {
-//   // toggle WiFi off and on to get fresh data
-//   console.error("Toggling WiFi off ");
-//   let offon = await execAsync(
-//     `echo ${settings.sudoerPassword} | sudo -S networksetup -setnetworkserviceenabled "Wi-Fi" off`,
-//   );
-//   console.log(`Toggled off: ${JSON.stringify(offon.stdout)}`);
-//   await delay(3000);
-//   console.error(`Toggling WiFi on: ${JSON.stringify(offon.stdout)}`);
-//   offon = await execAsync(
-//     `echo ${settings.sudoerPassword} | sudo -S networksetup -setnetworkserviceenabled "Wi-Fi" on`,
-//   );
-//   console.log(`offOn: ${JSON.stringify(offon.stdout)}`);
-//   await delay(3000);
-// }
+  const interval = 200; // msec
+  const count = (timeout * 1000) / interval;
+  let i;
+  for (i = 0; i < count; i++) {
+    let exit = "";
+    try {
+      const resp = await execAsync(`${cmd}`);
+      exit = resp.stdout;
+      // console.log(`"cmd" is OK: ${i} ${Date.now()} "${exit}"`);
+      // no error on the command: if we were waiting for it,  exit
+      if (condition != 0) {
+        break;
+      }
+    } catch (error) {
+      // console.log(`"cmd" gives error: ${i} ${Date.now()} "${error}"`);
+      // caught an error: if we were waiting for it,  exit
+      if (condition == 0) {
+        break;
+      }
+    }
+    // and delay before checking again
+    await delay(interval);
+  }
+  if (i == count) {
+    console.log(`loopUntilCondition timed out: ${cmd} ${condition} ${timeout}`);
+  }
+}

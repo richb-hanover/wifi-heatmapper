@@ -8,7 +8,6 @@ import { Toaster } from "@/components/ui/toaster";
 import NewToast from "@/components/NewToast";
 import PopupDetails from "@/components/PopupDetails";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { createWifiInfo } from "@/lib/wifiScanner";
 
 export default function ClickableFloorplan(): ReactNode {
   const { settings, updateSettings, surveyPointActions } = useSettings();
@@ -24,14 +23,6 @@ export default function ClickableFloorplan(): ReactNode {
   const [alertMessage, setAlertMessage] = useState("");
   const [isToastOpen, setIsToastOpen] = useState(false);
   const [surveyClick, setSurveyClick] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    // get information about wifi routines
-
-    const wifiInfo = await createWifiInfo();
-    const wifiIFName = await wifiInfo.findWifi();
-    console.log(`Heatmap - wifiIFName: ${wifiIFName}`);
-  }, []);
 
   /**
    * Load the image (and the canvas) when the component is mounted
@@ -106,7 +97,7 @@ export default function ClickableFloorplan(): ReactNode {
 
       surveyPointActions.add(newPoint);
     } catch (error) {
-      setAlertMessage(`An error occurred: ${error}`);
+      setAlertMessage(`An error occurred in startSurvey(): ${error}`);
       return;
     }
   };

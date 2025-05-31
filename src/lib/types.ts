@@ -114,8 +114,9 @@ export interface SurveyPointActions {
 
 // functions that return
 export interface WifiInfo {
-  findWifi(): Promise<string>; // return the interface
+  findWifi(): Promise<string>; // return the interface name
   restartWifi(settings: HeatmapSettings): Promise<void>; // "blink" the wifi
   scanWifi(settings: HeatmapSettings): Promise<WifiNetwork>; // get measurements
   nameOfWifi: string; // name of the Wifi interface
+  // defaultWifi: WifiNetwork; // default settings
 }

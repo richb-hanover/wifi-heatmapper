@@ -10,6 +10,15 @@ const logger = getLogger("server-utils");
  * The {shell:true} option allows shell options (pipes, redirection, etc)
  * The option is set to true so that Node can use the proper command for the OS
  * @ts-expect-error avoids Typescript error (the option is typed as a string)
+ *
+ * Completion Handling:
+ * If the command completes normally (return of zero), stdout and stderr
+ *    (strings) are filled with the results, and the "else" clause
+ *    executes the resolve() function, passing back { stdout, stderr }
+ * If the command has an error (non-zero return), error (string)
+ *    is set to the result, and the reject() function is called
+ * The caller can use catch() to handle a non-zero error return
+ *
  * @param command to execute
  * @returns {stdout , stderr }
  */
@@ -31,3 +40,12 @@ export const execAsync = async (
     });
   });
 };
+
+/**
+ * delay a given number of milliseconds
+ * @param ms:number - number of milliseconds to delay
+ * @returns Promise<void>
+ */
+export async function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

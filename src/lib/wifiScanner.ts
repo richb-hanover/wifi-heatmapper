@@ -7,17 +7,15 @@ import { MacOSSystemInfo } from "./wifiScanner-macos";
 // import { WindowsSystemInfo } from "./windows";
 // import { LinuxSystemInfo } from "./linux";
 
-// import { scanWifiMacOS, blinkWifiMacOS } from "./wifiScanner-macos";
+/**
+ * wifiScanner.ts is a factory module that returns the proper set of
+ * functions for the underlying OS
+ * */
 
 const logger = getLogger("wifiScanner");
 
-/**
- * createWifiInfo - a factory to return the proper functions for the OS
- * @returns object that has the functions to call
- */
 export async function createWifiInfo(): Promise<WifiInfo> {
   const platform = os.platform();
-
   switch (platform) {
     case "darwin":
       return new MacOSSystemInfo();
@@ -30,18 +28,20 @@ export async function createWifiInfo(): Promise<WifiInfo> {
   }
 }
 
-export const getDefaultWifiNetwork = async (): Promise<WifiNetwork> => ({
-  ssid: "",
-  bssid: "",
-  rssi: 0,
-  signalStrength: 0,
-  channel: 0,
-  band: 0, // frequency band will be either 2.4 or 5 (GHz)
-  channelWidth: 0,
-  txRate: 0,
-  phyMode: "",
-  security: "",
-});
+export const getDefaultWifiNetwork = async (): Promise<WifiNetwork> => {
+  return {
+    ssid: "",
+    bssid: "",
+    rssi: 0,
+    signalStrength: 0,
+    channel: 0,
+    band: 0, // frequency band will be either 2.4 or 5 (GHz)
+    channelWidth: 0,
+    txRate: 0,
+    phyMode: "",
+    security: "",
+  };
+};
 
 const hasValidData = (wifiData: WifiNetwork): boolean => {
   // if (!isValidMacAddress(wifiData.ssid)) {
@@ -58,88 +58,3 @@ const hasValidData = (wifiData: WifiNetwork): boolean => {
     wifiData.rssi !== 0 || wifiData.signalStrength !== 0
   );
 };
-
-/**
- * Blink (turn off, then re-associate) the current WiFi network
- * This allows the laptop to connect to the strongest network it has
- * ever connected to in this location.
- */
-// export async function blinkWifi(settings: HeatmapSettings): Promise<void> {
-//   try {
-//     const platform = os.platform(); // Platform for the server
-
-//     if (platform === "darwin") {
-//       await blinkWifiMacOS(settings);
-//     } else if (platform === "win32") {
-//       await blinkWifiWindows(settings);
-//     } else if (platform === "linux") {
-//       await blinkWifiLinux(settings);
-//     } else {
-//       throw new Error(`Unsupported platform: ${platform}`);
-//     }
-//   } catch (error_) {
-//     const error = error_ as Error;
-//     logger.error("Error blinking WiFi:", error);
-//     if (error.message.includes("sudo")) {
-//       logger.error(
-//         "This command requires sudo privileges. Please run the application with sudo.",
-//       );
-//     }
-//     throw error;
-//   }
-//   return;
-// }
-
-/**
- * Gets the current WiFi network name, BSSID of the AP it's connected to, and the RSSI.
- */
-// export async function scanWifi(
-//   settings: HeatmapSettings,
-// ): Promise<WifiNetwork> {
-//   let wifiData: WifiNetwork | null = null;
-
-//   try {
-//     const platform = os.platform(); // Platform for the server
-
-//     if (platform === "darwin") {
-//       wifiData = await scanWifiMacOS(settings); // Needs sudoerPassword
-//     } else if (platform === "win32") {
-//       wifiData = await scanWifiWindows();
-//     } else if (platform === "linux") {
-//       wifiData = await scanWifiLinux(settings); // Needs sudoerPassword
-//     } else {
-//       throw new Error(`Unsupported platform: ${platform}`);
-//     }
-//   } catch (error_) {
-//     const error = error_ as Error;
-//     logger.error("Error scanning WiFi:", error);
-//     if (error.message.includes("sudo")) {
-//       logger.error(
-//         "This command requires sudo privileges. Please run the application with sudo.",
-//       );
-//     }
-//     throw error;
-//   }
-
-//   if (!hasValidData(wifiData)) {
-//     throw new Error(
-//       "Measurement failed. We were not able to get good enough WiFi data: " +
-//         JSON.stringify(wifiData),
-//     );
-//   }
-
-//   return wifiData;
-// }
-
-// export const normalizeMacAddress = (macAddress: string): string => {
-//   return macAddress.replace(/[:-]/g, "").toLowerCase();
-// };
-
-// export const isValidMacAddress = (macAddress: string): boolean => {
-//   const cleanedMacAddress = normalizeMacAddress(macAddress);
-//   if (cleanedMacAddress === "000000000000") {
-//     // sometimes returned by ioreg, for example
-//     return false;
-//   }
-//   return /^[0-9a-f]{12}$/.test(cleanedMacAddress);
-// };

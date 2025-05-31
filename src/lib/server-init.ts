@@ -3,6 +3,7 @@ import { copyToMediaFolder } from "./actions";
 import { getLogger } from "./logger";
 import os from "os";
 import { promises as fs } from "fs";
+import { execAsync } from "./server-utils";
 
 import { initLocalization } from "./localization";
 
@@ -26,12 +27,12 @@ async function logSystemInfo(): Promise<void> {
     logger.info(`OS Version: ${release}`);
     logger.info(`OS Details: ${version}`);
 
-    // try {
-    //   const { stdout } = await execAsync("iperf3 --version");
-    //   logger.info(`iperf3 version: ${stdout.trim()}`);
-    // } catch (error) {
-    //   logger.warn("Could not determine iperf3 version:", error);
-    // }
+    try {
+      const { stdout } = await execAsync("iperf3 --version");
+      logger.info(`iperf3 version: ${stdout}`);
+    } catch (error) {
+      logger.warn("Could not determine iperf3 version:", error);
+    }
 
     logger.info("=========================");
   } catch (error) {
@@ -58,6 +59,9 @@ export async function initServer() {
 
     copyToMediaFolder("EmptyFloorPlan.png"); // seed with empty image
     await initLocalization(); // load up the localization files
+
+    // const { stdout } = await execAsync("ipconfig getifaddr en0");
+    // console.log(`wifi off: ${stdout}`);
 
     initialized = true;
     // logger.info(`Server initialization complete.`);

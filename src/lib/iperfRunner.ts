@@ -8,7 +8,7 @@ import {
   SurveyPoint,
 } from "./types";
 // import { scanWifi, blinkWifi } from "./wifiScanner";
-import { execAsync } from "./server-utils";
+import { execAsync, delay } from "./server-utils";
 import { getCancelFlag, sendSSEMessage } from "./server-globals";
 import { percentageToRssi, toMbps } from "./utils";
 import { SSEMessageType } from "@/app/api/events/route";
@@ -16,6 +16,9 @@ import { getLogger } from "./logger";
 import { createWifiInfo } from "./wifiScanner";
 
 const logger = getLogger("iperfRunner");
+const wifiInfo = await createWifiInfo();
+const wifiIFName = await wifiInfo.findWifi();
+// console.log(`wifiIFName is: ${wifiIFName} ${JSON.stringify(wifiInfo)}`);
 
 const validateWifiDataConsistency = (
   wifiDataBefore: WifiNetwork,
@@ -76,28 +79,35 @@ export const checkSettings = async (settings: HeatmapSettings) => {
   return settingsErrorMessage;
 };
 
-// moved from actions.ts
+/**
+ * startSurvey - kick off the entire process for surveying the clicked point
+ *
+ */
 export async function startSurvey(
   settings: HeatmapSettings,
 ): Promise<SurveyPoint | null> {
-  const { iperfResults, wifiData } = await runIperfTest(settings);
+  try {
+    const { iperfResults, wifiData } = await runIperfTest(settings);
 
-  if (!iperfResults || !wifiData) {
-    // null indicates measurement was canceled
-    return null;
+    if (!iperfResults || !wifiData) {
+      // null indicates measurement was canceled
+      return null;
+    }
+
+    const newPoint: SurveyPoint = {
+      wifiData,
+      iperfResults,
+      timestamp: new Date().toISOString(),
+      x: 0, //assigned by the recipient
+      y: 0, //assigned by the recipient
+      id: "BAD ID", //assigned by the recipient
+      isEnabled: true, //assigned by the recipient
+    };
+
+    return newPoint;
+  } catch (error) {
+    console.log(`caught error in startSurvey(): ${error}`);
   }
-
-  const newPoint: SurveyPoint = {
-    wifiData,
-    iperfResults,
-    timestamp: new Date().toISOString(),
-    x: 0, //assigned by the recipient
-    y: 0, //assigned by the recipient
-    id: "BAD ID", //assigned by the recipient
-    isEnabled: true, //assigned by the recipient
-  };
-
-  return newPoint;
 }
 
 function arrayAverage(arr: number[]): number {
@@ -105,6 +115,7 @@ function arrayAverage(arr: number[]): number {
   const sum = arr.reduce((acc, val) => acc + val, 0);
   return Math.round(sum / arr.length);
 }
+
 const initialStates = {
   type: "update",
   header: "Measurement beginning",
@@ -138,6 +149,7 @@ function getUpdatedMessage(): SSEMessageType {
 function checkForCancel() {
   if (getCancelFlag()) throw new Error("cancelled");
 }
+
 /**
  * runIperfTest() - get the WiFi and iperf readings
  * @param settings
@@ -149,23 +161,28 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
 }> {
   const performIperfTest = settings.iperfServerAdrs != "localhost";
   try {
-    const maxRetries = 3;
+    const maxRetries = 1;
     let attempts = 0;
     let results: IperfResults | null = null;
     let wifiData: WifiNetwork | null = null;
 
-    const wifiInfo = createWifiInfo();
-    // const wifiIf = await wifiInfo.findWifi();
-    // console.log(`Blinking Wifi in runIperfTest: ${JSON.stringify(wifiIf)}`);
-    // wifiInfo.restartWifi(settings);
+    // set the initial states, then send an event to the client
+    displayStates = { ...displayStates, ...initialStates };
+    sendSSEMessage(getUpdatedMessage()); // immediately send initial values
+    displayStates.header = "Measurement in progress...";
 
+    // "blink" the wifi to get best signal
+    console.log(`Blinking Wifi in runIperfTest: ${JSON.stringify(wifiIFName)}`);
+    displayStates.header = "Seeking best Wi-Fi";
+    sendSSEMessage(getUpdatedMessage());
+    const currentTime = Date.now();
+    await wifiInfo.restartWifi(settings);
+    console.log(`elapsed time for blinking: ${Date.now() - currentTime}`);
+
+    displayStates.header = "Measuring Wi-Fi";
+    sendSSEMessage(getUpdatedMessage());
     while (attempts < maxRetries && !results) {
       try {
-        // set the initial states, then send an event to the client
-        displayStates = { ...displayStates, ...initialStates };
-        sendSSEMessage(getUpdatedMessage()); // immediately send initial values
-        displayStates.header = "Measurement in progress...";
-
         const server = settings.iperfServerAdrs;
         const duration = settings.testDuration;
         const wifiStrengths: number[] = []; // percentages
@@ -258,7 +275,7 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
           throw error;
         }
         // wait 2 secs to recover
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await delay(2000);
       }
     }
 
