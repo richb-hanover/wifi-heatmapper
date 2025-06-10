@@ -20,21 +20,24 @@ async function logSystemInfo(): Promise<void> {
     const release = os.release();
     const version = os.version();
     const data = await loadJson("./package.json");
+    const nodeVersion = process.version;
 
     logger.info("=== System Information ===");
     logger.info(`wifi-heatmapper: ${data.version}`);
+    logger.info(`Node version: ${nodeVersion}`);
     logger.info(`OS: ${platform}`);
     logger.info(`OS Version: ${release}`);
     logger.info(`OS Details: ${version}`);
 
     try {
       const { stdout } = await execAsync("iperf3 --version");
-      logger.info(`iperf3 version: ${stdout}`);
+      logger.info(`iperf3 version: ${stdout.trim()}`);
     } catch (error) {
       logger.warn("Could not determine iperf3 version:", error);
     }
-
-    logger.info("=========================");
+    logger.info("");
+    logger.info("=== End System Information ===");
+    logger.info("");
   } catch (error) {
     logger.error("Error collecting system information:", error);
   }
@@ -59,9 +62,6 @@ export async function initServer() {
 
     copyToMediaFolder("EmptyFloorPlan.png"); // seed with empty image
     await initLocalization(); // load up the localization files
-
-    // const { stdout } = await execAsync("ipconfig getifaddr en0");
-    // console.log(`wifi off: ${stdout}`);
 
     initialized = true;
     // logger.info(`Server initialization complete.`);

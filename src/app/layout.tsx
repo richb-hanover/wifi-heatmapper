@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SettingsProvider } from "@/components/GlobalSettings";
 import { initServer } from "../lib/server-init";
-import { FetchInterceptor } from "@/components/FetchInterceptor";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +20,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <FetchInterceptor />
       <SettingsProvider>
         <body className={inter.className}>{children}</body>
       </SettingsProvider>

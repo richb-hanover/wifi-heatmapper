@@ -107,6 +107,7 @@ export async function startSurvey(
     return newPoint;
   } catch (error) {
     console.log(`caught error in startSurvey(): ${error}`);
+    return null;
   }
 }
 

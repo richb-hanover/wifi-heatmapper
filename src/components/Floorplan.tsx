@@ -299,14 +299,6 @@ export default function ClickableFloorplan(): ReactNode {
     }
   };
 
-  // const justAClick = () => {
-  //   console.log(`Clicked the header`);
-  //   const { stdout } = await execAsync(
-  //     'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
-  //   );
-  //   console.log(`Result: ${stdout}`);
-  // };
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold text-gray-800">
