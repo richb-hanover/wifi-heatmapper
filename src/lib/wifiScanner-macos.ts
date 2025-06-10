@@ -1,9 +1,10 @@
 import { HeatmapSettings, WifiNetwork } from "./types";
-import { execAsync, delay } from "./server-utils";
+import { execAsync } from "./server-utils";
 import { getLogger } from "./logger";
 import { rssiToPercentage } from "./utils";
 import { isValidMacAddress, normalizeMacAddress } from "./utils";
 import { WifiInfo } from "./types";
+import { loopUntilCondition } from "./wifiScanner";
 
 const logger = getLogger("wifi-macOS");
 
@@ -28,8 +29,11 @@ export class MacOSSystemInfo implements WifiInfo {
    * restartWifi - turn wifi off then on, wait 'til it reassociates
    * (presumably on the strongest signal)
    * @param settings
+   *
+   * NB: the "settings" parameter is unused,
+   * so it is prefixed by "_" to avoid a Typescript warning
    */
-  async restartWifi(settings: HeatmapSettings): Promise<void> {
+  async restartWifi(_settings: HeatmapSettings): Promise<void> {
     // logger.info(`Called restartWifi():`);
 
     // await delay(20000);
@@ -229,48 +233,5 @@ export function parseWdutilOutput(output: string): WifiNetwork {
     throw new Error(
       `Incomplete NetworkInfo data found in wifiScanner: ${JSON.stringify(partialNetworkInfo)}`,
     );
-  }
-}
-
-/**
- * loopUntilCondition - execute the command continually
- *    (every `interval` msec) and exit when the commands return code
- *    matches the condition
- * @param cmd - string to be executed
- * @param condition - 0 - loop until no error; 1 - loop until error
- * @param timeout - number of seconds
- */
-async function loopUntilCondition(
-  cmd: string,
-  condition: number, // 0 = loop until no error; 1 = loop until error
-  timeout: number, // seconds
-) {
-  // console.log(`loopUntilCondition: ${cmd} ${condition} ${timeout}`);
-
-  const interval = 200; // msec
-  const count = (timeout * 1000) / interval;
-  let i;
-  for (i = 0; i < count; i++) {
-    let exit = "";
-    try {
-      const resp = await execAsync(`${cmd}`);
-      exit = resp.stdout;
-      // console.log(`"cmd" is OK: ${i} ${Date.now()} "${exit}"`);
-      // no error on the command: if we were waiting for it,  exit
-      if (condition != 0) {
-        break;
-      }
-    } catch (error) {
-      // console.log(`"cmd" gives error: ${i} ${Date.now()} "${error}"`);
-      // caught an error: if we were waiting for it,  exit
-      if (condition == 0) {
-        break;
-      }
-    }
-    // and delay before checking again
-    await delay(interval);
-  }
-  if (i == count) {
-    console.log(`loopUntilCondition timed out: ${cmd} ${condition} ${timeout}`);
   }
 }

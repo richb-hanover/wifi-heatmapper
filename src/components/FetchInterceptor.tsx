@@ -16,7 +16,10 @@ export function FetchInterceptor() {
       console.log("fetch() called with:", url);
       console.log("Call stack:\n", stack);
       try {
-        if (url == "") throw "Empty URL";
+        if (url == "") {
+          console.log(`Got empty URL in FetchInterceptor`);
+          return "";
+        }
         const response = await originalFetch(...args);
         return response;
       } catch (err) {

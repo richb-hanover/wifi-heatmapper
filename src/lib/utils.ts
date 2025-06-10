@@ -5,8 +5,12 @@
 
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { IperfTestProperty, testTypes } from "./types";
-import { MeasurementTestType } from "./types";
+import {
+  IperfTestProperty,
+  testTypes,
+  MeasurementTestType,
+  WifiNetwork,
+} from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -83,6 +87,21 @@ export const metricFormatter = (
 export async function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+export const getDefaultWifiNetwork = (): WifiNetwork => {
+  return {
+    ssid: "",
+    bssid: "",
+    rssi: 0,
+    signalStrength: 0,
+    channel: 0,
+    band: 0, // frequency band will be either 2.4 or 5 (GHz)
+    channelWidth: 0,
+    txRate: 0,
+    phyMode: "",
+    security: "",
+  };
+};
 
 export const normalizeMacAddress = (macAddress: string): string => {
   return macAddress.replace(/[:-]/g, "").toLowerCase();

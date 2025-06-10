@@ -2,11 +2,11 @@ import { HeatmapSettings, WifiNetwork } from "./types";
 import { execAsync } from "./server-utils";
 import { getLogger } from "./logger";
 // import os from "os";
-import { getDefaultWifiNetwork } from "./wifiScanner";
-import { rssiToPercentage } from "./utils";
-// import { reverseLookup } from "./localization";
-import { normalizeMacAddress } from "./wifiScanner";
-// import { reverseLookup } from "./localization";
+import {
+  getDefaultWifiNetwork,
+  rssiToPercentage,
+  normalizeMacAddress,
+} from "./utils";
 
 const logger = getLogger("wifi-Linux");
 
