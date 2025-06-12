@@ -1,5 +1,5 @@
 import { HeatmapSettings, WifiNetwork } from "./types";
-import { execAsync } from "./server-utils";
+import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
 import { rssiToPercentage } from "./utils";
 import { isValidMacAddress, normalizeMacAddress } from "./utils";
@@ -17,7 +17,7 @@ export class MacOSSystemInfo implements WifiInfo {
    * @returns name of (the first) wifi interface (string)
    */
   async findWifi(): Promise<string> {
-    // logger.info(`Called findWifi():`);
+    logger.info(`Called findWifi():`);
     const { stdout } = await execAsync(
       'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
     );
@@ -34,7 +34,7 @@ export class MacOSSystemInfo implements WifiInfo {
    * so it is prefixed by "_" to avoid a Typescript warning
    */
   async restartWifi(_settings: HeatmapSettings): Promise<void> {
-    // logger.info(`Called restartWifi():`);
+    logger.info(`Called restartWifi():`);
 
     // await delay(20000);
     if (!this.nameOfWifi) {
@@ -46,6 +46,7 @@ export class MacOSSystemInfo implements WifiInfo {
     await loopUntilCondition(
       // until an error (no ipconfig for the wifi)
       `networksetup -setairportpower ${this.nameOfWifi} off`,
+      `ipconfig getifaddr ${this.nameOfWifi}`,
       1,
       5,
     );
@@ -53,19 +54,42 @@ export class MacOSSystemInfo implements WifiInfo {
     // console.log(`turn it back on:`);
     await loopUntilCondition(
       `networksetup -setairportpower ${this.nameOfWifi} on`,
+      `ipconfig getifaddr ${this.nameOfWifi}`,
       0,
-      8,
+      20,
     );
-    // console.log(`turned back on:`);
+    console.log(`turned back on`);
+    // await delay(5000);
   }
 
-  //
   /**
    * scanWifi() scan the wifi to get the signal strength, etc.
    * @param settings - the full set of settings, including sudoerPassword
    * @returns a WiFiNetwork description to be added to the surveyPoints
+   *
+   * After blinking the wifi, call wdutil` multiple times
+   * until the txRate is non-zero. Pause 200 msec before re-trying.
+   * (Apparently, the wifi interface gets an address well before
+   * all the rest of its settings (particularly txRate) are set.)
    */
   async scanWifi(settings: HeatmapSettings): Promise<WifiNetwork> {
+    let netInfo: WifiNetwork;
+    logger.info(`Called scanWifi():`);
+    while (true) {
+      netInfo = await this.getWdutilResults(settings);
+      console.log(`wdutil results: txRate is ${netInfo.txRate}`);
+      if (netInfo.txRate != 0) return netInfo;
+      await delay(200);
+    }
+  }
+  /**
+   * getWdutilResults() call `wdutil` to get the signal strength, etc.
+   * This code simply parses the response, returning all the values it finds
+   * (txRate may not be available right away, so the caller may re-try)
+   * @param settings - the full set of settings, including sudoerPassword
+   * @returns a WiFiNetwork description to be added to the surveyPoints
+   */
+  async getWdutilResults(settings: HeatmapSettings): Promise<WifiNetwork> {
     // Issue the OS command
     const wdutilOutput = await execAsync(
       `echo ${settings.sudoerPassword} | sudo -S wdutil info`,
@@ -214,24 +238,24 @@ export function parseWdutilOutput(output: string): WifiNetwork {
       }
     }
   });
-  if (
-    partialNetworkInfo.ssid &&
-    partialNetworkInfo.bssid &&
-    partialNetworkInfo.rssi &&
-    partialNetworkInfo.signalStrength &&
-    partialNetworkInfo.band &&
-    partialNetworkInfo.channel &&
-    partialNetworkInfo.channelWidth &&
-    partialNetworkInfo.txRate &&
-    partialNetworkInfo.phyMode &&
-    partialNetworkInfo.security
-  ) {
-    const networkInfo: WifiNetwork = partialNetworkInfo as WifiNetwork;
-    // logger.info("Final WiFi data:", partialNetworkInfo);
-    return networkInfo;
-  } else {
-    throw new Error(
-      `Incomplete NetworkInfo data found in wifiScanner: ${JSON.stringify(partialNetworkInfo)}`,
-    );
-  }
+  // if (
+  //   partialNetworkInfo.ssid &&
+  //   partialNetworkInfo.bssid &&
+  //   partialNetworkInfo.rssi &&
+  //   partialNetworkInfo.signalStrength &&
+  //   partialNetworkInfo.band &&
+  //   partialNetworkInfo.channel &&
+  //   partialNetworkInfo.channelWidth &&
+  //   partialNetworkInfo.txRate &&
+  //   partialNetworkInfo.phyMode &&
+  //   partialNetworkInfo.security
+  // ) {
+  const networkInfo: WifiNetwork = partialNetworkInfo as WifiNetwork;
+  // logger.info("Final WiFi data:", partialNetworkInfo);
+  return networkInfo;
+  // } else {
+  //   throw new Error(
+  //     `Incomplete NetworkInfo data found in wifiScanner: ${JSON.stringify(partialNetworkInfo)}`,
+  //   );
+  // }
 }

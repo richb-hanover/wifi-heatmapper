@@ -2,8 +2,7 @@
 import os from "os";
 import { WifiInfo } from "./types";
 import { MacOSSystemInfo } from "./wifiScanner-macos";
-// import { WindowsSystemInfo } from "./windows";
-// import { LinuxSystemInfo } from "./linux";
+import { execAsync, delay, runDetached } from "./server-utils";
 
 /**
  * wifiScanner.ts is a factory module that returns the proper set of
@@ -37,32 +36,33 @@ export async function createWifiInfo(): Promise<WifiInfo> {
  */
 export async function loopUntilCondition(
   cmd: string,
+  testcmd: string,
   condition: number, // 0 = loop until no error; 1 = loop until error
   timeout: number, // seconds
 ) {
-  // console.log(`loopUntilCondition: ${cmd} ${condition} ${timeout}`);
+  console.log(`loopUntilCondition: ${cmd} ${testcmd} ${condition} ${timeout}`);
 
   const interval = 200; // msec
   const count = (timeout * 1000) / interval;
   let i;
+
+  runDetached(cmd); // issue the specified command "detached"
+
+  // Start to loop on testcmd until the desired condition
   for (i = 0; i < count; i++) {
-    // let exit = "";
+    // const exit = "";
+    let outcome;
     try {
-      await execAsync(`${cmd}`);
-      // exit = resp.stdout;
-      // console.log(`"cmd" is OK: ${i} ${Date.now()} "${exit}"`);
-      // no error on the command: if we were waiting for it,  exit
-      if (condition != 0) {
-        break;
-      }
-    } catch {
-      // console.log(`"cmd" gives error: ${i} ${Date.now()} "${error}"`);
-      // caught an error: if we were waiting for it,  exit
-      if (condition == 0) {
-        break;
-      }
+      const resp = await execAsync(`${testcmd}`); // run the testcmd
+      const exit = resp.stdout;
+      console.log(`${testcmd} is OK: ${i} ${Date.now()} "${exit}"`);
+      outcome = 0; // no error
+      // } catch {
+    } catch (error) {
+      console.log(`${testcmd} gives error: ${i} ${Date.now()} "${error}"`);
+      outcome = 1; // some kind of error that caused the catch()
     }
-    // and delay before checking again
+    if (outcome == condition) break; // we got the result we were looking for
     await delay(interval);
   }
   if (i == count) {

@@ -8,7 +8,7 @@ import {
   SurveyPoint,
 } from "./types";
 // import { scanWifi, blinkWifi } from "./wifiScanner";
-import { execAsync, delay } from "./server-utils";
+import { execAsync } from "./server-utils";
 import { getCancelFlag, sendSSEMessage } from "./server-globals";
 import { percentageToRssi, toMbps } from "./utils";
 import { SSEMessageType } from "@/app/api/events/route";
@@ -276,7 +276,7 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
           throw error;
         }
         // wait 2 secs to recover
-        await delay(2000);
+        // await delay(2000);
       }
     }
 

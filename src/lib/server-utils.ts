@@ -1,5 +1,5 @@
 "use server";
-import { exec, ExecOptions } from "child_process";
+import { exec, ExecOptions, spawn } from "child_process";
 import { getLogger } from "./logger";
 
 const logger = getLogger("server-utils");
@@ -40,6 +40,27 @@ export const execAsync = async (
     });
   });
 };
+
+/**
+ * runDetached(cmd, [args])
+ *   Use this function to start a process but ignore its return
+ *   and simply use some other effect to know when it's complete
+ * Setting shell: true (below) allows you to use shell syntax,
+ *   so the command can be exactly as you type it
+ *   (and args can be empty/missing)
+ *
+ * @param command - command to run
+ * @param args array of arguments to pass along
+ */
+export async function runDetached(command: string, args: string[] = []) {
+  const subprocess = spawn(command, args, {
+    detached: true,
+    stdio: "ignore", // Don't keep stdio open
+    shell: true, // Needed if you're using shell syntax
+  });
+
+  subprocess.unref(); // Allow parent to exit independently
+}
 
 /**
  * delay a given number of milliseconds
