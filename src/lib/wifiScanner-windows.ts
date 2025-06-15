@@ -1,9 +1,13 @@
-import { WifiNetwork } from "./types";
+import { WifiNetwork, HeatmapSettings } from "./types";
 import { execAsync } from "./server-utils";
 import { getLogger } from "./logger";
-import { getDefaultWifiNetwork } from "./wifiScanner";
-import { percentageToRssi } from "./utils";
-import { isValidMacAddress } from "./wifiScanner";
+import {
+  getDefaultWifiNetwork,
+  isValidMacAddress,
+  normalizeMacAddress,
+  percentageToRssi,
+} from "./utils";
+import { getReverseLookupMap } from "./localization";
 
 const logger = getLogger("wifi-Windows");
 
@@ -19,10 +23,11 @@ export async function blinkWifiWindows(
  * @returns a WiFiNetwork description to be added to the surveyPoints
  */
 export async function scanWifiWindows(): Promise<WifiNetwork> {
+  const reverseLookupTable = await getReverseLookupMap();
   const command = "netsh wlan show interfaces";
   const { stdout } = await execAsync(command);
   logger.trace("NETSH output:", stdout);
-  const parsed = parseNetshOutput(stdout);
+  const parsed = parseNetshOutput(reverseLookupTable, stdout);
   logger.trace("Final WiFi data:", parsed);
   return parsed;
 }
@@ -45,7 +50,10 @@ function assignWindowsNetworkInfoValue<K extends keyof WifiNetwork>(
  * This code looks up the labels from the netsh... command
  * in a localization map that determines the proper label for the WifiNetwork
  */
-export function parseNetshOutput(output: string): WifiNetwork {
+export function parseNetshOutput(
+  reverseLookupTable: Map<string, string>,
+  output: string,
+): WifiNetwork {
   const networkInfo = getDefaultWifiNetwork();
   const lines = output.split("\n");
   for (const line of lines) {

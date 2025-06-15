@@ -100,7 +100,7 @@ export async function startSurvey(
       timestamp: new Date().toISOString(),
       x: 0, //assigned by the recipient
       y: 0, //assigned by the recipient
-      id: "BAD ID", //assigned by the recipient
+      id: "No ID Yet", //assigned by the recipient
       isEnabled: true, //assigned by the recipient
     };
 
@@ -120,7 +120,7 @@ function arrayAverage(arr: number[]): number {
 const initialStates = {
   type: "update",
   header: "Measurement beginning",
-  strength: 0,
+  strength: "-",
   tcp: "-/- Mbps",
   udp: "-/- Mbps",
 };
@@ -130,7 +130,7 @@ const initialStates = {
 let displayStates = {
   type: "update",
   header: "In progress",
-  strength: 0,
+  strength: "-",
   tcp: "-/- Mbps",
   udp: "-/- Mbps",
 };
@@ -140,10 +140,14 @@ let displayStates = {
  * @returns (SSEMessageType) - the message to send
  */
 function getUpdatedMessage(): SSEMessageType {
+  let strength = displayStates.strength;
+  if (strength != "-") {
+    strength += "%";
+  }
   return {
     type: displayStates.type,
     header: displayStates.header,
-    status: `Signal strength: ${displayStates.strength}%\nTCP: ${displayStates.tcp}\nUDP: ${displayStates.udp}`,
+    status: `Signal strength: ${strength}\nTCP: ${displayStates.tcp}\nUDP: ${displayStates.udp}`,
   };
 }
 
@@ -176,9 +180,8 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
     console.log(`Blinking Wifi in runIperfTest: ${JSON.stringify(wifiIFName)}`);
     displayStates.header = "Seeking best Wi-Fi";
     sendSSEMessage(getUpdatedMessage());
-    const currentTime = Date.now();
+    const startTime = Date.now();
     await wifiInfo.restartWifi(settings);
-    console.log(`elapsed time for blinking: ${Date.now() - currentTime}`);
 
     displayStates.header = "Measuring Wi-Fi";
     sendSSEMessage(getUpdatedMessage());
@@ -202,8 +205,9 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
         let udpUpload = emptyIperfTestProperty;
 
         const wifiDataBefore = await wifiInfo.scanWifi(settings);
+        console.log(`Elapsed time for blinking: ${Date.now() - startTime}`);
         wifiStrengths.push(wifiDataBefore.signalStrength);
-        displayStates.strength = arrayAverage(wifiStrengths);
+        displayStates.strength = arrayAverage(wifiStrengths).toString();
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
 
@@ -219,7 +223,7 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
 
         const wifiDataMiddle = await wifiInfo.scanWifi(settings);
         wifiStrengths.push(wifiDataMiddle.signalStrength);
-        displayStates.strength = arrayAverage(wifiStrengths);
+        displayStates.strength = arrayAverage(wifiStrengths).toString();
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
 
@@ -235,7 +239,7 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
 
         const wifiDataAfter = await wifiInfo.scanWifi(settings);
         wifiStrengths.push(wifiDataAfter.signalStrength);
-        displayStates.strength = arrayAverage(wifiStrengths);
+        displayStates.strength = arrayAverage(wifiStrengths).toString();
         checkForCancel();
         console.log(`wifiStrengths: ${wifiStrengths}`);
 
@@ -259,12 +263,12 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
 
         wifiData = {
           ...wifiDataBefore,
-          signalStrength: displayStates.strength, // uses the average value
+          signalStrength: parseInt(displayStates.strength), // uses the average value
         };
         //
         wifiData = {
           ...wifiData,
-          rssi: percentageToRssi(displayStates.strength),
+          rssi: percentageToRssi(wifiData.signalStrength),
         };
       } catch (error: any) {
         if (error.message == "cancelled") {

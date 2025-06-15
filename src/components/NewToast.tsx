@@ -45,7 +45,7 @@ export default function NewToast({ onClose, toastIsReady }: NewToastProps) {
     };
 
     eventSource.onerror = (error: Event) => {
-      console.error("SSE error:", error);
+      console.log(`SSE error: ${JSON.stringify(error)}`);
       eventSource.close();
     };
 

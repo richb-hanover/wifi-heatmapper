@@ -50,16 +50,17 @@ export async function loopUntilCondition(
 
   // Start to loop on testcmd until the desired condition
   for (i = 0; i < count; i++) {
-    // const exit = "";
+    // let exit = "";
     let outcome;
     try {
-      const resp = await execAsync(`${testcmd}`); // run the testcmd
-      const exit = resp.stdout;
-      console.log(`${testcmd} is OK: ${i} ${Date.now()} "${exit}"`);
+      await execAsync(`${testcmd}`); // run the testcmd
+      // const resp = await execAsync(`${testcmd}`); // run the testcmd
+      // exit = resp.stdout;
+      // console.log(`${testcmd} is OK: ${i} ${Date.now()} "${exit}"`);
       outcome = 0; // no error
-      // } catch {
-    } catch (error) {
-      console.log(`${testcmd} gives error: ${i} ${Date.now()} "${error}"`);
+    } catch {
+      // } catch (error) {
+      // console.log(`${testcmd} gives error: ${i} ${Date.now()} "${error}"`);
       outcome = 1; // some kind of error that caused the catch()
     }
     if (outcome == condition) break; // we got the result we were looking for

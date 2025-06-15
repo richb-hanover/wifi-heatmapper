@@ -35,8 +35,6 @@ export class MacOSSystemInfo implements WifiInfo {
    */
   async restartWifi(_settings: HeatmapSettings): Promise<void> {
     logger.info(`Called restartWifi():`);
-
-    // await delay(20000);
     if (!this.nameOfWifi) {
       logger.info(`re-retrieving wifi interface name:`);
       this.nameOfWifi = await this.findWifi();
@@ -58,7 +56,7 @@ export class MacOSSystemInfo implements WifiInfo {
       0,
       20,
     );
-    console.log(`turned back on`);
+    // console.log(`turned back on`);
     // await delay(5000);
   }
 
@@ -211,7 +209,6 @@ export function parseWdutilOutput(output: string): WifiNetwork {
           break;
         case "RSSI":
           partialNetworkInfo.rssi = parseInt(value.split(" ")[0]);
-          console.log(`RSSI: ${line} ${partialNetworkInfo.rssi}`);
           // macOS returns dBm - convert to percentage
           partialNetworkInfo.signalStrength = rssiToPercentage(
             partialNetworkInfo.rssi,
@@ -227,7 +224,6 @@ export function parseWdutilOutput(output: string): WifiNetwork {
         }
         case "Tx Rate":
           partialNetworkInfo.txRate = parseFloat(value.split(" ")[0]);
-          console.log(`tx rate: ${line} ${partialNetworkInfo.txRate}`);
           break;
         case "PHY Mode":
           partialNetworkInfo.phyMode = value;
@@ -238,6 +234,9 @@ export function parseWdutilOutput(output: string): WifiNetwork {
       }
     }
   });
+  logger.info(
+    `RSSI: ${partialNetworkInfo.rssi} txRate: ${partialNetworkInfo.txRate}`,
+  );
   // if (
   //   partialNetworkInfo.ssid &&
   //   partialNetworkInfo.bssid &&
@@ -251,7 +250,7 @@ export function parseWdutilOutput(output: string): WifiNetwork {
   //   partialNetworkInfo.security
   // ) {
   const networkInfo: WifiNetwork = partialNetworkInfo as WifiNetwork;
-  // logger.info("Final WiFi data:", partialNetworkInfo);
+  // logger.info(`Final WiFi data: ${JSON.stringify(networkInfo)}`);
   return networkInfo;
   // } else {
   //   throw new Error(

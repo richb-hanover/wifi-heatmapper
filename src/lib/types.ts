@@ -23,6 +23,7 @@ export const testProperties: IperfTestProperties = {
   lostPackets: "lostPackets",
   retransmits: "retransmits",
   packetsReceived: "packetsReceived",
+  // signalstrength is included so generateAllHeatmaps() has all the properties in one object
   signalStrength: "signalStrength",
 } as const;
 

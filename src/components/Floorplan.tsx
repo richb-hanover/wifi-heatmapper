@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { rssiToPercentage } from "../lib/utils";
 import { useSettings } from "./GlobalSettings";
 import { SurveyPoint, RGB, Gradient } from "../lib/types";
-import { checkSettings, startSurvey } from "@/lib/iperfRunner";
+import { checkSettings } from "@/lib/iperfRunner";
 import { Toaster } from "@/components/ui/toaster";
 import NewToast from "@/components/NewToast";
 import PopupDetails from "@/components/PopupDetails";
@@ -79,21 +79,40 @@ export default function ClickableFloorplan(): ReactNode {
     }
 
     try {
-      let newPoint = await startSurvey(settings);
+      // The simple "await startSurvey()" won't work
+      // Next.js dev server has a built-in timer that
+      // fails if the response takes too long (> 10 seconds?)
+      // Use the (existing) /api/start-task endpoint instead
+      // let newPoint = await startSurvey(settings);
+      // console.log(`About to POST...`);
+      const res = await fetch("/api/start-task?action=start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings }),
+      });
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status}`);
+      }
+      let newPoint = await res.json();
+      console.log(`Got body`);
+
       // null is OK - it just means that measurement was cancelled
       if (!newPoint) {
+        console.log(`Survey cancelled`);
         return;
       }
-      // otherwise, add the point, bumping the point number
-      const pointNum = settings.nextPointNum;
+
+      // Got measurements: add the x/y point, point number, and enabled
+      console.log(`Got a set of measurements`);
       newPoint = {
         ...newPoint,
         x,
         y,
         isEnabled: true,
-        id: `Point_${pointNum}`,
+        id: `Point_${settings.nextPointNum}`,
       };
-      updateSettings({ nextPointNum: pointNum + 1 });
+      updateSettings({ nextPointNum: settings.nextPointNum + 1 });
+      console.log(`newPoint: ${JSON.stringify(newPoint)}`);
 
       surveyPointActions.add(newPoint);
     } catch (error) {

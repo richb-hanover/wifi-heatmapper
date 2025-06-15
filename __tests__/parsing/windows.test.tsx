@@ -40,7 +40,7 @@ There are 1 interfaces on the system:
     Hosted network status : Not available
 `;
 
-  expect(() => parseNetshOutput(input)).toThrow(
+  expect(() => parseNetshOutput(reverseLookupTable, input)).toThrow(
     `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`,
   );
 });
@@ -71,7 +71,7 @@ There are 1 interfaces on the system:
     Hosted network status : Not available
 `;
 
-  const output = parseNetshOutput(input);
+  const output = parseNetshOutput(reverseLookupTable, input);
   expect(output).toStrictEqual({
     ssid: "SomeSSID",
     bssid: "1234567890ac",
@@ -111,7 +111,7 @@ Interfacce presenti nel sistema: 1:
     Stato rete ospitata    : Non disponibile
 `;
 
-  const output = parseNetshOutput(input);
+  const output = parseNetshOutput(reverseLookupTable, input);
   expect(output).toStrictEqual({
     ssid: "SomeSSID",
     bssid: "12345610f7a8",
@@ -156,7 +156,7 @@ Es ist 1 Schnittstelle auf dem System vorhanden:
    Status des gehosteten Netzwerks  : Nicht verfügbar
 `;
 
-  const output = parseNetshOutput(input);
+  const output = parseNetshOutput(reverseLookupTable, input);
   expect(output).toStrictEqual({
     ssid: "SomeSSID",
     bssid: "1234567890ab",
@@ -201,7 +201,7 @@ Il existe 1 interface sur le système :
     État du réseau hébergé: Non disponible
 `;
 
-  const output = parseNetshOutput(input);
+  const output = parseNetshOutput(reverseLookupTable, input);
   expect(output).toStrictEqual({
     ssid: "SomeSSID",
     bssid: "1234567890ab",

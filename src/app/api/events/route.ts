@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     clearInterval(heartbeat);
     clearSSESender();
     writer.close();
-    console.log("SSE client disconnected");
+    console.log("SSE client disconnected because of abort");
   });
 
   return new Response(stream.readable, {
