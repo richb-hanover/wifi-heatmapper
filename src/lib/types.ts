@@ -77,10 +77,15 @@ export interface SurveyPoint {
   x: number;
   y: number;
   wifiData: WifiNetwork;
-  iperfResults: IperfResults;
+  iperfData: IperfResults;
   timestamp: string;
   id: string;
   isEnabled: boolean;
+}
+
+export interface SurveyResult {
+  point: SurveyPoint | null; // either the survey point, or null if cancelled or error
+  status: string; // if cancelled or error, the reason to display
 }
 
 /**
@@ -113,11 +118,10 @@ export interface SurveyPointActions {
   delete: (points: SurveyPoint[]) => void;
 }
 
-// functions that return
+// functions that handle platform-specific work
 export interface WifiInfo {
   findWifi(): Promise<string>; // return the interface name
   restartWifi(settings: HeatmapSettings): Promise<void>; // "blink" the wifi
   scanWifi(settings: HeatmapSettings): Promise<WifiNetwork>; // get measurements
-  nameOfWifi: string; // name of the Wifi interface
-  // defaultWifi: WifiNetwork; // default settings
+  checkSettings(settings: HeatmapSettings): Promise<string>; // returns an error message
 }

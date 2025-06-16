@@ -3,13 +3,14 @@ import os from "os";
 import { WifiInfo } from "./types";
 import { MacOSSystemInfo } from "./wifiScanner-macos";
 import { execAsync, delay, runDetached } from "./server-utils";
+import { getLogger } from "./logger";
 
 /**
  * wifiScanner.ts is a factory module that returns the proper set of
  * functions for the underlying OS
  */
 
-// const logger = getLogger("wifiScanner");
+const logger = getLogger("wifiScanner");
 
 export async function createWifiInfo(): Promise<WifiInfo> {
   const platform = os.platform();
@@ -40,7 +41,7 @@ export async function loopUntilCondition(
   condition: number, // 0 = loop until no error; 1 = loop until error
   timeout: number, // seconds
 ) {
-  console.log(`loopUntilCondition: ${cmd} ${testcmd} ${condition} ${timeout}`);
+  // logger.info(`loopUntilCondition: ${cmd} ${testcmd} ${condition} ${timeout}`);
 
   const interval = 200; // msec
   const count = (timeout * 1000) / interval;
@@ -67,6 +68,6 @@ export async function loopUntilCondition(
     await delay(interval);
   }
   if (i == count) {
-    console.log(`loopUntilCondition timed out: ${cmd} ${condition} ${timeout}`);
+    logger.info(`loopUntilCondition timed out: ${cmd} ${condition} ${timeout}`);
   }
 }

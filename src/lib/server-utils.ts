@@ -25,16 +25,17 @@ const logger = getLogger("server-utils");
 export const execAsync = async (
   command: string,
 ): Promise<{ stdout: string; stderr: string }> => {
-  // @ts-expect-error // "shell" is the name of the shell program
+  // @ts-expect-error // "shell" is the name of the shell program, but prop must be boolean
   const options: ExecOptions = { shell: true }; // Node.js finds the right binary for the OS
 
   return new Promise((resolve, reject) => {
-    logger.trace("Executing command:", command);
+    // logger.trace("Executing command:", command);
     exec(command, options, (error, stdout, stderr) => {
       if (error) {
+        // logger.info(`execAsync(${command} rejects with "${error}")`);
         reject(error);
       } else {
-        logger.trace(`Command result: ${JSON.stringify(stdout)}`);
+        // logger.trace(`Command result: ${JSON.stringify(stdout)}`);
         resolve({ stdout: stdout.trimEnd(), stderr: stderr.trimEnd() });
       }
     });

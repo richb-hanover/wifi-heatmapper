@@ -12,12 +12,40 @@ export class MacOSSystemInfo implements WifiInfo {
   nameOfWifi: string = "";
 
   /**
+   * checkSettings - check whether the settings are "primed" to run a test
+   * @param settings
+   * @returns string - empty, or error message to display
+   */
+  async checkSettings(settings: HeatmapSettings): Promise<string> {
+    if (!settings.iperfServerAdrs) {
+      return "Please set iperf server address";
+    }
+
+    if (!settings.sudoerPassword || settings.sudoerPassword == "") {
+      // console.warn(
+      //   "No sudo password set, but running on macOS where it's required for wdutil info command",
+      // );
+      return "Please set sudo password. It is required on macOS.";
+    }
+    // check that the password is actually correct
+    // command throws if there is an error
+    try {
+      await execAsync(`echo ${settings.sudoerPassword} | sudo -S ls`);
+    } catch {
+      return "Please enter the correct sudo password.";
+    }
+    // console.log(`sudo ls shows...: "${JSON.stringify(testOutput)}`);
+    return "";
+  }
+
+  /**
    * findWifi() - find the name of the wifi interface
    * save in an object variable
    * @returns name of (the first) wifi interface (string)
    */
   async findWifi(): Promise<string> {
     logger.info(`Called findWifi():`);
+
     const { stdout } = await execAsync(
       'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
     );
@@ -75,7 +103,7 @@ export class MacOSSystemInfo implements WifiInfo {
     logger.info(`Called scanWifi():`);
     while (true) {
       netInfo = await this.getWdutilResults(settings);
-      console.log(`wdutil results: txRate is ${netInfo.txRate}`);
+      // console.log(`wdutil results: txRate is ${netInfo.txRate}`);
       if (netInfo.txRate != 0) return netInfo;
       await delay(200);
     }

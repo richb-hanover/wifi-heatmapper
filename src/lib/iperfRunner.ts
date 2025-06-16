@@ -1,11 +1,11 @@
 "use server";
-import os from "os";
 import {
   HeatmapSettings,
   IperfResults,
   IperfTestProperty,
   WifiNetwork,
   SurveyPoint,
+  SurveyResult,
 } from "./types";
 // import { scanWifi, blinkWifi } from "./wifiScanner";
 import { execAsync } from "./server-utils";
@@ -37,66 +37,23 @@ const validateWifiDataConsistency = (
 };
 
 /**
- * checkSettings - check whether the settings are "primed" to run a test
- * @param settings
- * @returns string
- */
-export const checkSettings = async (settings: HeatmapSettings) => {
-  sendSSEMessage({
-    type: "update",
-    status: "",
-    header: "In progress",
-  });
-  let settingsErrorMessage = "";
-
-  if (!settings.iperfServerAdrs) {
-    settingsErrorMessage = "Please set iperf server address";
-
-    sendSSEMessage({
-      type: "done",
-      status: settingsErrorMessage,
-      header: "Error",
-    });
-  }
-
-  const runningPlatform = os.platform();
-
-  if (
-    runningPlatform == "darwin" &&
-    (!settings.sudoerPassword || settings.sudoerPassword == "")
-  ) {
-    console.warn(
-      "No sudo password set, but running on macOS where it's required for wdutil info command",
-    );
-    settingsErrorMessage =
-      "Please set sudo password.\nIt is required on macOS.";
-    sendSSEMessage({
-      type: "done",
-      header: "Error",
-      status: settingsErrorMessage,
-    });
-  }
-  return settingsErrorMessage;
-};
-
-/**
  * startSurvey - kick off the entire process for surveying the clicked point
- *
+ * @returns
  */
 export async function startSurvey(
   settings: HeatmapSettings,
-): Promise<SurveyPoint | null> {
+): Promise<SurveyResult> {
   try {
-    const { iperfResults, wifiData } = await runIperfTest(settings);
+    const { iperfData, wifiData } = await runSurveyTests(settings);
 
-    if (!iperfResults || !wifiData) {
+    if (!iperfData || !wifiData) {
       // null indicates measurement was canceled
-      return null;
+      return { point: null, status: "canceled" };
     }
 
     const newPoint: SurveyPoint = {
       wifiData,
-      iperfResults,
+      iperfData,
       timestamp: new Date().toISOString(),
       x: 0, //assigned by the recipient
       y: 0, //assigned by the recipient
@@ -104,10 +61,10 @@ export async function startSurvey(
       isEnabled: true, //assigned by the recipient
     };
 
-    return newPoint;
+    return { point: newPoint, status: "" };
   } catch (error) {
     console.log(`caught error in startSurvey(): ${error}`);
-    return null;
+    return { point: null, status: String(error) };
   }
 }
 
@@ -156,12 +113,12 @@ function checkForCancel() {
 }
 
 /**
- * runIperfTest() - get the WiFi and iperf readings
+ * runSurveyTests() - get the WiFi and iperf readings
  * @param settings
  * @returns the WiFi and iperf results for this location
  */
-export async function runIperfTest(settings: HeatmapSettings): Promise<{
-  iperfResults: IperfResults | null;
+export async function runSurveyTests(settings: HeatmapSettings): Promise<{
+  iperfData: IperfResults | null;
   wifiData: WifiNetwork | null;
 }> {
   const performIperfTest = settings.iperfServerAdrs != "localhost";
@@ -175,6 +132,11 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
     displayStates = { ...displayStates, ...initialStates };
     sendSSEMessage(getUpdatedMessage()); // immediately send initial values
     displayStates.header = "Measurement in progress...";
+
+    // check the settings - throw a non-"" error message
+    console.log(`Checking the settings...`);
+    const settingsStatus = await wifiInfo.checkSettings(settings);
+    if (settingsStatus != "") throw `${settingsStatus}`;
 
     // "blink" the wifi to get best signal
     console.log(`Blinking Wifi in runIperfTest: ${JSON.stringify(wifiIFName)}`);
@@ -272,7 +234,7 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
         };
       } catch (error: any) {
         if (error.message == "cancelled") {
-          return { iperfResults: null, wifiData: null };
+          return { iperfData: null, wifiData: null };
         }
         logger.error(`Attempt ${attempts + 1} failed:`, error);
         attempts++;
@@ -284,12 +246,12 @@ export async function runIperfTest(settings: HeatmapSettings): Promise<{
       }
     }
 
-    return { iperfResults: results!, wifiData: wifiData! };
+    return { iperfData: results!, wifiData: wifiData! };
   } catch (error) {
-    logger.error("Error running iperf3 test:", error);
+    logger.error("Error running measurement tests:", error);
     sendSSEMessage({
       type: "done",
-      status: "Error running iperf3 test",
+      status: "Error taking measurements",
       header: "Error",
     });
 
@@ -317,12 +279,12 @@ async function runSingleTest(
   const { stdout } = await execAsync(command);
   const result = JSON.parse(stdout);
   logger.trace("Iperf JSON-parsed result:", result);
-  const extracted = extractIperfResults(result, isUdp);
+  const extracted = extractIperfData(result, isUdp);
   logger.trace("Iperf extracted results:", extracted);
   return extracted;
 }
 
-export async function extractIperfResults(
+export async function extractIperfData(
   result: {
     end: {
       sum_received?: { bits_per_second: number };

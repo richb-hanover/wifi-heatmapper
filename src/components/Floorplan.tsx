@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { rssiToPercentage } from "../lib/utils";
 import { useSettings } from "./GlobalSettings";
 import { SurveyPoint, RGB, Gradient } from "../lib/types";
-import { checkSettings } from "@/lib/iperfRunner";
+// import { checkSettings } from "@/lib/iperfRunner";
 import { Toaster } from "@/components/ui/toaster";
 import NewToast from "@/components/NewToast";
 import PopupDetails from "@/components/PopupDetails";
@@ -62,21 +62,18 @@ export default function ClickableFloorplan(): ReactNode {
 
   /**
    * measureSurveyPoint - make measurements for point at x/y
-   * Triggered by a click on the canvas that _isn't_ an existin
+   * Triggered by a click on the canvas that _isn't_ an existing
    *    surveypoint
    * @param x
    * @param y
-   * @returns
+   * @returns null, but after having added the point to surveyPoints[]
+   *
+   * Error handling:
+   * If there are errors, this routine throws a string with an explanation
    */
   const measureSurveyPoint = async (surveyClick: { x: number; y: number }) => {
     const x = Math.round(surveyClick.x);
     const y = Math.round(surveyClick.y);
-
-    const settingsErrorMessage = await checkSettings(settings);
-    if (settingsErrorMessage !== "") {
-      setAlertMessage(settingsErrorMessage);
-      return null;
-    }
 
     try {
       // The simple "await startSurvey()" won't work
@@ -93,17 +90,17 @@ export default function ClickableFloorplan(): ReactNode {
       if (!res.ok) {
         throw new Error(`Server error: ${res.status}`);
       }
-      let newPoint = await res.json();
-      console.log(`Got body`);
+      const { newPoint: aPoint, status } = await res.json();
+      let newPoint = aPoint;
+      // console.log(`Got body`);
 
       // null is OK - it just means that measurement was cancelled
       if (!newPoint) {
-        console.log(`Survey cancelled`);
-        return;
+        throw status; // throw "" if no error (cancelled) or the error string
       }
 
       // Got measurements: add the x/y point, point number, and enabled
-      console.log(`Got a set of measurements`);
+      // console.log(`Got a set of measurements`);
       newPoint = {
         ...newPoint,
         x,
@@ -112,12 +109,12 @@ export default function ClickableFloorplan(): ReactNode {
         id: `Point_${settings.nextPointNum}`,
       };
       updateSettings({ nextPointNum: settings.nextPointNum + 1 });
-      console.log(`newPoint: ${JSON.stringify(newPoint)}`);
+      // console.log(`newPoint: ${JSON.stringify(newPoint)}`);
 
       surveyPointActions.add(newPoint);
     } catch (error) {
-      setAlertMessage(`An error occurred in startSurvey(): ${error}`);
-      return;
+      setAlertMessage(`${error}`);
+      return null;
     }
   };
 
@@ -338,7 +335,7 @@ export default function ClickableFloorplan(): ReactNode {
       </div>
       {alertMessage != "" && (
         <Alert variant="destructive">
-          <AlertTitle>Error Summary</AlertTitle>
+          <AlertTitle>Error</AlertTitle>
           <AlertDescription>{alertMessage}</AlertDescription>
         </Alert>
       )}
