@@ -9,7 +9,12 @@ import {
 } from "./types";
 // import { scanWifi, blinkWifi } from "./wifiScanner";
 import { execAsync } from "./server-utils";
-import { getCancelFlag, sendSSEMessage } from "./server-globals";
+import {
+  getCancelFlag,
+  getSurveyResults,
+  sendSSEMessage,
+  setSurveyResults,
+} from "./server-globals";
 import { percentageToRssi, toMbps } from "./utils";
 import { SSEMessageType } from "@/app/api/events/route";
 import { getLogger } from "./logger";
@@ -44,11 +49,13 @@ export async function startSurvey(
   settings: HeatmapSettings,
 ): Promise<SurveyResult> {
   try {
+    setSurveyResults({ point: null, status: "starting" });
     const { iperfData, wifiData } = await runSurveyTests(settings);
 
     if (!iperfData || !wifiData) {
       // null indicates measurement was canceled
-      return { point: null, status: "canceled" };
+      setSurveyResults({ point: null, status: "canceled" });
+      return getSurveyResults();
     }
 
     const newPoint: SurveyPoint = {
@@ -60,11 +67,12 @@ export async function startSurvey(
       id: "No ID Yet", //assigned by the recipient
       isEnabled: true, //assigned by the recipient
     };
-
-    return { point: newPoint, status: "" };
+    setSurveyResults({ point: newPoint, status: "" });
+    return getSurveyResults();
   } catch (error) {
     console.log(`caught error in startSurvey(): ${error}`);
-    return { point: null, status: String(error) };
+    setSurveyResults({ point: null, status: String(error) });
+    return getSurveyResults();
   }
 }
 
@@ -246,6 +254,7 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
       }
     }
 
+    // return the values ("!" asserts that the values are non-null)
     return { iperfData: results!, wifiData: wifiData! };
   } catch (error) {
     logger.error("Error running measurement tests:", error);

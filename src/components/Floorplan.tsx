@@ -1,8 +1,8 @@
 import React, { ReactNode, useRef, useState } from "react";
 import { useEffect } from "react";
-import { rssiToPercentage } from "../lib/utils";
+import { rssiToPercentage, delay } from "../lib/utils";
 import { useSettings } from "./GlobalSettings";
-import { SurveyPoint, RGB, Gradient } from "../lib/types";
+import { SurveyPoint, SurveyResult, RGB, Gradient } from "../lib/types";
 // import { checkSettings } from "@/lib/iperfRunner";
 import { Toaster } from "@/components/ui/toaster";
 import NewToast from "@/components/NewToast";
@@ -74,14 +74,11 @@ export default function ClickableFloorplan(): ReactNode {
   const measureSurveyPoint = async (surveyClick: { x: number; y: number }) => {
     const x = Math.round(surveyClick.x);
     const y = Math.round(surveyClick.y);
+    let result: SurveyResult = { point: null, status: "initialized" };
 
     try {
-      // The simple "await startSurvey()" won't work
-      // Next.js dev server has a built-in timer that
-      // fails if the response takes too long (> 10 seconds?)
-      // Use the (existing) /api/start-task endpoint instead
-      // let newPoint = await startSurvey(settings);
-      // console.log(`About to POST...`);
+      // Kick off the measurement process by calling "action=start"
+      // This returns immediately, then poll for data
       const res = await fetch("/api/start-task?action=start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,9 +87,30 @@ export default function ClickableFloorplan(): ReactNode {
       if (!res.ok) {
         throw new Error(`Server error: ${res.status}`);
       }
-      const { newPoint: aPoint, status } = await res.json();
-      let newPoint = aPoint;
-      // console.log(`Got body`);
+
+      const startTime = Date.now();
+      while (true) {
+        if (startTime + 20000 < Date.now()) {
+          setAlertMessage(`Timed out waiting for response.`);
+          break;
+        }
+        try {
+          const res = await fetch("/api/start-task?action=results");
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          result = await res.json();
+          console.log(`Status is: ${JSON.stringify(result)}`);
+          if (result.status == "") {
+            // got a successful result
+            break;
+          }
+        } catch (err) {
+          // Typical: handle network errors, aborts, etc.
+          console.error(`Status poll failed: ${err}`);
+        }
+        await delay(1000);
+      }
+
+      let newPoint = result.point;
 
       // null is OK - it just means that measurement was cancelled
       if (!newPoint) {

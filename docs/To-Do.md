@@ -29,6 +29,7 @@ Ideas for making the program better - in no particular order:
 
 ## Bugs
 
+* Check for the earliest version of Node that supports all these features (fetch, etc)?
 * Normalize data rate scale for throughput (use range of 200..700mbps with 100's dividers instead of 245..673mbps)
 * Clicking a heat map (signal strength or data rate) and clicking Back should not give http error
 * If `Floorplan` cannot open the image, it should display

@@ -30,7 +30,7 @@ export default function NewToast({ onClose, toastIsReady }: NewToastProps) {
         }
 
         if (data.type == "done") {
-          // we're done (complete, error, canceled)
+          // we're done (complete, error, cancelled)
           setToastHeader(data.header);
           setToastStatus(data.status);
           eventSource.close();
