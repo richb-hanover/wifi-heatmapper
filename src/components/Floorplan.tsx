@@ -74,66 +74,66 @@ export default function ClickableFloorplan(): ReactNode {
   const measureSurveyPoint = async (surveyClick: { x: number; y: number }) => {
     const x = Math.round(surveyClick.x);
     const y = Math.round(surveyClick.y);
-    let result: SurveyResult = { point: null, status: "initialized" };
+    let result: SurveyResult = { status: "pending" };
 
-    try {
-      // Kick off the measurement process by calling "action=start"
-      // This returns immediately, then poll for data
-      const res = await fetch("/api/start-task?action=start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ settings }),
-      });
-      if (!res.ok) {
-        throw new Error(`Server error: ${res.status}`);
+    // Kick off the measurement process by calling "action=start"
+    // This returns immediately, then poll for data
+    const res = await fetch("/api/start-task?action=start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settings }),
+    });
+    if (!res.ok) {
+      throw new Error(`Server error: ${res.status}`);
+    }
+
+    const startTime = Date.now();
+    while (true) {
+      if (startTime + 20000 < Date.now()) {
+        setAlertMessage(`Timed out waiting for response.`);
+        break;
       }
-
-      const startTime = Date.now();
-      while (true) {
-        if (startTime + 20000 < Date.now()) {
-          setAlertMessage(`Timed out waiting for response.`);
+      try {
+        const res = await fetch("/api/start-task?action=results");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        result = await res.json();
+        console.log(`Status is: ${JSON.stringify(result)}`);
+        if (result.status != "pending") {
+          // got a result - status is "done" or "error"
           break;
         }
-        try {
-          const res = await fetch("/api/start-task?action=results");
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          result = await res.json();
-          console.log(`Status is: ${JSON.stringify(result)}`);
-          if (result.status == "") {
-            // got a successful result
-            break;
-          }
-        } catch (err) {
-          // Typical: handle network errors, aborts, etc.
-          console.error(`Status poll failed: ${err}`);
-        }
-        await delay(1000);
+      } catch (err) {
+        // Typical: handle network errors, aborts, etc.
+        console.error(`Results poll gave error: ${err}`);
       }
-
-      let newPoint = result.point;
-
-      // null is OK - it just means that measurement was cancelled
-      if (!newPoint) {
-        throw status; // throw "" if no error (cancelled) or the error string
-      }
-
-      // Got measurements: add the x/y point, point number, and enabled
-      // console.log(`Got a set of measurements`);
-      newPoint = {
-        ...newPoint,
-        x,
-        y,
-        isEnabled: true,
-        id: `Point_${settings.nextPointNum}`,
-      };
-      updateSettings({ nextPointNum: settings.nextPointNum + 1 });
-      // console.log(`newPoint: ${JSON.stringify(newPoint)}`);
-
-      surveyPointActions.add(newPoint);
-    } catch (error) {
-      setAlertMessage(`${error}`);
-      return null;
+      await delay(1000); // ask again in one second
     }
+
+    if (result.status === "error") {
+      setAlertMessage(`${result.error}`);
+      return;
+    }
+    if (!result.results!.wifiData || !result.results!.iperfData) {
+      setAlertMessage("Measurement cancelled");
+      return;
+    }
+    const { wifiData, iperfData } = result.results!;
+
+    // Got measurements: add the x/y point, point number, and enabled
+    // console.log(`Got a set of measurements`);
+    const newPoint = {
+      wifiData,
+      iperfData,
+      x,
+      y,
+      timestamp: Date.now(),
+      isEnabled: true,
+      id: `Point_${settings.nextPointNum}`,
+    };
+    updateSettings({ nextPointNum: settings.nextPointNum + 1 });
+    // console.log(`newPoint: ${JSON.stringify(newPoint)}`);
+
+    surveyPointActions.add(newPoint);
   };
 
   /**

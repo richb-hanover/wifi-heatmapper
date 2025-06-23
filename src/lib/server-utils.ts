@@ -1,12 +1,11 @@
 "use server";
 import { exec, ExecOptions, spawn } from "child_process";
-import { getLogger } from "./logger";
-
-const logger = getLogger("server-utils");
+// import { getLogger } from "./logger";
+// const logger = getLogger("server-utils");
 
 /**
  * exexAsync - asynchronously run the command, return { stdout, stderr }
- * Trim both return value **ends** to remove the trailing newline
+ * Trim **ends** of both return values to remove the trailing newline
  * The {shell:true} option allows shell options (pipes, redirection, etc)
  * The option is set to true so that Node can use the proper command for the OS
  * @ts-expect-error avoids Typescript error (the option is typed as a string)
@@ -20,7 +19,7 @@ const logger = getLogger("server-utils");
  * The caller can use catch() to handle a non-zero error return
  *
  * @param command to execute
- * @returns {stdout , stderr }
+ * @returns { stdout , stderr }
  */
 export const execAsync = async (
   command: string,

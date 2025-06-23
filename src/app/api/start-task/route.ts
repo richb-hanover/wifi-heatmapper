@@ -11,7 +11,7 @@ import {
   setSurveyResults,
   getSurveyResults,
 } from "@/lib/server-globals";
-import { startSurvey } from "@/lib/iperfRunner";
+import { runSurveyTests } from "@/lib/iperfRunner";
 
 // handle a "status" request
 export async function GET(req: NextRequest) {
@@ -34,25 +34,45 @@ export async function POST(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get("action");
 
+  // Start
   if (action === "start") {
-    try {
-      const { settings } = await req.json();
-      setSurveyResults({ point: null, status: "started" });
-      const result = await startSurvey(settings);
-      // console.log(`startSurvey results: ${JSON.stringify(result)}`);
-      const safe = JSON.parse(JSON.stringify(result));
-      return NextResponse.json(safe);
-    } catch (err) {
-      // console.error("Error in startSurvey:", err);
-      return NextResponse.json(
-        { error: `Task failed "${err}"` },
-        { status: 500 },
-      );
-    }
+    const { settings } = await req.json();
+    setSurveyResults({ status: "pending" });
+
+    // Start off the survey process immediately
+    // this IIFE runs independently and uses setSurveyResults for the client
+    void (async () => {
+      try {
+        const { iperfData, wifiData } = await runSurveyTests(settings);
+
+        // nulls indicates measurement was canceled
+        if (!iperfData || !wifiData) {
+          setSurveyResults({
+            error: "Measurement was cancelled",
+            status: "error",
+          });
+          return;
+        }
+
+        setSurveyResults({ status: "done", results: { wifiData, iperfData } });
+      } catch (err) {
+        setSurveyResults({ status: "error", error: String(err) });
+      }
+    })();
+
+    // and immediately retun an OK status
+    return NextResponse.json("OK");
+
+    // const result = await startSurvey(settings);
+    // console.log(`startSurvey results: ${JSON.stringify(result)}`);
+    // const safe = JSON.parse(JSON.stringify(result));
+
+    // Stop
   } else if (action === "stop") {
     setCancelFlag(true); // in sseGlobal.ts
     return NextResponse.json({ message: "Task stopped" });
   }
+
   // console.log(`Unexpected action received: ${action}`);
   return NextResponse.json(
     { error: `Invalid action "${action}"` },

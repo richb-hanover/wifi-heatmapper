@@ -1,4 +1,4 @@
-import { HeatmapSettings, WifiNetwork } from "./types";
+import { HeatmapSettings, WifiResults } from "./types";
 import { execAsync } from "./server-utils";
 import { getLogger } from "./logger";
 // import os from "os";
@@ -21,7 +21,7 @@ export async function blinkWifiLinux(settings: HeatmapSettings): Promise<void> {
  */
 export async function scanWifiLinux(
   heatmapsettings: HeatmapSettings,
-): Promise<WifiNetwork> {
+): Promise<WifiResults> {
   let wlanInterface: string = "";
   wlanInterface = await inferWifiDeviceIdOnLinux();
 
@@ -66,7 +66,7 @@ async function iwDevInfo(interfaceId: string): Promise<string> {
 export function parseIwOutput(
   linkOutput: string,
   infoOutput: string,
-): WifiNetwork {
+): WifiResults {
   const networkInfo = getDefaultWifiNetwork();
   const linkLines = linkOutput.split("\n");
   linkLines.forEach((line) => {

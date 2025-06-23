@@ -1,6 +1,6 @@
 "use server";
 import os from "os";
-import { WifiInfo } from "./types";
+import { WifiActions } from "./types";
 import { MacOSSystemInfo } from "./wifiScanner-macos";
 import { execAsync, delay, runDetached } from "./server-utils";
 import { getLogger } from "./logger";
@@ -12,7 +12,7 @@ import { getLogger } from "./logger";
 
 const logger = getLogger("wifiScanner");
 
-export async function createWifiInfo(): Promise<WifiInfo> {
+export async function createWifiInfo(): Promise<WifiActions> {
   const platform = os.platform();
   switch (platform) {
     case "darwin":

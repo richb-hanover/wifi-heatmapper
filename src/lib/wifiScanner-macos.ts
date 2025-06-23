@@ -1,14 +1,13 @@
-import { HeatmapSettings, WifiNetwork } from "./types";
+import { HeatmapSettings, WifiResults, WifiActions } from "./types";
 import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
 import { rssiToPercentage } from "./utils";
 import { isValidMacAddress, normalizeMacAddress } from "./utils";
-import { WifiInfo } from "./types";
 import { loopUntilCondition } from "./wifiScanner";
 
 const logger = getLogger("wifi-macOS");
 
-export class MacOSSystemInfo implements WifiInfo {
+export class MacOSSystemInfo implements WifiActions {
   nameOfWifi: string = "";
 
   /**
@@ -98,8 +97,8 @@ export class MacOSSystemInfo implements WifiInfo {
    * (Apparently, the wifi interface gets an address well before
    * all the rest of its settings (particularly txRate) are set.)
    */
-  async scanWifi(settings: HeatmapSettings): Promise<WifiNetwork> {
-    let netInfo: WifiNetwork;
+  async scanWifi(settings: HeatmapSettings): Promise<WifiResults> {
+    let netInfo: WifiResults;
     logger.info(`Called scanWifi():`);
     while (true) {
       netInfo = await this.getWdutilResults(settings);
@@ -115,7 +114,7 @@ export class MacOSSystemInfo implements WifiInfo {
    * @param settings - the full set of settings, including sudoerPassword
    * @returns a WiFiNetwork description to be added to the surveyPoints
    */
-  async getWdutilResults(settings: HeatmapSettings): Promise<WifiNetwork> {
+  async getWdutilResults(settings: HeatmapSettings): Promise<WifiResults> {
     // Issue the OS command
     const wdutilOutput = await execAsync(
       `echo ${settings.sudoerPassword} | sudo -S wdutil info`,
@@ -217,8 +216,8 @@ const parseChannel = (channelString: string): number[] => {
 /**
  * parseWdutilOutput - parses the string from `wdutil` into a WifiNetwork object
  */
-export function parseWdutilOutput(output: string): WifiNetwork {
-  const partialNetworkInfo: Partial<WifiNetwork> = {};
+export function parseWdutilOutput(output: string): WifiResults {
+  const partialNetworkInfo: Partial<WifiResults> = {};
   const wifiSection = output.split("WIFI")[1].split("BLUETOOTH")[0];
   const lines = wifiSection.split("\n");
   logger.silly("WDUTIL lines:", lines);
@@ -277,7 +276,7 @@ export function parseWdutilOutput(output: string): WifiNetwork {
   //   partialNetworkInfo.phyMode &&
   //   partialNetworkInfo.security
   // ) {
-  const networkInfo: WifiNetwork = partialNetworkInfo as WifiNetwork;
+  const networkInfo: WifiResults = partialNetworkInfo as WifiResults;
   // logger.info(`Final WiFi data: ${JSON.stringify(networkInfo)}`);
   return networkInfo;
   // } else {

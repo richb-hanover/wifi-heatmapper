@@ -1,4 +1,4 @@
-import { WifiNetwork, HeatmapSettings } from "./types";
+import { WifiResults, HeatmapSettings } from "./types";
 import { execAsync } from "./server-utils";
 import { getLogger } from "./logger";
 import {
@@ -22,7 +22,7 @@ export async function blinkWifiWindows(
  * scanWifiWindows() scan the Wifi for Windows
  * @returns a WiFiNetwork description to be added to the surveyPoints
  */
-export async function scanWifiWindows(): Promise<WifiNetwork> {
+export async function scanWifiWindows(): Promise<WifiResults> {
   const reverseLookupTable = await getReverseLookupMap();
   const command = "netsh wlan show interfaces";
   const { stdout } = await execAsync(command);
@@ -32,8 +32,8 @@ export async function scanWifiWindows(): Promise<WifiNetwork> {
   return parsed;
 }
 
-function assignWindowsNetworkInfoValue<K extends keyof WifiNetwork>(
-  networkInfo: WifiNetwork,
+function assignWindowsNetworkInfoValue<K extends keyof WifiResults>(
+  networkInfo: WifiResults,
   label: K,
   val: string,
 ) {
@@ -53,7 +53,7 @@ function assignWindowsNetworkInfoValue<K extends keyof WifiNetwork>(
 export function parseNetshOutput(
   reverseLookupTable: Map<string, string>,
   output: string,
-): WifiNetwork {
+): WifiResults {
   const networkInfo = getDefaultWifiNetwork();
   const lines = output.split("\n");
   for (const line of lines) {
@@ -71,7 +71,7 @@ export function parseNetshOutput(
     }
     if (key != null) {
       // console.log(`Real label/val: ${key} ${val}`);
-      assignWindowsNetworkInfoValue(networkInfo, key as keyof WifiNetwork, val);
+      assignWindowsNetworkInfoValue(networkInfo, key as keyof WifiResults, val);
     }
   }
   // Check to see if we got any of the important info

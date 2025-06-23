@@ -9,7 +9,7 @@ import {
   IperfTestProperty,
   testTypes,
   MeasurementTestType,
-  WifiNetwork,
+  WifiResults,
 } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -88,7 +88,7 @@ export async function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export const getDefaultWifiNetwork = (): WifiNetwork => {
+export const getDefaultWifiNetwork = (): WifiResults => {
   return {
     ssid: "",
     bssid: "",

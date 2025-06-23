@@ -3,18 +3,11 @@ import {
   HeatmapSettings,
   IperfResults,
   IperfTestProperty,
-  WifiNetwork,
-  SurveyPoint,
-  SurveyResult,
+  WifiResults,
 } from "./types";
 // import { scanWifi, blinkWifi } from "./wifiScanner";
 import { execAsync } from "./server-utils";
-import {
-  getCancelFlag,
-  getSurveyResults,
-  sendSSEMessage,
-  setSurveyResults,
-} from "./server-globals";
+import { getCancelFlag, sendSSEMessage } from "./server-globals";
 import { percentageToRssi, toMbps } from "./utils";
 import { SSEMessageType } from "@/app/api/events/route";
 import { getLogger } from "./logger";
@@ -22,12 +15,10 @@ import { createWifiInfo } from "./wifiScanner";
 
 const logger = getLogger("iperfRunner");
 const wifiInfo = await createWifiInfo();
-const wifiIFName = await wifiInfo.findWifi();
-// console.log(`wifiIFName is: ${wifiIFName} ${JSON.stringify(wifiInfo)}`);
 
 const validateWifiDataConsistency = (
-  wifiDataBefore: WifiNetwork,
-  wifiDataAfter: WifiNetwork,
+  wifiDataBefore: WifiResults,
+  wifiDataAfter: WifiResults,
 ) => {
   if (
     wifiDataBefore.bssid === wifiDataAfter.bssid &&
@@ -43,38 +34,30 @@ const validateWifiDataConsistency = (
 
 /**
  * startSurvey - kick off the entire process for surveying the clicked point
- * @returns
+ * @returns void
  */
-export async function startSurvey(
-  settings: HeatmapSettings,
-): Promise<SurveyResult> {
-  try {
-    setSurveyResults({ point: null, status: "starting" });
-    const { iperfData, wifiData } = await runSurveyTests(settings);
+// export async function startSurvey(settings: HeatmapSettings): Promise<void> {
+//   try {
+//     const { iperfData, wifiData } = await runSurveyTests(settings);
 
-    if (!iperfData || !wifiData) {
-      // null indicates measurement was canceled
-      setSurveyResults({ point: null, status: "canceled" });
-      return getSurveyResults();
-    }
+//     // null indicates measurement was canceled
+//     if (!iperfData || !wifiData) {
+//       setSurveyResults({ error: "Measurement was cancelled", status: "error" });
+//       return;
+//     }
 
-    const newPoint: SurveyPoint = {
-      wifiData,
-      iperfData,
-      timestamp: new Date().toISOString(),
-      x: 0, //assigned by the recipient
-      y: 0, //assigned by the recipient
-      id: "No ID Yet", //assigned by the recipient
-      isEnabled: true, //assigned by the recipient
-    };
-    setSurveyResults({ point: newPoint, status: "" });
-    return getSurveyResults();
-  } catch (error) {
-    console.log(`caught error in startSurvey(): ${error}`);
-    setSurveyResults({ point: null, status: String(error) });
-    return getSurveyResults();
-  }
-}
+//     const results: SurveyResults = {
+//       wifiData,
+//       iperfData,
+//     };
+//     setSurveyResults({ point: results, status: "done" });
+//     return;
+//   } catch (error) {
+//     console.log(`caught error in startSurvey(): ${error}`);
+//     setSurveyResults({ status: "error", error: String(error) });
+//     return;
+//   }
+// }
 
 function arrayAverage(arr: number[]): number {
   if (arr.length === 0) return 0;
@@ -127,14 +110,14 @@ function checkForCancel() {
  */
 export async function runSurveyTests(settings: HeatmapSettings): Promise<{
   iperfData: IperfResults | null;
-  wifiData: WifiNetwork | null;
+  wifiData: WifiResults | null;
 }> {
   const performIperfTest = settings.iperfServerAdrs != "localhost";
   try {
     const maxRetries = 1;
     let attempts = 0;
-    let results: IperfResults | null = null;
-    let wifiData: WifiNetwork | null = null;
+    let iperfData: IperfResults | null = null;
+    let wifiData: WifiResults | null = null;
 
     // set the initial states, then send an event to the client
     displayStates = { ...displayStates, ...initialStates };
@@ -147,7 +130,7 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
     if (settingsStatus != "") throw `${settingsStatus}`;
 
     // "blink" the wifi to get best signal
-    console.log(`Blinking Wifi in runIperfTest: ${JSON.stringify(wifiIFName)}`);
+    console.log(`Blinking Wifi in runIperfTest`);
     displayStates.header = "Seeking best Wi-Fi";
     sendSSEMessage(getUpdatedMessage());
     const startTime = Date.now();
@@ -155,7 +138,7 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
 
     displayStates.header = "Measuring Wi-Fi";
     sendSSEMessage(getUpdatedMessage());
-    while (attempts < maxRetries && !results) {
+    while (attempts < maxRetries && !iperfData) {
       try {
         const server = settings.iperfServerAdrs;
         const duration = settings.testDuration;
@@ -181,6 +164,7 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
 
+        // Run the TCP tests (last parameter = false)
         if (performIperfTest) {
           tcpDownload = await runSingleTest(server, duration, true, false);
           tcpUpload = await runSingleTest(server, duration, false, false);
@@ -197,6 +181,7 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
 
+        // Run the UDP tests
         if (performIperfTest) {
           udpDownload = await runSingleTest(server, duration, true, true);
           udpUpload = await runSingleTest(server, duration, false, true);
@@ -224,21 +209,18 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
           );
         }
 
-        results = {
+        iperfData = {
           tcpDownload,
           tcpUpload,
           udpDownload,
           udpUpload,
         };
 
+        const strength = parseInt(displayStates.strength);
         wifiData = {
           ...wifiDataBefore,
-          signalStrength: parseInt(displayStates.strength), // uses the average value
-        };
-        //
-        wifiData = {
-          ...wifiData,
-          rssi: percentageToRssi(wifiData.signalStrength),
+          signalStrength: strength, // use the average signalStrength
+          rssi: percentageToRssi(strength), // set corresponding RSSI
         };
       } catch (error: any) {
         if (error.message == "cancelled") {
@@ -255,7 +237,7 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
     }
 
     // return the values ("!" asserts that the values are non-null)
-    return { iperfData: results!, wifiData: wifiData! };
+    return { iperfData: iperfData!, wifiData: wifiData! };
   } catch (error) {
     logger.error("Error running measurement tests:", error);
     sendSSEMessage({

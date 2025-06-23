@@ -91,15 +91,37 @@ The _App()_ in `page.tsx` returns two major GUI components:
   It's likely this could also have been triggered by
   `action=start` but the direct call predated the SSE code.
 
-## How the Toast progress notifier works
+## How measurements proceed
+
+Earlier versions of the program simply await'ed the measurement
+process (iperfRunner.ts) to return a set of measurements (or null).
+But when the wifi gets turned off, a couple problems cropped up.
+The Next development server appears to have an internal time out,
+and some fetch() requests give errors when the wifi is off.
+
+To circumvent this, the client now polls using `/api/start-task`
+to control the measurement process:
+
+* POST action=start - starts the measurement process, which returns immediately
+* POST action=stop - halts/cancels the measurement process
+* GET action=status - returns the current Server Side Event object
+  (NewToast still uses the Server Side Event mechanism)
+* GET action=results - returns { {wifiData, iperfData}, error, status } with the results.
+  The measurement process runs asynchronously, then uses setSurveyResults()
+  to set the TaskStatus
+
+## How the NewToast progress notifier works
 
 When an empty space is clicked, the `Floorplan` component
 triggers the measurement process
-and displays the progress of the measurements.
+opens the NewToast window that displays the progress of the measurements.
 Those updates are provided by Server-Sent Events (see below),
-which is an astonishingly complicated process:
+which ~~is~~ was an astonishingly complicated process.
+The polling architecture (above) simplifies this significantly.
 
 * A click on `Floorplan` sets `toastIsOpen` true.
+* When `Floorplan` detects that a measurement is complete,
+  it sets `toastIsOpen` to false;
 * The `NewToast` component is "conditionally rendered"
   (because it is rendered with `{toastIsOpen && <NewToast... />}`)
   The child component builds a connection to the server by calling
@@ -109,10 +131,11 @@ which is an astonishingly complicated process:
   creates the `sendToClient()` function for sending updates,
   and registers that function in the global _sseGlobal.ts_ module.
   All server-side clients can import and use that function.
-* When `NewToast` receives a "ready" message from the server,
-  it calls back to the `Floorplan` with `toastIsOpen()`
-* That triggers the actual measurement process that uses `sendToClient()`
-  to send updates to `NewToast`.
+* ~~When `NewToast` receives a "ready" message from the server,
+  it calls back to the `Floorplan` with `toastIsOpen()`~~
+* ~~That triggers the actual measurement process that uses `sendToClient()`
+  to send updates to `NewToast`.~~
+* The NewToast component updates based on the contents of the SSE messages
 * Clicking the Cancel button of `NewToast`
   sends a POST to _/api/start-task?action=stop_.
   This calls global `setCancelFlag(true)`.
@@ -161,6 +184,7 @@ frequently sits around -90dBm.
 
 This table shows readings both ways: RSSI (dBm) <-> Percentage
 | Pct | dBm |   | dBm | Pct | dBm | Pct |
+
 |-----|-----|---|-----|-----|-----|-----|
 | 0% | -100dBm |  | -100dBm | 0% |  -100dBm | 0% |
 | 10% | -94dBm |  |  -94dBm | 10% |  -90dBm | 17% |
@@ -212,9 +236,9 @@ To create a localization file for your Windows system's language:
   `netsh wlan...` output.
 * Restart the `wifi-heatmapper` server (`npm run dev`)
   to read the new localized values
-* Please add the new file as an Issue to the repo
-  (https://github.com/hnykda/wifi-heatmapper/issues)
-  so it can be incorporated into the program. 
+* Please add the new file as an Issue to the
+  [main repo](https://github.com/hnykda/wifi-heatmapper/issues)
+  so it can be incorporated into the program.
 
 ## Radius Calculations
 

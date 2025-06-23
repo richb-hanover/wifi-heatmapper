@@ -6,7 +6,25 @@ export interface IperfTestProperty {
   packetsReceived: number | null;
   signalStrength: number;
 }
+/**
+ * WifiResults - the results from a Wi-Fi test
+ */
+export interface WifiResults {
+  ssid: string;
+  bssid: string;
+  rssi: number; // dBm value
+  signalStrength: number; // percentage of signal strength
+  channel: number;
+  security: string;
+  txRate: number;
+  phyMode: string;
+  channelWidth: number;
+  band: number; // frequency band - 2GHz or 5GHz
+}
 
+/**
+ * IperfResults - results from an iperf3 test
+ */
 export interface IperfResults {
   tcpDownload: IperfTestProperty;
   tcpUpload: IperfTestProperty;
@@ -73,36 +91,32 @@ export interface HeatmapSettings {
   gradient: Gradient;
 }
 
+/**
+ * SurveyPoint - all the information we have about a particular point
+ */
 export interface SurveyPoint {
   x: number;
   y: number;
-  wifiData: WifiNetwork;
+  wifiData: WifiResults;
   iperfData: IperfResults;
-  timestamp: string;
+  timestamp: number;
   id: string;
   isEnabled: boolean;
 }
 
-export interface SurveyResult {
-  point: SurveyPoint | null; // either the survey point, or null if cancelled or error
-  status: string; // if cancelled or error, the reason to display
+/**
+ * Results from startSurvey()
+ */
+export interface SurveyResults {
+  wifiData: WifiResults;
+  iperfData: IperfResults;
 }
 
-/**
- * @rssi is the dBm value
- * @signalStrength is the percentage of signal strength
- */
-export interface WifiNetwork {
-  ssid: string;
-  bssid: string;
-  rssi: number;
-  signalStrength: number;
-  channel: number;
-  security: string;
-  txRate: number;
-  phyMode: string;
-  channelWidth: number;
-  band: number; // frequency band - 2GHz or 5GHz
+type TaskStatus = "pending" | "done" | "error";
+export interface SurveyResult {
+  status: TaskStatus; // mimics states of Promise()
+  results?: SurveyResults; // if "done", has the wifiData and iperfData
+  error?: string; // if "error", this is the string to display
 }
 
 export type ScannerSettings = {
@@ -119,9 +133,9 @@ export interface SurveyPointActions {
 }
 
 // functions that handle platform-specific work
-export interface WifiInfo {
+export interface WifiActions {
   findWifi(): Promise<string>; // return the interface name
   restartWifi(settings: HeatmapSettings): Promise<void>; // "blink" the wifi
-  scanWifi(settings: HeatmapSettings): Promise<WifiNetwork>; // get measurements
+  scanWifi(settings: HeatmapSettings): Promise<WifiResults>; // get measurements
   checkSettings(settings: HeatmapSettings): Promise<string>; // returns an error message
 }
