@@ -43,7 +43,7 @@ export class MacOSSystemInfo implements WifiActions {
    * @returns name of (the first) wifi interface (string)
    */
   async findWifi(): Promise<string> {
-    logger.info(`Called findWifi():`);
+    // logger.info(`Called findWifi():`);
 
     const { stdout } = await execAsync(
       'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
@@ -61,9 +61,9 @@ export class MacOSSystemInfo implements WifiActions {
    * so it is prefixed by "_" to avoid a Typescript warning
    */
   async restartWifi(_settings: HeatmapSettings): Promise<void> {
-    logger.info(`Called restartWifi():`);
+    // logger.info(`Called restartWifi():`);
     if (!this.nameOfWifi) {
-      logger.info(`re-retrieving wifi interface name:`);
+      // logger.info(`re-retrieving wifi interface name:`);
       this.nameOfWifi = await this.findWifi();
     }
 
@@ -83,36 +83,38 @@ export class MacOSSystemInfo implements WifiActions {
       0,
       20,
     );
-    // console.log(`turned back on`);
-    // await delay(5000);
   }
 
   /**
    * scanWifi() scan the wifi to get the signal strength, etc.
    * @param settings - the full set of settings, including sudoerPassword
-   * @returns a WiFiNetwork description to be added to the surveyPoints
+   * @returns a WiFiResults description to be added to the surveyPoints
    *
-   * After blinking the wifi, call wdutil` multiple times
+   * After blinking the wifi, call `wdutil` multiple times
    * until the txRate is non-zero. Pause 200 msec before re-trying.
    * (Apparently, the wifi interface gets an address well before
    * all the rest of its settings (particularly txRate) are set.)
    */
   async scanWifi(settings: HeatmapSettings): Promise<WifiResults> {
     let netInfo: WifiResults;
-    logger.info(`Called scanWifi():`);
+    // logger.info(`Called scanWifi():`);
+
     while (true) {
       netInfo = await this.getWdutilResults(settings);
       // console.log(`wdutil results: txRate is ${netInfo.txRate}`);
-      if (netInfo.txRate != 0) return netInfo;
+      if (netInfo.txRate != 0) {
+        return netInfo;
+      }
       await delay(200);
     }
   }
+
   /**
    * getWdutilResults() call `wdutil` to get the signal strength, etc.
    * This code simply parses the response, returning all the values it finds
    * (txRate may not be available right away, so the caller may re-try)
    * @param settings - the full set of settings, including sudoerPassword
-   * @returns a WiFiNetwork description to be added to the surveyPoints
+   * @returns a WiFiResults description to be added to the surveyPoints
    */
   async getWdutilResults(settings: HeatmapSettings): Promise<WifiResults> {
     // Issue the OS command
@@ -167,9 +169,9 @@ const getIoregBssid = async (): Promise<string> => {
  * macos 15 gives "2g1/20" where the channel is "1"
  * macos 15 gives "5g144/40" where the channel is "144"
  * macos 12 gives "11 (20 MHz, Active)" where the channel is "11"
- * macos 12 gives "144 (40Mhz, DFS)" where the channel is 144
+ * macos 12 gives "144 (40Mhz, DFS)" where the channel is "144"
  * @param channelString - see the formats above
- * @returns band (2 or 5 GHz); channel, channelWidth
+ * @returns [ band (2.4 or 5 GHz), channel, channelWidth ]
  */
 const parseChannel = (channelString: string): number[] => {
   let bandStr = "0",
@@ -261,27 +263,13 @@ export function parseWdutilOutput(output: string): WifiResults {
       }
     }
   });
-  logger.info(
-    `RSSI: ${partialNetworkInfo.rssi} txRate: ${partialNetworkInfo.txRate}`,
-  );
-  // if (
-  //   partialNetworkInfo.ssid &&
-  //   partialNetworkInfo.bssid &&
-  //   partialNetworkInfo.rssi &&
-  //   partialNetworkInfo.signalStrength &&
-  //   partialNetworkInfo.band &&
-  //   partialNetworkInfo.channel &&
-  //   partialNetworkInfo.channelWidth &&
-  //   partialNetworkInfo.txRate &&
-  //   partialNetworkInfo.phyMode &&
-  //   partialNetworkInfo.security
-  // ) {
+  if (partialNetworkInfo.txRate != 0) {
+    logger.info(
+      `RSSI: ${partialNetworkInfo.rssi} txRate: ${partialNetworkInfo.txRate}`,
+    );
+  }
+
   const networkInfo: WifiResults = partialNetworkInfo as WifiResults;
   // logger.info(`Final WiFi data: ${JSON.stringify(networkInfo)}`);
   return networkInfo;
-  // } else {
-  //   throw new Error(
-  //     `Incomplete NetworkInfo data found in wifiScanner: ${JSON.stringify(partialNetworkInfo)}`,
-  //   );
-  // }
 }
