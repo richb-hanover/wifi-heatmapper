@@ -33,7 +33,8 @@ _This section follows the precepts of [Keep a Changelog](https://keepachangelog.
 * If there are no iperf3 tests (TCP or UDP), their heat maps are not shown.
 * All Settings items have an "information" button.
 * Significant editorial work on README and other pages in _docs_
-* Changed the Popup details window to use the term "Band" instead of "Frequency". Fixed the units to use "GHz" (was "MHz")
+* Changed the Popup details window to use the term "Band" instead of "Frequency".
+  Fixed the units to use "GHz" (was "MHz")
 * Now parses the `wdutil` command on macOS 12 ("Catalina")
 * Obfuscated the SSID, BSSID, and Profile for wifi test files
 * Passes all tests: `npm run typecheck`, `npm run lint`, `npm test`
@@ -67,7 +68,8 @@ _This section follows the precepts of [Keep a Changelog](https://keepachangelog.
   Yellow and red (35% and below) indicate poor signal strength.
 * Update survey points to show the color of the signal strength
   at that point along with the strength (as percent)
-* Heatmaps use a heuristic for the "heat spot" sizes; use global "spot size" to adjust as needed. (Wants to be a slider...)
+* Heatmaps use a heuristic for the "heat spot" sizes;
+  use global "spot size" to adjust as needed. (Wants to be a slider...)
 * Toast-based window now shows progress
   during the entire Wi-Fi and speed test survey process
   and allows canceling the measurement

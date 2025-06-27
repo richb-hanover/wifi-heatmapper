@@ -20,7 +20,7 @@ Yellow and red colors indicate poor signal levels.
 
 The screen shot above is a sample heat map.
 It was created by measuring about two dozen points around the house,
-especially locations where people actually use a computer. 
+especially locations where people actually use a computer.
 The heat map shows that the signal levels throughout the house
 are acceptable &mdash; mostly green, turquoise, and blue.
 The areas of yellow or red are at the edges, or on a stairway
@@ -71,7 +71,7 @@ Multiple measurements per room provide more fine-grained data.
 6. **Click the Heatmap tab** to see the resulting heat map.
 Areas with strong signal will be green,
 lower signal levels will follow the
-Green -> Tuquoise -> Blue -> Yellow -> Red transition.
+Green -> Turquoise -> Blue -> Yellow -> Red transition.
 Adjust the **Radius** slider until the spots grow together.
 Go back to the Floor Plan tab to make more measurements if needed.
 
@@ -129,7 +129,8 @@ To take advantage of `iperf3` throughput (speed) tests:
 
 WiFi Heatmapper includes a Dockerfile that automates much of
 the installation process for Linux.
-_NB: The Dockerfile does not work on macOS or Windows. See the note in the Dockerfile for more information._
+_NB: The Dockerfile does not work on macOS or Windows.
+See the note in the Dockerfile for more information._
 
 1. Build the Docker Image
 
@@ -153,8 +154,10 @@ use `-v` options if you want to save db + floorplanpicture to the _datas_ folder
 
 ## History
 
-This project is a WiFi heatmapper solution for macOS/Windows/Linux, inspired by [python-wifi-survey-heatmap](https://github.com/jantman/python-wifi-survey-heatmap).
-@hnykda wanted to create a heatmap of his WiFi coverage, but the original project didn't work because he is running on Mac.
+This project is a WiFi heatmapper solution for macOS/Windows/Linux, inspired by
+[python-wifi-survey-heatmap](https://github.com/jantman/python-wifi-survey-heatmap).
+@hnykda wanted to create a heatmap of his WiFi coverage,
+but the original project didn't work on a Mac.
 He also wanted something that might be slightly easier to use, i.e. using a browser.
 @richb-hanover refactored the GUI to its current four-tab appearance.
 
@@ -171,8 +174,12 @@ blue was "cool" (weak).
 
 ## Credits
 
-This project was inspired by [python-wifi-survey-heatmap](https://github.com/jantman/python-wifi-survey-heatmap). Special thanks to the original author for their work.
+This project was inspired by
+[python-wifi-survey-heatmap](https://github.com/jantman/python-wifi-survey-heatmap).
+Special thanks to the original author for their work.
 
 ## Contributing
 
-Feel free to contribute to this project by opening an issue or submitting a pull request. I am more than happy for that!
+Feel free to contribute to this project by opening an issue
+or submitting a pull request.
+I am more than happy for that!

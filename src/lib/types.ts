@@ -74,6 +74,10 @@ export type HeatmapConfig = {
   gradient: Record<string, string>;
 };
 
+/**
+ * The full set of data for a particular background image
+ * This is "global" to the entire GUI, and passed down as needed
+ */
 export interface HeatmapSettings {
   surveyPoints: SurveyPoint[];
   floorplanImageName: string; // name of the floorplan-filename
@@ -92,6 +96,15 @@ export interface HeatmapSettings {
 }
 
 /**
+ * Settings passed to iperfRunner.ts
+ */
+export interface PartialHeatmapSettings {
+  iperfServerAdrs: string;
+  testDuration: number;
+  sudoerPassword: string;
+}
+
+/**
  * SurveyPoint - all the information we have about a particular point
  */
 export interface SurveyPoint {
@@ -105,7 +118,7 @@ export interface SurveyPoint {
 }
 
 /**
- * Results from startSurvey()
+ * Results from runSurveyTests()
  */
 export interface SurveyResults {
   wifiData: WifiResults;
@@ -133,9 +146,11 @@ export interface SurveyPointActions {
 }
 
 // functions that handle platform-specific work
+// pass PartialHeatmapSettings for the essential parameters
 export interface WifiActions {
   findWifi(): Promise<string>; // return the interface name
-  restartWifi(settings: HeatmapSettings): Promise<void>; // "blink" the wifi
-  scanWifi(settings: HeatmapSettings): Promise<WifiResults>; // get measurements
-  checkSettings(settings: HeatmapSettings): Promise<string>; // returns an error message
+  restartWifi(settings: PartialHeatmapSettings): Promise<void>; // "blink" the wifi
+  scanWifi(settings: PartialHeatmapSettings): Promise<WifiResults>; // get measurements
+  checkWifiSettings(settings: PartialHeatmapSettings): Promise<string>; // returns "" or error message
+  checkIperfSettings(settings: PartialHeatmapSettings): Promise<string>; // returns "" or error message
 }

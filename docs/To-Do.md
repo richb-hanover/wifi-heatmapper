@@ -50,7 +50,7 @@ Ideas for making the program better - in no particular order:
 
 ## Questions
 
-* What's the best gradient for signal strength? Linear between -40 and -80 dBM?
+* What's the best gradient for signal strength? Linear between -40 and -80 dBm?
   Emphasize differences between good (-40 to -60?) Emphasize the bad?
   Good rule might be "green or above (yellow, orange, red) is good...
 * I think the magic of this heat map system is that if drawing
@@ -70,11 +70,11 @@ Ideas for making the program better - in no particular order:
 * ~~Is there a difference between using the currently subscribed SSID and using the sum of all SSIDs?~~ Yes. `wifi-heatmapper` only uses the current SSID, and doesn't see other SSIDs.
 * ~~It's odd that "Floorplan Image" can be empty and show a floor plan...~~
 * ~~Does a mDNS name work for the iperf3 server address?~~ Yes
-* ~~Uncontrolled input: https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable~~ Done (I think) by setting sudoerPassword after reading other settings from a file
+* ~~Uncontrolled input: <https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable>~~ Done (I think) by setting sudoerPassword after reading other settings from a file
 * ~~Alternative: Different color scale: Can heat map colors go (good to bad) _Green - Turquoise - Blue - Grey - Yellow - Red_ to comport with "normal meanings" of "Green is good, red is bad"? (Advice would then be blue or above is OK...) Grey could then be a narrow band (numeric range) between blue and yellow that is the divider between good and not-so-good~~ Done.
 * ~~Update the Toast progress indicators to stay on-screen during entire survey process. Display:~~
   * ~~Starting measurement... X seconds remaining (and count down)~~
-  * ~~Signal level is XX dBM / %~~
+  * ~~Signal level is XX dBm / %~~
   * ~~Starting download / Download is XX~~
   * ~~Starting upload test / Upload is XX~~
   * ~~Survey is complete... Leave on screen for 5 seconds or so~~
@@ -115,7 +115,7 @@ Ideas for making the program better - in no particular order:
 * ~~Find out how to get RSSI and other stuff from `ioreg` so sudo is not needed (for `wdutil`)~~ _Likely, not possible_
 * ~~Infer the relevant command/OS version and use the relevant commands and parser based on that to make this multi-platform.~~ Done
 * ~~Make version 0.2.1 work with Docker (currently gives error attempting to locate the _localization_ directory)~~
-* ~~Load/save heatmap config to database~~ 
+* ~~Load/save heatmap config to database~~
 * Alternative: Save the JSON data to localStorage() with a name like `wifi-heatmapper-floorPlanImagename`, and come up with a means of selecting one or the other. [DONE]
 * Create a "Signal strength only" setting for quicker surveys.
   Doing this also removes the requirement of setting up a separate iperf3 server.

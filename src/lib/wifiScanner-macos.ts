@@ -1,4 +1,4 @@
-import { HeatmapSettings, WifiResults, WifiActions } from "./types";
+import { PartialHeatmapSettings, WifiResults, WifiActions } from "./types";
 import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
 import { rssiToPercentage } from "./utils";
@@ -11,11 +11,11 @@ export class MacOSSystemInfo implements WifiActions {
   nameOfWifi: string = "";
 
   /**
-   * checkSettings - check whether the settings are "primed" to run a test
+   * checkWifiSettings - check whether the settings are "primed" to run a test
    * @param settings
    * @returns string - empty, or error message to display
    */
-  async checkSettings(settings: HeatmapSettings): Promise<string> {
+  async checkWifiSettings(settings: PartialHeatmapSettings): Promise<string> {
     if (!settings.iperfServerAdrs) {
       return "Please set iperf server address";
     }
@@ -34,6 +34,22 @@ export class MacOSSystemInfo implements WifiActions {
       return "Please enter the correct sudo password.";
     }
     // console.log(`sudo ls shows...: "${JSON.stringify(testOutput)}`);
+    return "";
+  }
+
+  /**
+   * checkIperfSettings() - test if an iperf3 server is available at the address
+   * @param settings includes the iperfServerAddress
+   * @returns "" or error string
+   */
+  async checkIperfSettings(settings: PartialHeatmapSettings): Promise<string> {
+    // check that we can actually connect to the iperf3 server
+    // command throws if there is an error
+    try {
+      await execAsync(`nc -vz ${settings.iperfServerAdrs} 5201`);
+    } catch {
+      return "Cannot connect to iperf3 server.";
+    }
     return "";
   }
 
@@ -60,7 +76,7 @@ export class MacOSSystemInfo implements WifiActions {
    * NB: the "settings" parameter is unused,
    * so it is prefixed by "_" to avoid a Typescript warning
    */
-  async restartWifi(_settings: HeatmapSettings): Promise<void> {
+  async restartWifi(_settings: PartialHeatmapSettings): Promise<void> {
     // logger.info(`Called restartWifi():`);
     if (!this.nameOfWifi) {
       // logger.info(`re-retrieving wifi interface name:`);
@@ -95,7 +111,7 @@ export class MacOSSystemInfo implements WifiActions {
    * (Apparently, the wifi interface gets an address well before
    * all the rest of its settings (particularly txRate) are set.)
    */
-  async scanWifi(settings: HeatmapSettings): Promise<WifiResults> {
+  async scanWifi(settings: PartialHeatmapSettings): Promise<WifiResults> {
     let netInfo: WifiResults;
     // logger.info(`Called scanWifi():`);
 
@@ -116,7 +132,9 @@ export class MacOSSystemInfo implements WifiActions {
    * @param settings - the full set of settings, including sudoerPassword
    * @returns a WiFiResults description to be added to the surveyPoints
    */
-  async getWdutilResults(settings: HeatmapSettings): Promise<WifiResults> {
+  async getWdutilResults(
+    settings: PartialHeatmapSettings,
+  ): Promise<WifiResults> {
     // Issue the OS command
     const wdutilOutput = await execAsync(
       `echo ${settings.sudoerPassword} | sudo -S wdutil info`,

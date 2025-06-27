@@ -27,13 +27,13 @@ to get the measurements of the Wi-Fi strength and throughput.
 | Platform | Commands          | Notes                                                                                                                                                    |
 | -------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | macOS    | `wdutil`, `ioreg` | Both are usually part of the system, sudo password is needed for `wdutil`                                             |
-| Windows  | `netsh`           | Part of the system  |                                                                                       
+| Windows  | `netsh`           | Part of the system  |
 | Linux    | `iw`              | `iw` might need to be installed via your distro package manager, you will need to provide your wireless device id (e.g. "wlp4s0", we do try to infer it) |
 
 **wifi-heatmapper** requires that `iperf3` be installed locally to make TCP
-or UDP measurements. 
+or UDP measurements.
 
-In all cases, `iperf3` must be available in `PATH`. For Windows you might have to do something like `set PATH=%PATH%;C:\path\to\iperf3`, e.g. do `set PATH=%PATH%;C:\iperf3` (or `setx` to make it permanent) before running `npm run dev`. The version of at least 3.17 is weakly recommended for `iperf3` on both server and client (ideally the same version, but that's not strictly necessary). 
+In all cases, `iperf3` must be available in `PATH`. For Windows you might have to do something like `set PATH=%PATH%;C:\path\to\iperf3`, e.g. do `set PATH=%PATH%;C:\iperf3` (or `setx` to make it permanent) before running `npm run dev`. The version of at least 3.17 is weakly recommended for `iperf3` on both server and client (ideally the same version, but that's not strictly necessary).
 
 ## How wifi-heatmapper works
 
@@ -76,7 +76,7 @@ The _App()_ in `page.tsx` returns two major GUI components:
   A POST request is treated as a file upload to be saved
   in that directory.
 * The _api/events/route.ts_ file listens for a GET request,
-  then keeps open a connection that sends 
+  then keeps open a connection that sends
   `sseMessageType` events to the client.
   These indicate the state of the measurement, or a Cancel event.
 * The _api/start-task/route.ts_ file listens for a POST
@@ -86,7 +86,7 @@ The _App()_ in `page.tsx` returns two major GUI components:
   The `stop` action cancels the measurement process and returns
   a `done` `sseMessage` containing "canceled".
 * NB: The measurement process on the sever is initiated
-  by the client directly calling the server side 
+  by the client directly calling the server side
   `measureSurveyPoint()` function.
   It's likely this could also have been triggered by
   `action=start` but the direct call predated the SSE code.
@@ -172,7 +172,7 @@ The `rssiToPercentage()` and `percentageToRSSI()` functions
 in _lib/utils.ts_ convert from one to the other.
 At the end of each measurement, the code saves both values.
 
-NB: In practice, any value below -75 dBM (~ 40%) is too low
+NB: In practice, any value below -75 dBm (~ 40%) is too low
 to be useful, and the color displayed in the heatmap
 is correspondingly discouraging (yellow, red).
 
@@ -206,7 +206,7 @@ The Windows `netsh wlan show interfaces` code is localized for the
 system's language setting.
 Curiously, different English systems also use slightly different
 labels (e.g. "AP BSSID" vs "BSSID").
-Consequently, there is no obvious algorithm for retriving values
+Consequently, there is no obvious algorithm for retrieving values
 from the `netsh...` output.
 
 At server startup, the _lib/localization.ts_ code reads a set of

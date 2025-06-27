@@ -1,6 +1,6 @@
 "use server";
 import {
-  HeatmapSettings,
+  PartialHeatmapSettings,
   IperfResults,
   IperfTestProperty,
   WifiResults,
@@ -12,6 +12,9 @@ import { percentageToRssi, toMbps } from "./utils";
 import { SSEMessageType } from "@/app/api/events/route";
 import { getLogger } from "./logger";
 import { createWifiInfo } from "./wifiScanner";
+
+type TestType = "TCP" | "UDP";
+type TestDirection = "Up" | "Down";
 
 const logger = getLogger("iperfRunner");
 const wifiInfo = await createWifiInfo();
@@ -108,11 +111,23 @@ function checkForCancel() {
  * @param settings
  * @returns the WiFi and iperf results for this location
  */
-export async function runSurveyTests(settings: HeatmapSettings): Promise<{
+export async function runSurveyTests(
+  settings: PartialHeatmapSettings,
+): Promise<{
   iperfData: IperfResults | null;
   wifiData: WifiResults | null;
 }> {
-  const performIperfTest = settings.iperfServerAdrs != "localhost";
+  // perform iperf tests if address != "localhost" and server is available
+  let noIperfTestReason = "";
+  let performIperfTest = true;
+  if (settings.iperfServerAdrs != "localhost") {
+    performIperfTest = false;
+    noIperfTestReason = "Not performed";
+  } else if ((await wifiInfo.checkIperfSettings(settings)) != "") {
+    performIperfTest = false;
+    noIperfTestReason = "Server not available";
+  }
+
   try {
     const maxRetries = 1;
     let attempts = 0;
@@ -126,7 +141,7 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
 
     // check the settings - throw a non-"" error message
     console.log(`Checking the settings...`);
-    const settingsStatus = await wifiInfo.checkSettings(settings);
+    const settingsStatus = await wifiInfo.checkWifiSettings(settings);
     if (settingsStatus != "") throw `${settingsStatus}`;
 
     // "blink" the wifi to get best signal
@@ -164,13 +179,13 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
 
-        // Run the TCP tests (last parameter = false)
+        // Run the TCP tests
         if (performIperfTest) {
-          tcpDownload = await runSingleTest(server, duration, true, false);
-          tcpUpload = await runSingleTest(server, duration, false, false);
+          tcpDownload = await runSingleTest(server, duration, "Down", "TCP");
+          tcpUpload = await runSingleTest(server, duration, "Up", "TCP");
           displayStates.tcp = `${toMbps(tcpDownload.bitsPerSecond)} / ${toMbps(tcpUpload.bitsPerSecond)} Mbps`;
         } else {
-          displayStates.tcp = "Not performed";
+          displayStates.tcp = noIperfTestReason;
         }
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
@@ -183,11 +198,11 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
 
         // Run the UDP tests
         if (performIperfTest) {
-          udpDownload = await runSingleTest(server, duration, true, true);
-          udpUpload = await runSingleTest(server, duration, false, true);
+          udpDownload = await runSingleTest(server, duration, "Down", "UDP");
+          udpUpload = await runSingleTest(server, duration, "Up", "UDP");
           displayStates.udp = `${toMbps(udpDownload.bitsPerSecond)} / ${toMbps(udpUpload.bitsPerSecond)} Mbps`;
         } else {
-          displayStates.udp = "Not performed";
+          displayStates.udp = noIperfTestReason;
         }
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
@@ -253,8 +268,8 @@ export async function runSurveyTests(settings: HeatmapSettings): Promise<{
 async function runSingleTest(
   server: string,
   duration: number,
-  isDownload: boolean,
-  isUdp: boolean,
+  testDir: TestDirection,
+  testType: TestType,
 ): Promise<IperfTestProperty> {
   const logger = getLogger("runSingleTest");
 
@@ -264,6 +279,8 @@ async function runSingleTest(
     server = host;
     port = serverPort;
   }
+  const isUdp = testType == "UDP";
+  const isDownload = testDir == "Down";
   const command = `iperf3 -c ${server} ${
     port ? `-p ${port}` : ""
   } -t ${duration} ${isDownload ? "-R" : ""} ${isUdp ? "-u -b 0" : ""} -J`;

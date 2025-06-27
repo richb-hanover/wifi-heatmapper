@@ -10,7 +10,7 @@ export function FetchInterceptor() {
       // console.log(`FETCH called: ${JSON.stringify(args)}`);
 
       const url = args[0] instanceof Request ? args[0].url : args[0];
-      const stack = new Error().stack;
+      // const stack = new Error().stack;
 
       console.log("fetch() called with:", url);
       if (window.location.hostname != "localhost") {
