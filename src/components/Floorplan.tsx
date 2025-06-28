@@ -74,14 +74,23 @@ export default function ClickableFloorplan(): ReactNode {
   const measureSurveyPoint = async (surveyClick: { x: number; y: number }) => {
     const x = Math.round(surveyClick.x);
     const y = Math.round(surveyClick.y);
-    let result: SurveyResult = { status: "pending" };
+    let result: SurveyResult = { state: "pending" };
 
+    // an object with a single property: settings
+    const partialSettings = {
+      settings: {
+        iperfServerAdrs: settings.iperfServerAdrs,
+        testDuration: settings.testDuration,
+        sudoerPassword: settings.sudoerPassword,
+      },
+    };
+    // console.log(`PartialSettings: ${JSON.stringify(partialSettings)}`);
     // Kick off the measurement process by calling "action=start"
     // This returns immediately, then poll for data
     const res = await fetch("/api/start-task?action=start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ settings }),
+      body: JSON.stringify(partialSettings),
     });
     if (!res.ok) {
       throw new Error(`Server error: ${res.status}`);
@@ -89,31 +98,36 @@ export default function ClickableFloorplan(): ReactNode {
 
     const startTime = Date.now();
     while (true) {
-      if (startTime + 20000 < Date.now()) {
-        setAlertMessage(`Timed out waiting for response.`);
-        break;
-      }
+      // LEAVE THIS OUT - Cancel button is sufficient
+      // if (startTime + 20000 < Date.now()) {
+      //   setAlertMessage(`Timed out waiting for response.`);
+      //   break;
+      // }
       try {
         const res = await fetch("/api/start-task?action=results");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         result = await res.json();
         console.log(`Status is: ${JSON.stringify(result)}`);
-        if (result.status != "pending") {
+        if (result.state != "pending") {
           // got a result - status is "done" or "error"
           break;
         }
       } catch (err) {
         // Typical: handle network errors, aborts, etc.
-        console.error(`Results poll gave error: ${err}`);
+        console.error(`Measurement process gave error: ${err}`);
       }
       await delay(1000); // ask again in one second
     }
+    console.log(`Measurement took ${Date.now() - startTime} ms`);
 
-    if (result.status === "error") {
-      setAlertMessage(`${result.error}`);
+    console.log(`Result from results API: ${JSON.stringify(result)}`);
+    if (result.state === "error") {
+      setIsToastOpen(false);
+      setAlertMessage(`${result.explanation}`);
       return;
     }
     if (!result.results!.wifiData || !result.results!.iperfData) {
+      setIsToastOpen(false);
       setAlertMessage("Measurement cancelled");
       return;
     }

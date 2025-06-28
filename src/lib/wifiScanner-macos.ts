@@ -11,29 +11,52 @@ export class MacOSSystemInfo implements WifiActions {
   nameOfWifi: string = "";
 
   /**
-   * checkWifiSettings - check whether the settings are "primed" to run a test
+   * preflightSettings - check whether the settings are "primed" to run a test
+   * Tests:
+   *   * iperfServerAdrs
+   *   * testDuration
+   *   * sudoerPassword
+   *
    * @param settings
    * @returns string - empty, or error message to display
    */
-  async checkWifiSettings(settings: PartialHeatmapSettings): Promise<string> {
-    if (!settings.iperfServerAdrs) {
-      return "Please set iperf server address";
+  async preflightSettings(settings: PartialHeatmapSettings): Promise<string> {
+    console.log(`partialSettings: ${JSON.stringify(settings)}`);
+    // test duration must be > 0 - otherwise iperf3 runs forever
+    if (settings.testDuration <= 0) {
+      return "Test duration must be greater than zero.";
     }
 
+    // iperfServerAddress must not be empty or ""
+    if (!settings.iperfServerAdrs) {
+      return "Please set iperf3 server address";
+    }
+
+    // if it's not "localhost",
+    // check that we can actually connect to the iperf3 server
+    // execAsync() throws if there is an error
+    if (settings.iperfServerAdrs != "localhost") {
+      try {
+        await execAsync(`nc -vz ${settings.iperfServerAdrs} 5201`);
+      } catch {
+        return "Cannot connect to iperf3 server.";
+      }
+    }
+
+    // macOS requires a sudo password
     if (!settings.sudoerPassword || settings.sudoerPassword == "") {
-      // console.warn(
-      //   "No sudo password set, but running on macOS where it's required for wdutil info command",
-      // );
       return "Please set sudo password. It is required on macOS.";
     }
-    // check that the password is actually correct
-    // command throws if there is an error
+
+    // check that the sudo password is actually correct
+    // execAsync() throws if there is an error
     try {
       await execAsync(`echo ${settings.sudoerPassword} | sudo -S ls`);
     } catch {
-      return "Please enter the correct sudo password.";
+      return "Please enter a valid sudo password.";
     }
-    // console.log(`sudo ls shows...: "${JSON.stringify(testOutput)}`);
+
+    // things look good - return ""
     return "";
   }
 
@@ -42,31 +65,31 @@ export class MacOSSystemInfo implements WifiActions {
    * @param settings includes the iperfServerAddress
    * @returns "" or error string
    */
-  async checkIperfSettings(settings: PartialHeatmapSettings): Promise<string> {
-    // check that we can actually connect to the iperf3 server
-    // command throws if there is an error
-    try {
-      await execAsync(`nc -vz ${settings.iperfServerAdrs} 5201`);
-    } catch {
-      return "Cannot connect to iperf3 server.";
-    }
-    return "";
-  }
+  // async checkIperfSettings(settings: PartialHeatmapSettings): Promise<string> {
+  //   // check that we can actually connect to the iperf3 server
+  //   // command throws if there is an error
+  //   try {
+  //     await execAsync(`nc -vz ${settings.iperfServerAdrs} 5201`);
+  //   } catch {
+  //     return "Cannot connect to iperf3 server.";
+  //   }
+  //   return "";
+  // }
 
   /**
    * findWifi() - find the name of the wifi interface
    * save in an object variable
    * @returns name of (the first) wifi interface (string)
    */
-  async findWifi(): Promise<string> {
-    // logger.info(`Called findWifi():`);
+  // async findWifi(): Promise<string> {
+  //   // logger.info(`Called findWifi():`);
 
-    const { stdout } = await execAsync(
-      'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
-    );
-    this.nameOfWifi = stdout;
-    return stdout;
-  }
+  //   const { stdout } = await execAsync(
+  //     'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
+  //   );
+  //   this.nameOfWifi = stdout;
+  //   return stdout;
+  // }
 
   /**
    * restartWifi - turn wifi off then on, wait 'til it reassociates
@@ -80,7 +103,10 @@ export class MacOSSystemInfo implements WifiActions {
     // logger.info(`Called restartWifi():`);
     if (!this.nameOfWifi) {
       // logger.info(`re-retrieving wifi interface name:`);
-      this.nameOfWifi = await this.findWifi();
+      const { stdout } = await execAsync(
+        'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
+      );
+      this.nameOfWifi = stdout;
     }
 
     // console.log(`turned off:`);

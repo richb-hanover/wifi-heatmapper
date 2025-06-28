@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { PopoverHelper } from "@/components/PopoverHelpText";
 import HeatmapAdvancedConfig from "./HeatmapAdvancedConfig";
 import MediaDropdown from "./MediaDropdown";
+import { NumberInput } from "./NumberInput";
 
 export default function SettingsEditor() {
   const { settings, updateSettings, readNewSettingsFromFile } = useSettings();
@@ -62,13 +63,11 @@ export default function SettingsEditor() {
             </Label>
           </td>
           <td>
-            <input
-              type="number"
+            <NumberInput
+              // type="number"
               className="w-full border border-gray-200 rounded-sm p-2 focus:outline-none focus:ring focus:ring-blue-300 focus:border-blue-400"
-              value={settings.testDuration}
-              onChange={(e) =>
-                updateSettings({ testDuration: Number(e.target.value.trim()) })
-              }
+              initialValue={settings.testDuration}
+              onChange={(e: number) => updateSettings({ testDuration: e })}
             />
           </td>
         </tr>

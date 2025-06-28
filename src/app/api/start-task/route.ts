@@ -34,29 +34,36 @@ export async function POST(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get("action");
 
-  // Start
+  // action=start: expects an object with a single property: settings
   if (action === "start") {
     const { settings } = await req.json();
-    setSurveyResults({ status: "pending" });
+    // console.log(`action=start: ${JSON.stringify(settings)}`);
+    setSurveyResults({ state: "pending" });
 
     // Start off the survey process immediately
     // this IIFE runs independently and uses setSurveyResults for the client
     void (async () => {
       try {
-        const { iperfData, wifiData } = await runSurveyTests(settings);
+        const { iperfData, wifiData, status } = await runSurveyTests(settings);
 
-        // nulls indicates measurement was canceled
-        if (!iperfData || !wifiData) {
+        // status that isn't "" means preflight went wrong
+        if (status != "") {
           setSurveyResults({
-            error: "Measurement was cancelled",
-            status: "error",
+            explanation: status,
+            state: "error",
           });
           return;
         }
-
-        setSurveyResults({ status: "done", results: { wifiData, iperfData } });
+        if (!wifiData || !iperfData) {
+          setSurveyResults({
+            state: "error",
+            explanation: "wifi or iperf data is null",
+          });
+          return;
+        }
+        setSurveyResults({ state: "done", results: { wifiData, iperfData } });
       } catch (err) {
-        setSurveyResults({ status: "error", error: String(err) });
+        setSurveyResults({ state: "error", explanation: String(err) });
       }
     })();
 

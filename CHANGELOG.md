@@ -4,7 +4,17 @@ _This section follows the precepts of [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
-* No features yet
+* "Blink the Wi-Fi" - turn off the wifi, then turn it on to allow the device
+  to associate with the strongest access point (not the previous one)
+* Requires platform-specific code to turn off/on the wifi, then to
+  wait to re-associate and be fully connected
+* Switch to client polling for status so that client-server communication
+  is not disrupted by turning off wifi
+* Coalesce all pre-measurement test into preflightSettings()
+* Refactor error detection/flow to provide more meaningful messages
+* Modify Test duration field to ignore non-numeric values (gets reset to zero)
+* Rename many types in `types.ts` to fit their actual function
+* Editorial pass (and spellcheck) on all .md files
 
 ---
 

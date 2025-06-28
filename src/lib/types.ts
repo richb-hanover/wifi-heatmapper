@@ -127,9 +127,9 @@ export interface SurveyResults {
 
 type TaskStatus = "pending" | "done" | "error";
 export interface SurveyResult {
-  status: TaskStatus; // mimics states of Promise()
+  state: TaskStatus; // mimics states of Promise()
   results?: SurveyResults; // if "done", has the wifiData and iperfData
-  error?: string; // if "error", this is the string to display
+  explanation?: string; // if "error", this is the string to display
 }
 
 export type ScannerSettings = {
@@ -148,9 +148,8 @@ export interface SurveyPointActions {
 // functions that handle platform-specific work
 // pass PartialHeatmapSettings for the essential parameters
 export interface WifiActions {
-  findWifi(): Promise<string>; // return the interface name
+  // findWifi(): Promise<string>; // return the interface name
+  preflightSettings(settings: PartialHeatmapSettings): Promise<string>; // returns "" or error message
   restartWifi(settings: PartialHeatmapSettings): Promise<void>; // "blink" the wifi
   scanWifi(settings: PartialHeatmapSettings): Promise<WifiResults>; // get measurements
-  checkWifiSettings(settings: PartialHeatmapSettings): Promise<string>; // returns "" or error message
-  checkIperfSettings(settings: PartialHeatmapSettings): Promise<string>; // returns "" or error message
 }

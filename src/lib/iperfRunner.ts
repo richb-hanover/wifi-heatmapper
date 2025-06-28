@@ -116,18 +116,15 @@ export async function runSurveyTests(
 ): Promise<{
   iperfData: IperfResults | null;
   wifiData: WifiResults | null;
+  status: string;
 }> {
-  // perform iperf tests if address != "localhost" and server is available
-  let noIperfTestReason = "";
-  let performIperfTest = true;
-  if (settings.iperfServerAdrs != "localhost") {
-    performIperfTest = false;
-    noIperfTestReason = "Not performed";
-  } else if ((await wifiInfo.checkIperfSettings(settings)) != "") {
-    performIperfTest = false;
-    noIperfTestReason = "Server not available";
+  // first check the settings and return cogent error if not good
+  const preResults = await wifiInfo.preflightSettings(settings);
+  if (preResults != "") {
+    console.log(`preflightSettings returned: ${preResults}`);
+    return { iperfData: null, wifiData: null, status: preResults };
   }
-
+  const performIperfTest = settings.iperfServerAdrs != "localhost";
   try {
     const maxRetries = 1;
     let attempts = 0;
@@ -138,11 +135,6 @@ export async function runSurveyTests(
     displayStates = { ...displayStates, ...initialStates };
     sendSSEMessage(getUpdatedMessage()); // immediately send initial values
     displayStates.header = "Measurement in progress...";
-
-    // check the settings - throw a non-"" error message
-    console.log(`Checking the settings...`);
-    const settingsStatus = await wifiInfo.checkWifiSettings(settings);
-    if (settingsStatus != "") throw `${settingsStatus}`;
 
     // "blink" the wifi to get best signal
     console.log(`Blinking Wifi in runIperfTest`);
@@ -185,7 +177,7 @@ export async function runSurveyTests(
           tcpUpload = await runSingleTest(server, duration, "Up", "TCP");
           displayStates.tcp = `${toMbps(tcpDownload.bitsPerSecond)} / ${toMbps(tcpUpload.bitsPerSecond)} Mbps`;
         } else {
-          displayStates.tcp = noIperfTestReason;
+          displayStates.tcp = "Not performed";
         }
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
@@ -202,7 +194,7 @@ export async function runSurveyTests(
           udpUpload = await runSingleTest(server, duration, "Up", "UDP");
           displayStates.udp = `${toMbps(udpDownload.bitsPerSecond)} / ${toMbps(udpUpload.bitsPerSecond)} Mbps`;
         } else {
-          displayStates.udp = noIperfTestReason;
+          displayStates.udp = "Not performed";
         }
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
@@ -239,7 +231,11 @@ export async function runSurveyTests(
         };
       } catch (error: any) {
         if (error.message == "cancelled") {
-          return { iperfData: null, wifiData: null };
+          return {
+            iperfData: null,
+            wifiData: null,
+            status: "test was cancelled",
+          };
         }
         logger.error(`Attempt ${attempts + 1} failed:`, error);
         attempts++;
@@ -252,7 +248,7 @@ export async function runSurveyTests(
     }
 
     // return the values ("!" asserts that the values are non-null)
-    return { iperfData: iperfData!, wifiData: wifiData! };
+    return { iperfData: iperfData!, wifiData: wifiData!, status: "" };
   } catch (error) {
     logger.error("Error running measurement tests:", error);
     sendSSEMessage({
