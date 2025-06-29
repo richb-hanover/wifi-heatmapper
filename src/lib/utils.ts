@@ -17,6 +17,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const formatMacAddress = (macAddress: string) => {
+  if (macAddress.includes("redacted")) {
+    return macAddress;
+  }
   return macAddress.replace(/../g, "$&-").toUpperCase().slice(0, -1);
 };
 
@@ -100,6 +103,8 @@ export const getDefaultWifiNetwork = (): WifiResults => {
     txRate: 0,
     phyMode: "",
     security: "",
+    v4router: "",
+    v6router: "",
   };
 };
 

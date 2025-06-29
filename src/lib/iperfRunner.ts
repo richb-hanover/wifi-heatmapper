@@ -121,10 +121,28 @@ export async function runSurveyTests(
   // first check the settings and return cogent error if not good
   const preResults = await wifiInfo.preflightSettings(settings);
   if (preResults != "") {
-    console.log(`preflightSettings returned: ${preResults}`);
+    // console.log(`preflightSettings returned: ${preResults}`);
     return { iperfData: null, wifiData: null, status: preResults };
   }
-  const performIperfTest = settings.iperfServerAdrs != "localhost";
+  // check if iperf3 server is available
+  // this is separate from the other preflight checks because it's reasonable
+  // to test the wifi even the iperf3 server is not accessible
+  // (say, you have moved to another subnet)
+  let noIperfTestReason = "";
+  let performIperfTest = true; // assume we will run iperf3 test
+  if (settings.iperfServerAdrs != "localhost") {
+    performIperfTest = false;
+    noIperfTestReason = "Not performed";
+  }
+  // otherwise check if the server is available
+  else {
+    const resp = await wifiInfo.checkIperfServer(settings);
+    if (resp != "") {
+      performIperfTest = false;
+      noIperfTestReason = resp;
+    }
+  }
+
   try {
     const maxRetries = 1;
     let attempts = 0;
@@ -177,7 +195,7 @@ export async function runSurveyTests(
           tcpUpload = await runSingleTest(server, duration, "Up", "TCP");
           displayStates.tcp = `${toMbps(tcpDownload.bitsPerSecond)} / ${toMbps(tcpUpload.bitsPerSecond)} Mbps`;
         } else {
-          displayStates.tcp = "Not performed";
+          displayStates.tcp = noIperfTestReason;
         }
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
@@ -194,7 +212,7 @@ export async function runSurveyTests(
           udpUpload = await runSingleTest(server, duration, "Up", "UDP");
           displayStates.udp = `${toMbps(udpDownload.bitsPerSecond)} / ${toMbps(udpUpload.bitsPerSecond)} Mbps`;
         } else {
-          displayStates.udp = "Not performed";
+          displayStates.udp = noIperfTestReason;
         }
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());

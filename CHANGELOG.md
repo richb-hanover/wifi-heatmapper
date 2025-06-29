@@ -6,15 +6,18 @@ _This section follows the precepts of [Keep a Changelog](https://keepachangelog.
 
 * "Blink the Wi-Fi" - turn off the wifi, then turn it on to allow the device
   to associate with the strongest access point (not the previous one)
-* Requires platform-specific code to turn off/on the wifi, then to
-  wait to re-associate and be fully connected
-* Switch to client polling for status so that client-server communication
+* The platform-specific code must turn off/on the wifi,
+  wait to re-associate and become fully connected
+* Switch to client polling for results so that client-server communication
   is not disrupted by turning off wifi
-* Coalesce all pre-measurement test into preflightSettings()
+* Coalesce all pre-measurement tests into preflightSettings()
+* Keep a separate test for iperf3 server available: it's OK to test the 
+  wifi signal strength even if the iperf3 server isn't available
 * Refactor error detection/flow to provide more meaningful messages
 * Modify Test duration field to ignore non-numeric values (gets reset to zero)
-* Rename many types in `types.ts` to fit their actual function
-* Editorial pass (and spellcheck) on all .md files
+* Rename many definitions in `types.ts` to fit their actual function
+* Add (but don't use) pref's for v4router and v6router.
+* Editorial pass with spellcheck on all .md files
 
 ---
 

@@ -13,15 +13,15 @@ export class MacOSSystemInfo implements WifiActions {
   /**
    * preflightSettings - check whether the settings are "primed" to run a test
    * Tests:
-   *   * iperfServerAdrs
-   *   * testDuration
-   *   * sudoerPassword
+   *   * iperfServerAdrs - non-empty
+   *   * testDuration - greater than zero
+   *   * sudoerPassword - non-empty and correct
    *
    * @param settings
    * @returns string - empty, or error message to display
    */
   async preflightSettings(settings: PartialHeatmapSettings): Promise<string> {
-    console.log(`partialSettings: ${JSON.stringify(settings)}`);
+    // console.log(`partialSettings: ${JSON.stringify(settings)}`);
     // test duration must be > 0 - otherwise iperf3 runs forever
     if (settings.testDuration <= 0) {
       return "Test duration must be greater than zero.";
@@ -30,17 +30,6 @@ export class MacOSSystemInfo implements WifiActions {
     // iperfServerAddress must not be empty or ""
     if (!settings.iperfServerAdrs) {
       return "Please set iperf3 server address";
-    }
-
-    // if it's not "localhost",
-    // check that we can actually connect to the iperf3 server
-    // execAsync() throws if there is an error
-    if (settings.iperfServerAdrs != "localhost") {
-      try {
-        await execAsync(`nc -vz ${settings.iperfServerAdrs} 5201`);
-      } catch {
-        return "Cannot connect to iperf3 server.";
-      }
     }
 
     // macOS requires a sudo password
@@ -61,20 +50,20 @@ export class MacOSSystemInfo implements WifiActions {
   }
 
   /**
-   * checkIperfSettings() - test if an iperf3 server is available at the address
+   * checkIperfServer() - test if an iperf3 server is available at the address
    * @param settings includes the iperfServerAddress
    * @returns "" or error string
    */
-  // async checkIperfSettings(settings: PartialHeatmapSettings): Promise<string> {
-  //   // check that we can actually connect to the iperf3 server
-  //   // command throws if there is an error
-  //   try {
-  //     await execAsync(`nc -vz ${settings.iperfServerAdrs} 5201`);
-  //   } catch {
-  //     return "Cannot connect to iperf3 server.";
-  //   }
-  //   return "";
-  // }
+  async checkIperfServer(settings: PartialHeatmapSettings): Promise<string> {
+    // check that we can actually connect to the iperf3 server
+    // command throws if there is an error
+    try {
+      await execAsync(`nc -vz ${settings.iperfServerAdrs} 5201`);
+    } catch {
+      return "Cannot connect to iperf3 server.";
+    }
+    return "";
+  }
 
   /**
    * findWifi() - find the name of the wifi interface
@@ -218,7 +207,7 @@ const getIoregBssid = async (): Promise<string> => {
  * @returns [ band (2.4 or 5 GHz), channel, channelWidth ]
  */
 const parseChannel = (channelString: string): number[] => {
-  let bandStr = "0",
+  let //bandStr,
     channelStr = "0",
     channelWidthStr = "0",
     band = 0,
@@ -231,7 +220,7 @@ const parseChannel = (channelString: string): number[] => {
   // macos 15 has a "/" - parse it
   if (channelParts.length == 2) {
     // leading digit is the band
-    bandStr = channelParts[0].match(/\d+/)?.[0] ?? "0";
+    // bandStr = channelParts[0].match(/\d+/)?.[0] ?? "0";
     // channel number follows the "g"
     channelStr = channelParts[0].substring(2);
     if (channelParts[1]) {
@@ -250,12 +239,11 @@ const parseChannel = (channelString: string): number[] => {
   }
 
   // 2.4GHz or 5GHz processing
-  band = parseInt(bandStr);
+  // band = parseInt(bandStr); // IGNORE THE PARSED-OUT "bandStr"
   channel = parseInt(channelStr);
   channelWidth = parseInt(channelWidthStr);
-  if (band == 0) {
-    band = channel > 14 ? 5 : 2.4; // patch up the frequency band
-  }
+  band = channel > 14 ? 5 : 2.4; // patch up the frequency band
+
   return [band, channel, channelWidth];
 };
 
@@ -303,6 +291,12 @@ export function parseWdutilOutput(output: string): WifiResults {
           break;
         case "Security":
           partialNetworkInfo.security = value;
+          break;
+        case "IPv4 Router":
+          partialNetworkInfo.v4router = value;
+          break;
+        case "IPv6 Router":
+          partialNetworkInfo.v6router = value;
           break;
       }
     }

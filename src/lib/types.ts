@@ -19,7 +19,9 @@ export interface WifiResults {
   txRate: number;
   phyMode: string;
   channelWidth: number;
-  band: number; // frequency band - 2GHz or 5GHz
+  band: number; // frequency band - 2.4 or 5 (GHz)
+  v4router: string; // v4router (and v6router) unlikely to be useful
+  v6router: string; // if there are extenders/dumb APs
 }
 
 /**
@@ -150,6 +152,7 @@ export interface SurveyPointActions {
 export interface WifiActions {
   // findWifi(): Promise<string>; // return the interface name
   preflightSettings(settings: PartialHeatmapSettings): Promise<string>; // returns "" or error message
+  checkIperfServer(settings: PartialHeatmapSettings): Promise<string>; // returns "" or an error message
   restartWifi(settings: PartialHeatmapSettings): Promise<void>; // "blink" the wifi
   scanWifi(settings: PartialHeatmapSettings): Promise<WifiResults>; // get measurements
 }

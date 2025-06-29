@@ -36,14 +36,13 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({
   // const { settings, updateSettings } = useSettings();
   const [isEnabled, setIsEnabled] = useState(point.isEnabled);
   const rows = [
-    { label: "ID", value: point.id },
+    // { label: "ID", value: point.id },
     { label: "RSSI", value: `${point.wifiData.rssi} dBm` },
     {
       label: "Signal Strength",
       value: `${point.wifiData.signalStrength}%`,
       // value: `${point.wifiData?.signalStrength || rssiToPercentage(point.wifiData?.rssi)}%`,
     },
-    { label: "Created", value: new Date(point.timestamp).toLocaleString() },
     { label: "SSID", value: point.wifiData?.ssid },
     { label: "Channel", value: point.wifiData?.channel },
     { label: "BSSID", value: formatMacAddress(point.wifiData?.bssid || "") },
@@ -53,8 +52,12 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({
         (ap) => ap.macAddress === point.wifiData?.bssid,
       )?.apName,
     },
+    // v4 and v6 router info not helpful in the case of extenders/dumb AP's
+    //    since the main router hands out IP addresses, which is
+    //    entirely unrelated to the access point providing the Wifi
+    // { label: "V4 Router", value: point.wifiData?.v4router },
+    // { label: "V6 Router", value: point.wifiData?.v6router },
     { label: "Band", value: `${point.wifiData?.band} GHz` },
-    { label: "Position", value: `X: ${point.x}, Y: ${point.y}` },
   ];
 
   if (point.iperfData) {
@@ -75,6 +78,8 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({
           "bitsPerSecond",
         ),
       },
+      { label: "Position", value: `X: ${point.x}, Y: ${point.y}` },
+      { label: "Created", value: new Date(point.timestamp).toLocaleString() },
     );
   }
 
@@ -99,10 +104,11 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({
     onClose();
   };
 
+  const header = `Measurement Details for ${point.id}`;
   return (
     <div className="bg-white border border-gray-200 rounded-md shadow-lg text-xs overflow-hidden">
       <div className="flex justify-between items-center bg-gray-100 px-2 py-1">
-        <h3 className="font-semibold text-sm">Measurement Details</h3>
+        <h3 className="font-semibold text-sm">{header}</h3>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
           <X size={16} />
         </button>
