@@ -16,13 +16,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const formatMacAddress = (macAddress: string) => {
-  if (macAddress.includes("redacted")) {
-    return macAddress;
-  }
-  return macAddress.replace(/../g, "$&-").toUpperCase().slice(0, -1);
-};
-
 export const rssiToPercentage = (rssi: number): number => {
   if (rssi <= -100) return 0;
   if (rssi >= -40) return 100;
@@ -103,15 +96,37 @@ export const getDefaultWifiNetwork = (): WifiResults => {
     txRate: 0,
     phyMode: "",
     security: "",
-    v4router: "",
-    v6router: "",
+    // v4router: "",
+    // v6router: "",
   };
 };
 
+/**
+ * formatMacAddress() - add punctuation: convert "0123456789ab" to "01-23-45-67-89-AB"
+ * @param macAddress
+ * @returns formatted string
+ */
+export const formatMacAddress = (macAddress: string) => {
+  if (macAddress.includes("redacted")) {
+    return macAddress;
+  }
+  return macAddress.replace(/../g, "$&-").toUpperCase().slice(0, -1);
+};
+
+/**
+ * normalizeMacAddress - remove punctuation ("-", ":") from MAC address
+ * @param macAddress
+ * @returns
+ */
 export const normalizeMacAddress = (macAddress: string): string => {
   return macAddress.replace(/[:-]/g, "").toLowerCase();
 };
 
+/**
+ * isValidMacAddress - return true if it's a valid MAC address
+ * @param macAddress
+ * @returns
+ */
 export const isValidMacAddress = (macAddress: string): boolean => {
   const cleanedMacAddress = normalizeMacAddress(macAddress);
   if (cleanedMacAddress === "000000000000") {

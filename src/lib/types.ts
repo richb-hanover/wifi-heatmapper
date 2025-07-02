@@ -20,8 +20,9 @@ export interface WifiResults {
   phyMode: string;
   channelWidth: number;
   band: number; // frequency band - 2.4 or 5 (GHz)
-  v4router: string; // v4router (and v6router) unlikely to be useful
-  v6router: string; // if there are extenders/dumb APs
+  // frequency: number; // exact frequency (as number) - xxxx GHz
+  // v4router: string; // v4router (and v6router) unlikely to be useful
+  // v6router: string; // if there are extenders/dumb APs
 }
 
 /**
@@ -86,7 +87,7 @@ export interface HeatmapSettings {
   floorplanImagePath: string; // path to the /media/floorplan-filename
   iperfServerAdrs: string;
   testDuration: number;
-  sudoerPassword: string; // passed around, removed before writing to file
+  sudoerPassword: string; // kept in settings, removed before writing to file
   apMapping: ApMapping[];
   nextPointNum: number;
   dimensions: { width: number; height: number };
@@ -120,13 +121,24 @@ export interface SurveyPoint {
 }
 
 /**
- * Results from runSurveyTests()
+ * SurveyResults - returned from runSurveyTests()
  */
 export interface SurveyResults {
   wifiData: WifiResults;
   iperfData: IperfResults;
 }
 
+/**
+ * WifiScanResults - array of available SSIDs, plus a reason
+ */
+export interface WifiScanResults {
+  wifiSSIDs: WifiResults[];
+  reason: string;
+}
+
+/**
+ * TaskStatus - status of the wifi survey process
+ */
 type TaskStatus = "pending" | "done" | "error";
 export interface SurveyResult {
   state: TaskStatus; // mimics states of Promise()

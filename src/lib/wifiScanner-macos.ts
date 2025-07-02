@@ -1,4 +1,9 @@
-import { PartialHeatmapSettings, WifiResults, WifiActions } from "./types";
+import {
+  PartialHeatmapSettings,
+  WifiResults,
+  WifiScanResults,
+  WifiActions,
+} from "./types";
 import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
 import { rssiToPercentage } from "./utils";
@@ -79,6 +84,36 @@ export class MacOSSystemInfo implements WifiActions {
   //   this.nameOfWifi = stdout;
   //   return stdout;
   // }
+
+  /**
+   * findBestWifi() - return an array of available wifi SSIDs plus a reason string
+   */
+  async findBestWifi(
+    _settings: PartialHeatmapSettings,
+  ): Promise<WifiScanResults> {
+    const response: WifiScanResults = {
+      wifiSSIDs: [],
+      reason: "",
+    };
+    // let stdout: string;
+    let jsonResults: string;
+
+    // Get the Wifi information from system_profiler
+    try {
+      const result = await execAsync(`system_profiler -json SPAirPortDataType`);
+      jsonResults = JSON.parse(result.stdout);
+    } catch (err) {
+      response.reason = `Cannot get wifi info: ${err}"`;
+      return response;
+    }
+
+    // jsonResults holds the Wifi environment
+    const localSSIDs: WifiResults[] = parseLocalWifi(jsonResults);
+    console.log(`Local SSIDs: ${JSON.stringify(localSSIDs)}`);
+
+    // ======= FINALLY WE ARE DONE! =======
+    return response;
+  }
 
   /**
    * restartWifi - turn wifi off then on, wait 'til it reassociates
@@ -292,12 +327,12 @@ export function parseWdutilOutput(output: string): WifiResults {
         case "Security":
           partialNetworkInfo.security = value;
           break;
-        case "IPv4 Router":
-          partialNetworkInfo.v4router = value;
-          break;
-        case "IPv6 Router":
-          partialNetworkInfo.v6router = value;
-          break;
+        // case "IPv4 Router":
+        //   partialNetworkInfo.v4router = value;
+        //   break;
+        // case "IPv6 Router":
+        //   partialNetworkInfo.v6router = value;
+        //   break;
       }
     }
   });
@@ -311,3 +346,24 @@ export function parseWdutilOutput(output: string): WifiResults {
   // logger.info(`Final WiFi data: ${JSON.stringify(networkInfo)}`);
   return networkInfo;
 }
+
+/**
+ * parseLocalWifi(jsonResults) - pluck up the local SSIDs from the JSON
+ * @param - Object that contains output of system_profiler for Wifi
+ * @returns WifiResults[] sorted by signalStrength
+ */
+
+// @ts-expect-error allow implicit any
+const parseLocalWifi = (json): WifiResults[] => {
+  const result = json.SPAirPortDataType.flatMap(
+    // @ts-expect-error allow implicit any
+    (item) => item.spairport_airport_interfaces,
+  )
+    // @ts-expect-error allow implicit any
+    .filter((item) => item._name === "en0")
+    // @ts-expect-error allow implicit any
+    .flatMap((item) => item.spairport_airport_other_local_wireless_networks);
+
+  console.log(`Parsed Channels: ${JSON.stringify(result)}`);
+  return [];
+};

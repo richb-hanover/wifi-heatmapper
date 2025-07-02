@@ -43,3 +43,6 @@ public/media/
 # Exclude data from container
 datas/data/*
 datas/media/*
+
+# exclude big files from experiments
+experiments/get-bssid
