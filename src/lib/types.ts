@@ -132,7 +132,7 @@ export interface SurveyResults {
  * WifiScanResults - array of available SSIDs, plus a reason
  */
 export interface WifiScanResults {
-  wifiSSIDs: WifiResults[];
+  SSIDs: WifiResults[];
   reason: string;
 }
 
@@ -167,4 +167,62 @@ export interface WifiActions {
   checkIperfServer(settings: PartialHeatmapSettings): Promise<string>; // returns "" or an error message
   restartWifi(settings: PartialHeatmapSettings): Promise<void>; // "blink" the wifi
   scanWifi(settings: PartialHeatmapSettings): Promise<WifiResults>; // get measurements
+}
+
+/**
+ * Definitions for SPAirPortDataType - ChatGPT derived the structure from the
+ *    output of system_profiler -json SPAirPortDataType
+ */
+
+export interface AirportNetwork {
+  _name: string;
+  spairport_network_bssid: string;
+  spairport_network_channel: number | string;
+  spairport_network_country_code?: string;
+  spairport_network_phymode: string;
+  spairport_network_type: string;
+  spairport_security_mode: string;
+  spairport_signal_noise: string;
+}
+
+export interface AirportCurrentNetworkInformation extends AirportNetwork {
+  spairport_network_mcs?: number;
+  spairport_network_rate?: number;
+}
+
+export interface AirportInterface {
+  _name: string;
+  spairport_airdrop_channel?: number;
+  spairport_airport_other_local_wireless_networks: AirportNetwork[];
+  spairport_caps_airdrop?: string;
+  spairport_caps_autounlock?: string;
+  spairport_current_network_information?: AirportCurrentNetworkInformation;
+  spairport_status_information?: string;
+  spairport_supported_channels?: (number | string)[];
+  spairport_supported_phymodes?: string;
+  spairport_wireless_card_type?: string;
+  spairport_wireless_country_code?: string;
+  spairport_wireless_firmware_version?: string;
+  spairport_wireless_locale?: string;
+  spairport_wireless_mac_address?: string;
+}
+
+export interface SPAirPortSoftwareInformation {
+  spairport_corewlan_version?: string;
+  spairport_corewlankit_version?: string;
+  spairport_diagnostics_version?: string;
+  spairport_extra_version?: string;
+  spairport_family_version?: string;
+  spairport_profiler_version?: string;
+  spairport_utility_version?: string;
+}
+
+export interface SPAirPortEntry {
+  spairport_airport_interfaces: AirportInterface[];
+  spairport_software_information?: SPAirPortSoftwareInformation;
+}
+
+export interface SPAirPortRoot {
+  TestDescriptionDEADBEEF: string; // used to describe test conditions for this data
+  SPAirPortDataType: SPAirPortEntry[];
 }

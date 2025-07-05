@@ -15,7 +15,7 @@ WIFI
     Power                : On [On]
     Op Mode              : STA
     SSID                 : SomeSSID
-    BSSID                : FE:DC:AB:09:87:65
+    BSSID                : FE:DC:BA:09:87:65
     RSSI                 : -79 dBm
     CCA                  : 16 %
     Noise                : -91 dBm
@@ -60,13 +60,13 @@ POWER
   `;
   const output = parseWdutilOutput(input);
   expect(output).toStrictEqual({
-    bssid: "fedcab098765",
+    bssid: "fedcba098765",
     channel: 44,
     channelWidth: 40,
     band: 5,
     phyMode: "11ax",
     rssi: -79,
-    signalStrength: 0,
+    signalStrength: 35,
     security: "WPA2 Personal",
     ssid: "SomeSSID",
     txRate: 103,
@@ -146,7 +146,7 @@ POWER
     band: 2.4,
     phyMode: "11n",
     rssi: -55,
-    signalStrength: 0,
+    signalStrength: 75,
     security: "None",
     ssid: "SomeSSID-2.4",
     txRate: 145.0,
@@ -226,7 +226,7 @@ POWER
     band: 5,
     phyMode: "11ac",
     rssi: -61,
-    signalStrength: 0,
+    signalStrength: 65,
     security: "WPA2 Personal",
     ssid: "SomeSSID-5",
     txRate: 324.0,

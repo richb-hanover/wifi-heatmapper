@@ -3,6 +3,7 @@ import {
   WifiResults,
   WifiScanResults,
   WifiActions,
+  SPAirPortRoot,
 } from "./types";
 import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
@@ -75,15 +76,15 @@ export class MacOSSystemInfo implements WifiActions {
    * save in an object variable
    * @returns name of (the first) wifi interface (string)
    */
-  // async findWifi(): Promise<string> {
-  //   // logger.info(`Called findWifi():`);
+  async findWifi(): Promise<string> {
+    // logger.info(`Called findWifi():`);
 
-  //   const { stdout } = await execAsync(
-  //     'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
-  //   );
-  //   this.nameOfWifi = stdout;
-  //   return stdout;
-  // }
+    const { stdout } = await execAsync(
+      'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
+    );
+    this.nameOfWifi = stdout;
+    return stdout;
+  }
 
   /**
    * findBestWifi() - return an array of available wifi SSIDs plus a reason string
@@ -92,11 +93,12 @@ export class MacOSSystemInfo implements WifiActions {
     _settings: PartialHeatmapSettings,
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
-      wifiSSIDs: [],
+      SSIDs: [],
       reason: "",
     };
     // let stdout: string;
-    let jsonResults: string;
+    let jsonResults: SPAirPortRoot;
+    const currentIf = await this.findWifi();
 
     // Get the Wifi information from system_profiler
     try {
@@ -108,8 +110,8 @@ export class MacOSSystemInfo implements WifiActions {
     }
 
     // jsonResults holds the Wifi environment
-    const localSSIDs: WifiResults[] = parseLocalWifi(jsonResults);
-    console.log(`Local SSIDs: ${JSON.stringify(localSSIDs)}`);
+    response.SSIDs = getCandidateSSIDs(jsonResults, currentIf);
+    console.log(`Local SSIDs: ${JSON.stringify(response.SSIDs, null, 2)}`);
 
     // ======= FINALLY WE ARE DONE! =======
     return response;
@@ -125,13 +127,8 @@ export class MacOSSystemInfo implements WifiActions {
    */
   async restartWifi(_settings: PartialHeatmapSettings): Promise<void> {
     // logger.info(`Called restartWifi():`);
-    if (!this.nameOfWifi) {
-      // logger.info(`re-retrieving wifi interface name:`);
-      const { stdout } = await execAsync(
-        'networksetup -listallhardwareports | grep -A 1 "Wi-Fi\\|Airport" | grep "Device" |  sed "s/Device: //"',
-      );
-      this.nameOfWifi = stdout;
-    }
+
+    this.nameOfWifi = await this.findWifi();
 
     // console.log(`turned off:`);
     await loopUntilCondition(
@@ -337,9 +334,9 @@ export function parseWdutilOutput(output: string): WifiResults {
     }
   });
   if (partialNetworkInfo.txRate != 0) {
-    logger.info(
-      `RSSI: ${partialNetworkInfo.rssi} txRate: ${partialNetworkInfo.txRate}`,
-    );
+    // logger.info(
+    //   `RSSI: ${partialNetworkInfo.rssi} txRate: ${partialNetworkInfo.txRate}`,
+    // );
   }
 
   const networkInfo: WifiResults = partialNetworkInfo as WifiResults;
@@ -348,22 +345,189 @@ export function parseWdutilOutput(output: string): WifiResults {
 }
 
 /**
- * parseLocalWifi(jsonResults) - pluck up the local SSIDs from the JSON
+ * getLocalCandidates(jsonResults) - pluck up the local SSIDs from the JSON
  * @param - Object that contains output of system_profiler for Wifi
  * @returns WifiResults[] sorted by signalStrength
  */
 
-// @ts-expect-error allow implicit any
-const parseLocalWifi = (json): WifiResults[] => {
-  const result = json.SPAirPortDataType.flatMap(
-    // @ts-expect-error allow implicit any
-    (item) => item.spairport_airport_interfaces,
-  )
-    // @ts-expect-error allow implicit any
-    .filter((item) => item._name === "en0")
-    // @ts-expect-error allow implicit any
-    .flatMap((item) => item.spairport_airport_other_local_wireless_networks);
+export const getCandidateSSIDs = (
+  data: SPAirPortRoot,
+  currentInterface: string,
+): WifiResults[] => {
+  function bySignalStrength(a: any, b: any): number {
+    const parseSignal = (val: string | undefined): number | null => {
+      const match = val?.match(/^(-?\d+)\s+dBm/);
+      return match ? parseInt(match[1], 10) : null;
+    };
 
-  console.log(`Parsed Channels: ${JSON.stringify(result)}`);
-  return [];
+    const signalA = parseSignal(a.spairport_signal_noise);
+    const signalB = parseSignal(b.spairport_signal_noise);
+
+    if (signalA === null && signalB === null) return 0;
+    if (signalA === null) return 1; // move A to end
+    if (signalB === null) return -1; // move B to end
+
+    // Descending: stronger (less negative) signal first
+    return signalB - signalA;
+  }
+
+  const candidates: WifiResults[] =
+    data.SPAirPortDataType.flatMap(
+      (entry) => entry.spairport_airport_interfaces || [],
+    ).find((iface) => iface._name === currentInterface)
+      ?.spairport_airport_other_local_wireless_networks ?? [];
+
+  candidates.sort(bySignalStrength);
+
+  // console.log(`Candidates: ${JSON.stringify(candidates, null, 2)}`);
+  return candidates;
 };
+
+/**
+ * getCurrentSSID(jsonResults) - get info about the current SSID
+ * @param - Object that contains output of system_profiler for Wifi
+ * @returns WifiResults[] sorted by signalStrength
+ */
+
+export const getCurrentSSID = (
+  data: SPAirPortRoot,
+  currentInterface: string,
+): WifiResults[] => {
+  const current = data.SPAirPortDataType.flatMap(
+    (entry) => entry.spairport_airport_interfaces || [],
+  ).find(
+    (iface) => iface._name === currentInterface,
+  )?.spairport_current_network_information;
+
+  // console.log(`getCurrentSSID results: ${JSON.stringify(current)}`);
+  if (!current) return [];
+
+  console.log(`Current: ${JSON.stringify(current, null, 2)}`);
+  const bobject = mapSPToWifiResult(current, spToWifiResultMap);
+  return bobject;
+};
+
+/**
+ * Map system_profiler values into a WifiResults object
+ */
+// type AObject = Record<string, any>;
+type MappingSpec =
+  | string
+  | {
+      key: string;
+      transform?: (value: any) => string | Record<string, string>;
+    };
+type SPToWifiMap = Record<string, MappingSpec>;
+
+// A map to convert from system_profiler property names to WifiResults property names
+// This map uses the property's value unchanged,
+//  or uses the transform to convert the value to the desired form
+const spToWifiResultMap: SPToWifiMap = {
+  _name: "ssid",
+  spairport_network_phymode: "phyMode",
+  spairport_network_rate: "txRate",
+  spairport_network_channel: {
+    key: "channel", // return channel and possibly channelWidth
+    transform: (val: string) => parseChannelInfo(val), // e.g. "6" from "6 (2GHz, 20MHz)",
+  },
+  spairport_network_bssid: "bssid",
+  spairport_security_mode: {
+    key: "security",
+    transform: (val: string) => SECURITY_LABELS[val] ?? "Unrecognized",
+  },
+  spairport_signal_noise: {
+    key: "rssi",
+    transform: (val: string) => parseRSSI(val), // e.g. "-56"
+  },
+  // spairport_network_mcs: 15,
+  // spairport_network_type: "spairport_network_type_station",
+};
+
+//=====================
+
+function mapSPToWifiResult(
+  aObject: Record<string, any>,
+  aToBMap: Record<string, MappingSpec>,
+): Record<string, string> {
+  const bObject: Record<string, string> = {};
+
+  for (const [aKey, mapping] of Object.entries(aToBMap)) {
+    let bKey: string;
+    let transform: ((val: any) => string | Record<string, string>) | undefined;
+
+    if (typeof mapping === "string") {
+      bKey = mapping;
+    } else {
+      bKey = mapping.key;
+      transform = mapping.transform;
+    }
+
+    const raw = aKey in aObject ? aObject[aKey] : undefined;
+
+    if (raw === undefined) {
+      bObject[bKey] = "";
+      continue;
+    }
+
+    const result = transform ? transform(raw) : String(raw);
+
+    if (typeof result === "string") {
+      bObject[bKey] = result;
+    } else {
+      Object.assign(bObject, result);
+    }
+  }
+
+  return bObject;
+}
+
+const SECURITY_LABELS: Record<string, string> = {
+  spairport_security_mode_none: "None",
+  spairport_security_mode_wep: "WEP",
+  spairport_security_mode_wpa_personal: "WPA Personal",
+  spairport_security_mode_wpa2_personal: "WPA2 Personal",
+  spairport_security_mode_wpa3_personal: "WPA3 Personal",
+  spairport_security_mode_wpa_enterprise: "WPA Enterprise",
+  spairport_security_mode_wpa2_enterprise: "WPA2 Enterprise",
+  spairport_security_mode_wpa3_enterprise: "WPA3 Enterprise",
+  spairport_security_mode_unknown: "Unknown",
+};
+
+/**
+ * parseChannelInfo - parse "6 (2GHz, 20MHz)", return "6" and "20"
+ *  or parse "6" and return "6" and ""
+ * @param input
+ * @returns
+ */
+function parseChannelInfo(input: string): {
+  channel: string;
+  channelWidth: string;
+  band: string;
+} {
+  if (typeof input === "number") {
+    const bareChannel = input;
+    return {
+      channel: String(input),
+      channelWidth: "",
+      band: parseInt(bareChannel) < 14 ? "2.4" : "5",
+    };
+  }
+  const match = input.match(/^(\d+)(?:\s+\([^(,]+,\s*(\d+)MHz\))?$/);
+  const channel = match?.[1] ?? "";
+  return {
+    channel: channel,
+    channelWidth: match?.[2] ?? "",
+    band: parseInt(channel) < 14 ? "2.4" : "5",
+  };
+}
+
+function parseRSSI(input: string): {
+  rssi: string;
+  signalStrength: string;
+} {
+  const rssi = parseInt(input.split(" ")[0]);
+  return {
+    rssi: String(rssi),
+    signalStrength: String(rssiToPercentage(rssi)),
+  };
+}

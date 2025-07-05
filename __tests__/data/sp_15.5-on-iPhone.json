@@ -1,6 +1,5 @@
-// % system_profiler -json  SPAirPortDataType
-
 {
+  "TestDescriptionDEADBEEF":" macOS 15.5 at Location2, only iPhone",
   "SPAirPortDataType" : [
     {
       "spairport_airport_interfaces" : [
@@ -8,55 +7,27 @@
           "_name" : "en0",
           "spairport_airport_other_local_wireless_networks" : [
             {
-              "_name" : "AP-WH4E-C0BFBE6ACDA3",
-              "spairport_network_channel" : "4 (2GHz, 20MHz)",
-              "spairport_network_phymode" : "802.11b/g/n",
-              "spairport_network_type" : "spairport_network_type_station",
-              "spairport_security_mode" : "spairport_security_mode_wpa2_personal"
-            },
-            {
-              "_name" : "HBTL",
-              "spairport_network_channel" : "6 (2GHz, 20MHz)",
-              "spairport_network_phymode" : "802.11g/n",
-              "spairport_network_type" : "spairport_network_type_station",
-              "spairport_security_mode" : "spairport_security_mode_none",
-              "spairport_signal_noise" : "-39 dBm / -97 dBm"
-            },
-            {
-              "_name" : "HBTL5",
-              "spairport_network_channel" : "44 (5GHz, 80MHz)",
+              "_name" : "SSID-1",
+              "spairport_network_channel" : "149 (5GHz, 80MHz)",
               "spairport_network_phymode" : "802.11a/n/ac/ax",
               "spairport_network_type" : "spairport_network_type_station",
-              "spairport_security_mode" : "spairport_security_mode_none"
-            },
-            {
-              "_name" : "HBTL5",
-              "spairport_network_channel" : "144 (5GHz, 80MHz)",
-              "spairport_network_phymode" : "802.11a/n/ac/ax",
-              "spairport_network_type" : "spairport_network_type_station",
-              "spairport_security_mode" : "spairport_security_mode_none"
-            },
-            {
-              "_name" : "HDSPro-9 340a",
-              "spairport_network_channel" : "6 (2GHz, 20MHz)",
-              "spairport_network_phymode" : "802.11b/g/n",
-              "spairport_network_type" : "spairport_network_type_station",
-              "spairport_security_mode" : "spairport_security_mode_wpa2_personal"
+              "spairport_security_mode" : "spairport_security_mode_wpa2_personal",
+              "spairport_signal_noise" : "-49 dBm / -95 dBm"
             }
           ],
           "spairport_caps_airdrop" : "spairport_caps_supported",
           "spairport_caps_autounlock" : "spairport_caps_supported",
           "spairport_caps_wow" : "spairport_caps_supported",
           "spairport_current_network_information" : {
-            "_name" : "HBTL",
-            "spairport_network_channel" : "6 (2GHz, 20MHz)",
+            "_name" : "SSID-1",
+            "spairport_network_channel" : "149 (5GHz, 80MHz)",
             "spairport_network_country_code" : "US",
-            "spairport_network_mcs" : 15,
-            "spairport_network_phymode" : "802.11n",
-            "spairport_network_rate" : 144,
+            "spairport_network_mcs" : 8,
+            "spairport_network_phymode" : "802.11ax",
+            "spairport_network_rate" : 864,
             "spairport_network_type" : "spairport_network_type_station",
-            "spairport_security_mode" : "spairport_security_mode_none",
-            "spairport_signal_noise" : "-40 dBm / -97 dBm"
+            "spairport_security_mode" : "spairport_security_mode_wpa2_personal",
+            "spairport_signal_noise" : "-55 dBm / -95 dBm"
           },
           "spairport_status_information" : "spairport_status_connected",
           "spairport_supported_channels" : [
@@ -163,7 +134,7 @@
           "spairport_wireless_country_code" : "US",
           "spairport_wireless_firmware_version" : "wl0: Mar 22 2025 02:16:34 version 23.40.30.0.41.51.180 FWID 01-5f726d72\nIO80211_driverkit-1475.39 \"IO80211_driverkit-1475.39\" Apr 18 2025 20:10:40",
           "spairport_wireless_locale" : "FCC",
-          "spairport_wireless_mac_address" : "76:13:17:0b:99:24"
+          "spairport_wireless_mac_address" : "fe:dc:ba:09:87:65"
         },
         {
           "_name" : "awdl0",
@@ -269,7 +240,7 @@
             "229 (6GHz)",
             "233 (6GHz)"
           ],
-          "spairport_wireless_mac_address" : "9a:9d:57:00:5b:60"
+          "spairport_wireless_mac_address" : "fe:dc:ba:09:87:65"
         }
       ],
       "spairport_software_information" : {

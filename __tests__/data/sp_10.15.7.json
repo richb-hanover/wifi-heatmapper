@@ -1,5 +1,6 @@
-// system_profiler -json SPAirPortDataType # on macOS 10.15.7 (Latitude)
+
 {
+  "TestDescriptionDEADBEEF":" macOS 10.15.7 (Latitude) at Location1",
  "SPAirPortDataType" : [
    {
      "spairport_airport_interfaces" : [
@@ -8,8 +9,8 @@
          "spairport_airdrop_channel" : 149,
          "spairport_airport_other_local_wireless_networks" : [
            {
-             "_name" : "AP-WH4E-C0BFBE6ACDA3",
-             "spairport_network_bssid" : "c0:bf:be:6a:cd:a4",
+             "_name" : "SSID-1",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 4,
              "spairport_network_phymode" : "802.11n",
              "spairport_network_type" : "spairport_network_type_station",
@@ -17,8 +18,8 @@
              "spairport_signal_noise" : "-57 dBm / 0 dBm"
            },
            {
-             "_name" : "Apartment",
-             "spairport_network_bssid" : "50:c7:bf:78:38:e3",
+             "_name" : "SSID-2",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 6,
              "spairport_network_country_code" : "US",
              "spairport_network_phymode" : "802.11n",
@@ -27,8 +28,8 @@
              "spairport_signal_noise" : "-88 dBm / -98 dBm"
            },
            {
-             "_name" : "HBTL",
-             "spairport_network_bssid" : "94:83:c4:a7:29:c5",
+             "_name" : "SSID-3",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 1,
              "spairport_network_phymode" : "802.11n",
              "spairport_network_type" : "spairport_network_type_station",
@@ -36,8 +37,8 @@
              "spairport_signal_noise" : "-73 dBm / 0 dBm"
            },
            {
-             "_name" : "HBTL",
-             "spairport_network_bssid" : "e8:9f:80:e3:c1:8e",
+             "_name" : "SSID-4",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 1,
              "spairport_network_phymode" : "802.11n",
              "spairport_network_type" : "spairport_network_type_station",
@@ -45,8 +46,8 @@
              "spairport_signal_noise" : "-86 dBm / 0 dBm"
            },
            {
-             "_name" : "HBTL",
-             "spairport_network_bssid" : "20:05:b6:ff:1f:22",
+             "_name" : "SSID-5",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 11,
              "spairport_network_phymode" : "802.11n",
              "spairport_network_type" : "spairport_network_type_station",
@@ -54,8 +55,8 @@
              "spairport_signal_noise" : "-54 dBm / 0 dBm"
            },
            {
-             "_name" : "HBTL",
-             "spairport_network_bssid" : "50:6a:03:bb:e8:85",
+             "_name" : "SSID-6",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 6,
              "spairport_network_phymode" : "802.11n",
              "spairport_network_type" : "spairport_network_type_station",
@@ -63,8 +64,8 @@
              "spairport_signal_noise" : "-59 dBm / -98 dBm"
            },
            {
-             "_name" : "HBTL-Garage",
-             "spairport_network_bssid" : "98:de:d0:7d:77:f8",
+             "_name" : "SSID-7",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 1,
              "spairport_network_phymode" : "802.11n",
              "spairport_network_type" : "spairport_network_type_station",
@@ -72,8 +73,8 @@
              "spairport_signal_noise" : "-84 dBm / 0 dBm"
            },
            {
-             "_name" : "HBTL5",
-             "spairport_network_bssid" : "94:83:c4:a7:29:c6",
+             "_name" : "SSID-8",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 144,
              "spairport_network_country_code" : "US",
              "spairport_network_phymode" : "802.11n",
@@ -82,8 +83,8 @@
              "spairport_signal_noise" : "-80 dBm / 0 dBm"
            },
            {
-             "_name" : "HBTL5",
-             "spairport_network_bssid" : "20:05:b6:ff:1f:29",
+             "_name" : "SSID-9",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : "149,+1",
              "spairport_network_country_code" : "US",
              "spairport_network_phymode" : "802.11n",
@@ -92,8 +93,8 @@
              "spairport_signal_noise" : "-70 dBm / 0 dBm"
            },
            {
-             "_name" : "HBTL5",
-             "spairport_network_bssid" : "e8:9f:80:e7:ed:6b",
+             "_name" : "SSID-10",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 44,
              "spairport_network_phymode" : "802.11n",
              "spairport_network_type" : "spairport_network_type_station",
@@ -101,8 +102,8 @@
              "spairport_signal_noise" : "-51 dBm / 0 dBm"
            },
            {
-             "_name" : "HBTL_5GEXT",
-             "spairport_network_bssid" : "52:6a:03:bb:e8:85",
+             "_name" : "SSID-11",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 153,
              "spairport_network_phymode" : "802.11n",
              "spairport_network_type" : "spairport_network_type_station",
@@ -110,8 +111,8 @@
              "spairport_signal_noise" : "-82 dBm / 0 dBm"
            },
            {
-             "_name" : "HDSPro-9 340a",
-             "spairport_network_bssid" : "02:01:f9:1c:ab:76",
+             "_name" : "SSID-12",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 6,
              "spairport_network_country_code" : "US",
              "spairport_network_phymode" : "802.11n",
@@ -120,8 +121,8 @@
              "spairport_signal_noise" : "-83 dBm / -98 dBm"
            },
            {
-             "_name" : "Loch Lyme Lodge-Private",
-             "spairport_network_bssid" : "ea:63:da:15:9d:36",
+             "_name" : "SSID-13",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 11,
              "spairport_network_country_code" : "US",
              "spairport_network_phymode" : "802.11n",
@@ -130,8 +131,8 @@
              "spairport_signal_noise" : "-92 dBm / 0 dBm"
            },
            {
-             "_name" : "LochLymeLodge-Guest",
-             "spairport_network_bssid" : "e6:63:da:15:9d:36",
+             "_name" : "SSID-14",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 11,
              "spairport_network_country_code" : "US",
              "spairport_network_phymode" : "802.11n",
@@ -140,8 +141,8 @@
              "spairport_signal_noise" : "-90 dBm / 0 dBm"
            },
            {
-             "_name" : "LochLymeLodge-UB",
-             "spairport_network_bssid" : "e0:63:da:15:9d:36",
+             "_name" : "SSID-15",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 11,
              "spairport_network_country_code" : "US",
              "spairport_network_phymode" : "802.11n",
@@ -150,8 +151,8 @@
              "spairport_signal_noise" : "-91 dBm / 0 dBm"
            },
            {
-             "_name" : "The Perch",
-             "spairport_network_bssid" : "84:d8:1b:e9:42:aa",
+             "_name" : "SSID-16",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : "11,-1",
              "spairport_network_phymode" : "802.11n",
              "spairport_network_type" : "spairport_network_type_station",
@@ -159,8 +160,8 @@
              "spairport_signal_noise" : "-88 dBm / 0 dBm"
            },
            {
-             "_name" : "ZyXEL_7955",
-             "spairport_network_bssid" : "98:0d:67:f0:79:55",
+             "_name" : "SSID-17",
+             "spairport_network_bssid" : "fe:dc:ba:09:87:65",
              "spairport_network_channel" : 6,
              "spairport_network_phymode" : "802.11n",
              "spairport_network_type" : "spairport_network_type_station",
@@ -171,8 +172,8 @@
          "spairport_caps_airdrop" : "spairport_caps_supported",
          "spairport_caps_autounlock" : "spairport_caps_supported",
          "spairport_current_network_information" : {
-           "_name" : "HBTL",
-           "spairport_network_bssid" : "e8:9f:80:e7:ed:6a",
+           "_name" : "SSID-5",
+           "spairport_network_bssid" : "fe:dc:ba:09:87:65",
            "spairport_network_channel" : 6,
            "spairport_network_country_code" : "US",
            "spairport_network_mcs" : 15,
@@ -223,7 +224,7 @@
          "spairport_wireless_country_code" : "US",
          "spairport_wireless_firmware_version" : "Broadcom BCM43xx 1.0 (7.77.111.1 AirPortDriverBrcmNIC-1615.7)",
          "spairport_wireless_locale" : "FCC",
-         "spairport_wireless_mac_address" : "24:0a:64:4b:86:ed"
+         "spairport_wireless_mac_address" : "fe:dc:ba:09:87:65"
        }
      ],
      "spairport_software_information" : {
@@ -238,3 +239,4 @@
    }
  ]
 }
+
