@@ -129,14 +129,6 @@ export interface SurveyResults {
 }
 
 /**
- * WifiScanResults - array of available SSIDs, plus a reason
- */
-export interface WifiScanResults {
-  SSIDs: WifiResults[];
-  reason: string;
-}
-
-/**
  * TaskStatus - status of the wifi survey process
  */
 type TaskStatus = "pending" | "done" | "error";
@@ -159,14 +151,25 @@ export interface SurveyPointActions {
   delete: (points: SurveyPoint[]) => void;
 }
 
-// functions that handle platform-specific work
-// pass PartialHeatmapSettings for the essential parameters
+/**
+ * Functions that do the platform-specfic work
+ * Pass PartialHeatmapSettings for the essential parameters
+ * Return a potentially-empty array of WifiResults and a "reason" string
+ */
+export interface WifiScanResults {
+  SSIDs: WifiResults[]; // potentially empty
+  reason: string; // if noErr "", otherwise an explanation
+}
+
 export interface WifiActions {
-  // findWifi(): Promise<string>; // return the interface name
-  preflightSettings(settings: PartialHeatmapSettings): Promise<string>; // returns "" or error message
-  checkIperfServer(settings: PartialHeatmapSettings): Promise<string>; // returns "" or an error message
-  restartWifi(settings: PartialHeatmapSettings): Promise<void>; // "blink" the wifi
-  scanWifi(settings: PartialHeatmapSettings): Promise<WifiResults>; // get measurements
+  preflightSettings(settings: PartialHeatmapSettings): Promise<WifiScanResults>; // returns error message
+  checkIperfServer(settings: PartialHeatmapSettings): Promise<WifiScanResults>; // returns error message
+  findBestWifi(settings: PartialHeatmapSettings): Promise<WifiScanResults>; // return sorted list of nearby SSIDs
+  setWifi(
+    settings: PartialHeatmapSettings,
+    ssid: string,
+  ): Promise<WifiScanResults>; // associate with the named ssid
+  getWifi(settings: PartialHeatmapSettings): Promise<WifiScanResults>; // the the current values
 }
 
 /**

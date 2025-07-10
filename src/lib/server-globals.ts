@@ -15,6 +15,7 @@ const SSE_KEY = "__sseSend__";
 const CANCEL_KEY = "__sseFlag__";
 const STATUS_KEY = "__status__";
 const RESULTS_KEY = "__results__";
+const SSID_KEY = "__ssid__";
 
 export function registerSSESender(fn: (msg: SSEMessageType) => void) {
   (globalThis as any)[SSE_KEY] = fn;
@@ -66,4 +67,14 @@ export function setSurveyResults(value: SurveyResult) {
 
 export function getSurveyResults(): SurveyResult {
   return (globalThis as any)[RESULTS_KEY];
+}
+
+// === Global copy of the current SSID ===
+
+export function setSSID(value: string | null) {
+  (globalThis as any)[SSID_KEY] = value;
+}
+
+export function getSSID(): string | null {
+  return (globalThis as any)[SSID_KEY];
 }

@@ -44,7 +44,10 @@ In #3 above, GUI needs to say,
 
 ## API
 
-Current API:
+### Current API
+
+All these functions receive a settings object to be used
+as needed.
 
 * **preflightSettings()** - return nice error message if not ready to go
 * **checkIperfServer()** - ensure that the iperf3 server is available, return a nice error message or ""
@@ -54,12 +57,13 @@ Current API:
   (meaning that it has fully re-associated) then
   return a WifiResults from `wdutil` output.
 
-Desired API:
+### Desired API
+
+All these functions receive a settings object to be used
+as needed.
 
 * **preflightSettings()** - _same_
 * **checkIperfServer()** - _same_
-* **restartWifi()** - _deprecated_
-* **scanWifi()** - _deprecated_
 * **scanForSSIDs()** - Survey the wifi, and
   return an array of WifiResults, sorted
   by signalStrength along with a status of:
@@ -70,7 +74,12 @@ Desired API:
   * ... etc. 
 * **connectToWifi(SSID)** - associate with the named
   SSID, return the WifiResults and a status string.
-  May need to finagle around until connection comes back.
+  May need to "delay" until connection comes back.
+  (maybe waiting 'til txRate is non-zero as before).
 * **getCurrentWifi()** - return WifiResults and status string
-* **getRecentSSIDs()** - return an array of recently-connected-to
-  SSIDs (we might only choose from these...)
+* **getRecentSSIDs()** - (Optional) Ask the OS for
+  a list of SSIDs that have recently been used.
+  (This could be used to exclude strong but un-useful SSIDs,
+  such as a nearby printer, heat pump, or refrigerator.)
+* ~~**restartWifi()** - _deprecated_~~
+* ~~**scanWifi()** - _deprecated_~~

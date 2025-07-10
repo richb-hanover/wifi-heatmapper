@@ -4,6 +4,7 @@ import { getLogger } from "./logger";
 import os from "os";
 import { promises as fs } from "fs";
 import { execAsync } from "./server-utils";
+import { setSSID } from "./server-globals";
 
 import { initLocalization } from "./localization";
 
@@ -65,6 +66,7 @@ export async function initServer() {
     copyToMediaFolder("EmptyFloorPlan.png"); // seed with empty image
     await initLocalization(); // load up the localization files
 
+    setSSID(null);
     initialized = true;
     // logger.info(`Server initialization complete.`);
   }

@@ -24,7 +24,7 @@
               "spairport_signal_noise" : "-91 dBm / -91 dBm"
             },
             {
-              "_name" : "iPhone 28",
+              "_name" : "SSID-3",
               "spairport_network_channel" : 149,
               "spairport_network_phymode" : "802.11",
               "spairport_network_type" : "spairport_network_type_station",

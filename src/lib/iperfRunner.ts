@@ -4,10 +4,11 @@ import {
   IperfResults,
   IperfTestProperty,
   WifiResults,
+  WifiScanResults,
 } from "./types";
 // import { scanWifi, blinkWifi } from "./wifiScanner";
 import { execAsync } from "./server-utils";
-import { getCancelFlag, sendSSEMessage } from "./server-globals";
+import { getCancelFlag, sendSSEMessage, getSSID } from "./server-globals";
 import { percentageToRssi, toMbps } from "./utils";
 import { SSEMessageType } from "@/app/api/events/route";
 import { getLogger } from "./logger";
@@ -120,9 +121,9 @@ export async function runSurveyTests(
 }> {
   // first check the settings and return cogent error if not good
   const preResults = await wifiInfo.preflightSettings(settings);
-  if (preResults != "") {
+  if (preResults.reason != "") {
     // console.log(`preflightSettings returned: ${preResults}`);
-    return { iperfData: null, wifiData: null, status: preResults };
+    return { iperfData: null, wifiData: null, status: preResults.reason };
   }
   // check if iperf3 server is available
   // this is separate from the other preflight checks because it's reasonable
@@ -130,16 +131,16 @@ export async function runSurveyTests(
   // (say, you have moved to another subnet)
   let noIperfTestReason = "";
   let performIperfTest = true; // assume we will run iperf3 test
-  if (settings.iperfServerAdrs != "localhost") {
+  if (settings.iperfServerAdrs == "localhost") {
     performIperfTest = false;
     noIperfTestReason = "Not performed";
   }
   // otherwise check if the server is available
   else {
     const resp = await wifiInfo.checkIperfServer(settings);
-    if (resp != "") {
+    if (resp.reason != "") {
       performIperfTest = false;
-      noIperfTestReason = resp;
+      noIperfTestReason = resp.reason;
     }
   }
 
@@ -155,13 +156,33 @@ export async function runSurveyTests(
     displayStates.header = "Measurement in progress...";
 
     // "blink" the wifi to get best signal
-    console.log(`Blinking Wifi in runIperfTest`);
+    console.log(`Scanning for best wifi`);
     displayStates.header = "Seeking best Wi-Fi";
     sendSSEMessage(getUpdatedMessage());
     const startTime = Date.now();
-    await wifiInfo.restartWifi(settings);
 
-    displayStates.header = "Measuring Wi-Fi";
+    // get the array of candidates SSIDs, sorted by RSSI/signalStrength
+    const results: WifiScanResults = await wifiInfo.findBestWifi(settings);
+    // if there's an error, return that as the status
+    if (results.reason != "") {
+      return { iperfData: null, wifiData: null, status: results.reason };
+    }
+
+    try {
+      const wifiStatus = wifiInfo.setWifi(settings, results.SSIDs[0].ssid);
+      console.log(`wifiStatus: ${JSON.stringify(wifiStatus)}`);
+    } catch (err) {
+      return {
+        iperfData: null,
+        wifiData: null,
+        status: `wifiStatus.reason: ${err}`,
+      };
+    }
+    let theSSID = getSSID();
+    if (theSSID != null) {
+      theSSID = `(${theSSID})`;
+    }
+    displayStates.header = `Measuring Wi-Fi ${theSSID}`;
     sendSSEMessage(getUpdatedMessage());
     while (attempts < maxRetries && !iperfData) {
       try {
@@ -182,9 +203,9 @@ export async function runSurveyTests(
         let udpDownload = emptyIperfTestProperty;
         let udpUpload = emptyIperfTestProperty;
 
-        const wifiDataBefore = await wifiInfo.scanWifi(settings);
+        const wifiDataBefore = await wifiInfo.getWifi(settings);
         console.log(`Elapsed time for blinking: ${Date.now() - startTime}`);
-        wifiStrengths.push(wifiDataBefore.signalStrength);
+        wifiStrengths.push(wifiDataBefore.SSIDs[0].signalStrength);
         displayStates.strength = arrayAverage(wifiStrengths).toString();
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
@@ -200,8 +221,8 @@ export async function runSurveyTests(
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
 
-        const wifiDataMiddle = await wifiInfo.scanWifi(settings);
-        wifiStrengths.push(wifiDataMiddle.signalStrength);
+        const wifiDataMiddle = await wifiInfo.getWifi(settings);
+        wifiStrengths.push(wifiDataMiddle.SSIDs[0].signalStrength);
         displayStates.strength = arrayAverage(wifiStrengths).toString();
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
@@ -217,8 +238,8 @@ export async function runSurveyTests(
         checkForCancel();
         sendSSEMessage(getUpdatedMessage());
 
-        const wifiDataAfter = await wifiInfo.scanWifi(settings);
-        wifiStrengths.push(wifiDataAfter.signalStrength);
+        const wifiDataAfter = await wifiInfo.getWifi(settings);
+        wifiStrengths.push(wifiDataAfter.SSIDs[0].signalStrength);
         displayStates.strength = arrayAverage(wifiStrengths).toString();
         checkForCancel();
         console.log(`wifiStrengths: ${wifiStrengths}`);
@@ -228,7 +249,12 @@ export async function runSurveyTests(
         displayStates.header = "Measurement complete";
         sendSSEMessage(getUpdatedMessage());
 
-        if (!validateWifiDataConsistency(wifiDataBefore, wifiDataAfter)) {
+        if (
+          !validateWifiDataConsistency(
+            wifiDataBefore.SSIDs[0],
+            wifiDataAfter.SSIDs[0],
+          )
+        ) {
           throw new Error(
             "Wifi configuration changed between scans! Cancelling instead of giving wrong results.",
           );
@@ -243,7 +269,7 @@ export async function runSurveyTests(
 
         const strength = parseInt(displayStates.strength);
         wifiData = {
-          ...wifiDataBefore,
+          ...wifiDataBefore.SSIDs[0],
           signalStrength: strength, // use the average signalStrength
           rssi: percentageToRssi(strength), // set corresponding RSSI
         };
@@ -260,8 +286,6 @@ export async function runSurveyTests(
         if (attempts >= maxRetries) {
           throw error;
         }
-        // wait 2 secs to recover
-        // await delay(2000);
       }
     }
 

@@ -9,7 +9,8 @@ import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
 import { rssiToPercentage } from "./utils";
 import { isValidMacAddress, normalizeMacAddress } from "./utils";
-import { loopUntilCondition } from "./wifiScanner";
+// import { loopUntilCondition } from "./wifiScanner";
+import { setSSID, getSSID } from "./server-globals";
 
 const logger = getLogger("wifi-macOS");
 
@@ -26,33 +27,43 @@ export class MacOSSystemInfo implements WifiActions {
    * @param settings
    * @returns string - empty, or error message to display
    */
-  async preflightSettings(settings: PartialHeatmapSettings): Promise<string> {
+  async preflightSettings(
+    settings: PartialHeatmapSettings,
+  ): Promise<WifiScanResults> {
+    const response: WifiScanResults = {
+      SSIDs: [],
+      reason: "",
+    };
+    let reason: string = "";
     // console.log(`partialSettings: ${JSON.stringify(settings)}`);
     // test duration must be > 0 - otherwise iperf3 runs forever
     if (settings.testDuration <= 0) {
-      return "Test duration must be greater than zero.";
+      reason = "Test duration must be greater than zero.";
     }
 
     // iperfServerAddress must not be empty or ""
-    if (!settings.iperfServerAdrs) {
-      return "Please set iperf3 server address";
+    else if (!settings.iperfServerAdrs) {
+      reason = "Please set iperf3 server address";
     }
 
     // macOS requires a sudo password
-    if (!settings.sudoerPassword || settings.sudoerPassword == "") {
-      return "Please set sudo password. It is required on macOS.";
+    else if (!settings.sudoerPassword || settings.sudoerPassword == "") {
+      reason = "Please set sudo password. It is required on macOS.";
     }
 
     // check that the sudo password is actually correct
     // execAsync() throws if there is an error
-    try {
-      await execAsync(`echo ${settings.sudoerPassword} | sudo -S ls`);
-    } catch {
-      return "Please enter a valid sudo password.";
+    else {
+      try {
+        await execAsync(`echo ${settings.sudoerPassword} | sudo -S ls`);
+      } catch {
+        reason = "Please enter a valid sudo password.";
+      }
     }
 
-    // things look good - return ""
-    return "";
+    // fill in the reason and return it
+    response.reason = reason;
+    return response;
   }
 
   /**
@@ -60,15 +71,23 @@ export class MacOSSystemInfo implements WifiActions {
    * @param settings includes the iperfServerAddress
    * @returns "" or error string
    */
-  async checkIperfServer(settings: PartialHeatmapSettings): Promise<string> {
+  async checkIperfServer(
+    settings: PartialHeatmapSettings,
+  ): Promise<WifiScanResults> {
+    const response: WifiScanResults = {
+      SSIDs: [],
+      reason: "",
+    };
+    let reason: string = "";
     // check that we can actually connect to the iperf3 server
     // command throws if there is an error
     try {
       await execAsync(`nc -vz ${settings.iperfServerAdrs} 5201`);
     } catch {
-      return "Cannot connect to iperf3 server.";
+      reason = "Cannot connect to iperf3 server.";
     }
-    return "";
+    response.reason = reason;
+    return response;
   }
 
   /**
@@ -88,6 +107,7 @@ export class MacOSSystemInfo implements WifiActions {
 
   /**
    * findBestWifi() - return an array of available wifi SSIDs plus a reason string
+   * These are sorted by the strongest RSSI
    */
   async findBestWifi(
     _settings: PartialHeatmapSettings,
@@ -100,20 +120,97 @@ export class MacOSSystemInfo implements WifiActions {
     let jsonResults: SPAirPortRoot;
     const currentIf = await this.findWifi();
 
-    // Get the Wifi information from system_profiler
     try {
+      // Get the Wifi information from system_profiler
       const result = await execAsync(`system_profiler -json SPAirPortDataType`);
       jsonResults = JSON.parse(result.stdout);
+
+      // jsonResults holds the Wifi environment from system_profiler
+      response.SSIDs = getCandidateSSIDs(jsonResults, currentIf);
+      console.log(`Local SSIDs: ${JSON.stringify(response.SSIDs, null, 2)}`);
     } catch (err) {
       response.reason = `Cannot get wifi info: ${err}"`;
-      return response;
     }
-
-    // jsonResults holds the Wifi environment
-    response.SSIDs = getCandidateSSIDs(jsonResults, currentIf);
-    console.log(`Local SSIDs: ${JSON.stringify(response.SSIDs, null, 2)}`);
-
     // ======= FINALLY WE ARE DONE! =======
+    return response;
+  }
+
+  /**
+   * setWifi(settings, newSSID) - associate with the named SSID
+   *
+   * @param settings - same as always
+   * @param ssid - new SSID to associate with
+   * @returns WifiScanResults - empty array of results, only the reason
+   */
+  async setWifi(
+    settings: PartialHeatmapSettings,
+    ssid: string,
+  ): Promise<WifiScanResults> {
+    const response: WifiScanResults = {
+      SSIDs: [],
+      reason: "",
+    };
+    let reason: string = "";
+    let netInfo: WifiResults;
+
+    try {
+      // save the global copy of the SSID
+      setSSID(ssid);
+
+      console.log(`Setting Wifi SSID on interface ${this.nameOfWifi}: ${ssid}`);
+      try {
+        await execAsync(
+          `networksetup -setairportnetwork ${this.nameOfWifi} FOOBAR`,
+        );
+      } catch (err) {
+        setSSID(null);
+        response.reason = `Cannot connect to SSID ${ssid}: ${err}`;
+        console.log(`${response.reason}`);
+        return response;
+      }
+      const start = Date.now();
+      const timeDelay = 20000; // 20 seconds
+      while (start + timeDelay > Date.now()) {
+        netInfo = await this.getWdutilResults(settings);
+        console.log(`wdutil results: txRate is ${netInfo.txRate}`);
+        if (netInfo.txRate != 0) {
+          response.SSIDs.push(netInfo);
+          break;
+        }
+        await delay(200);
+      }
+      if (Date.now() >= start + timeDelay) {
+        reason = `Timed out attempting to set Wifi to ${ssid}`;
+      }
+    } catch (err) {
+      reason = `Can't set wifi to ${ssid}: ${err}`;
+    }
+    response.reason = reason;
+    console.log(`setWifi return: ${JSON.stringify(response)}`);
+    return response;
+  }
+
+  /**
+   * getWifi - return the WifiResults for the currently-associated SSID
+   * @param settings
+   * @returns
+   */
+  async getWifi(settings: PartialHeatmapSettings): Promise<WifiScanResults> {
+    const response: WifiScanResults = {
+      SSIDs: [],
+      reason: "",
+    };
+    try {
+      const netInfo: WifiResults = await this.getWdutilResults(settings);
+      const realSSID = getSSID(); // SSID we tried to set
+      // if the returned SSID contains "redacted" use the "global SSID"
+      if (realSSID != null && netInfo.ssid.includes("redacted")) {
+        netInfo.ssid = realSSID;
+      }
+      response.SSIDs.push(netInfo);
+    } catch (err) {
+      response.reason = `Can't getWifi: ${err}`;
+    }
     return response;
   }
 
@@ -125,52 +222,59 @@ export class MacOSSystemInfo implements WifiActions {
    * NB: the "settings" parameter is unused,
    * so it is prefixed by "_" to avoid a Typescript warning
    */
-  async restartWifi(_settings: PartialHeatmapSettings): Promise<void> {
-    // logger.info(`Called restartWifi():`);
+  // async restartWifi(_settings: PartialHeatmapSettings): Promise<void> {
+  //   // logger.info(`Called restartWifi():`);
 
-    this.nameOfWifi = await this.findWifi();
+  //   this.nameOfWifi = await this.findWifi();
 
-    // console.log(`turned off:`);
-    await loopUntilCondition(
-      // until an error (no ipconfig for the wifi)
-      `networksetup -setairportpower ${this.nameOfWifi} off`,
-      `ipconfig getifaddr ${this.nameOfWifi}`,
-      1,
-      5,
-    );
+  //   // console.log(`turned off:`);
+  //   await loopUntilCondition(
+  //     // until an error (no ipconfig for the wifi)
+  //     `networksetup -setairportpower ${this.nameOfWifi} off`,
+  //     `ipconfig getifaddr ${this.nameOfWifi}`,
+  //     1,
+  //     5,
+  //   );
 
-    // console.log(`turn it back on:`);
-    await loopUntilCondition(
-      `networksetup -setairportpower ${this.nameOfWifi} on`,
-      `ipconfig getifaddr ${this.nameOfWifi}`,
-      0,
-      20,
-    );
-  }
+  //   // console.log(`turn it back on:`);
+  //   await loopUntilCondition(
+  //     `networksetup -setairportpower ${this.nameOfWifi} on`,
+  //     `ipconfig getifaddr ${this.nameOfWifi}`,
+  //     0,
+  //     20,
+  //   );
+  // }
 
   /**
    * scanWifi() scan the wifi to get the signal strength, etc.
    * @param settings - the full set of settings, including sudoerPassword
    * @returns a WiFiResults description to be added to the surveyPoints
    *
-   * After blinking the wifi, call `wdutil` multiple times
+   * Scans the local wifi environment (with system_profiler) to get
+   * the SSID with the strongest signal, then switches to that SSID
+   *
+   * ~~After blinking the wifi, call `wdutil` multiple times
    * until the txRate is non-zero. Pause 200 msec before re-trying.
    * (Apparently, the wifi interface gets an address well before
-   * all the rest of its settings (particularly txRate) are set.)
+   * all the rest of its settings (particularly txRate) are set.)~~
    */
-  async scanWifi(settings: PartialHeatmapSettings): Promise<WifiResults> {
-    let netInfo: WifiResults;
-    // logger.info(`Called scanWifi():`);
+  // async scanWifi(settings: PartialHeatmapSettings): Promise<WifiResults> {
+  //   let netInfo: WifiResults;
+  //   // logger.info(`Called scanWifi():`);
 
-    while (true) {
-      netInfo = await this.getWdutilResults(settings);
-      // console.log(`wdutil results: txRate is ${netInfo.txRate}`);
-      if (netInfo.txRate != 0) {
-        return netInfo;
-      }
-      await delay(200);
-    }
-  }
+  //   const candidates:  = this.findBestWifi(settings);
+
+  //   const netinfo = candidates[0];
+
+  // while (true) {
+  //   netInfo = await this.getWdutilResults(settings);
+  //   // console.log(`wdutil results: txRate is ${netInfo.txRate}`);
+  //   if (netInfo.txRate != 0) {
+  //     return netInfo;
+  //   }
+  //   await delay(200);
+  // }
+  // }
 
   /**
    * getWdutilResults() call `wdutil` to get the signal strength, etc.
@@ -188,10 +292,10 @@ export class MacOSSystemInfo implements WifiActions {
     );
     // parse that command into wdutilNetworkInfo
     const wdutilNetworkInfo = parseWdutilOutput(wdutilOutput.stdout);
-    logger.trace("WDUTIL output:", wdutilNetworkInfo);
+    // logger.trace("WDUTIL output:", wdutilNetworkInfo);
 
     if (!isValidMacAddress(wdutilNetworkInfo.ssid)) {
-      logger.trace("Invalid SSID, getting it from ioreg");
+      // logger.trace("Invalid SSID, getting it from ioreg");
       const ssidOutput = await getIoregSsid();
       if (isValidMacAddress(ssidOutput)) {
         wdutilNetworkInfo.ssid = ssidOutput;
@@ -199,7 +303,7 @@ export class MacOSSystemInfo implements WifiActions {
     }
 
     if (!isValidMacAddress(wdutilNetworkInfo.bssid)) {
-      logger.trace("Invalid BSSID, getting it from ioreg");
+      // logger.trace("Invalid BSSID, getting it from ioreg");
       const bssidOutput = await getIoregBssid();
       if (isValidMacAddress(bssidOutput)) {
         wdutilNetworkInfo.bssid = bssidOutput;
@@ -230,7 +334,7 @@ const getIoregBssid = async (): Promise<string> => {
 };
 
 /**
- * parseChannel
+ * parseChannel() from the `wdutil info` output
  * macos 15 gives "2g1/20" where the channel is "1"
  * macos 15 gives "5g144/40" where the channel is "144"
  * macos 12 gives "11 (20 MHz, Active)" where the channel is "11"
@@ -324,12 +428,6 @@ export function parseWdutilOutput(output: string): WifiResults {
         case "Security":
           partialNetworkInfo.security = value;
           break;
-        // case "IPv4 Router":
-        //   partialNetworkInfo.v4router = value;
-        //   break;
-        // case "IPv6 Router":
-        //   partialNetworkInfo.v6router = value;
-        //   break;
       }
     }
   });
@@ -345,7 +443,7 @@ export function parseWdutilOutput(output: string): WifiResults {
 }
 
 /**
- * getLocalCandidates(jsonResults) - pluck up the local SSIDs from the JSON
+ * getCandidates(jsonResults) - pluck up the local SSIDs from the JSON
  * @param - Object that contains output of system_profiler for Wifi
  * @returns WifiResults[] sorted by signalStrength
  */
@@ -354,14 +452,15 @@ export const getCandidateSSIDs = (
   data: SPAirPortRoot,
   currentInterface: string,
 ): WifiResults[] => {
+  // sort by the signalStrength value (may be null)
   function bySignalStrength(a: any, b: any): number {
-    const parseSignal = (val: string | undefined): number | null => {
-      const match = val?.match(/^(-?\d+)\s+dBm/);
-      return match ? parseInt(match[1], 10) : null;
-    };
+    // const parseSignal = (val: string | undefined): number | null => {
+    //   const match = val?.match(/^(-?\d+)\s+dBm/);
+    //   return match ? parseInt(match[1], 10) : null;
+    // };
 
-    const signalA = parseSignal(a.spairport_signal_noise);
-    const signalB = parseSignal(b.spairport_signal_noise);
+    const signalA = a.signalStrength;
+    const signalB = b.signalStrength;
 
     if (signalA === null && signalB === null) return 0;
     if (signalA === null) return 1; // move A to end
@@ -371,41 +470,47 @@ export const getCandidateSSIDs = (
     return signalB - signalA;
   }
 
-  const candidates: WifiResults[] =
+  // pluck out the local candidate SSIDs from the system_profiler output
+  const spCandidates =
     data.SPAirPortDataType.flatMap(
       (entry) => entry.spairport_airport_interfaces || [],
     ).find((iface) => iface._name === currentInterface)
       ?.spairport_airport_other_local_wireless_networks ?? [];
 
-  candidates.sort(bySignalStrength);
+  // convert each to a WifiResults
+  const candidates = spCandidates.map((item) => convertToWifiResults(item));
 
-  // console.log(`Candidates: ${JSON.stringify(candidates, null, 2)}`);
-  return candidates;
+  // eliminate any RSSI=0 (no reading), then sort by RSSI
+  const nonZeroCandidates = candidates.filter((item) => item.rssi != 0);
+  const sortedCandidates = nonZeroCandidates.sort(bySignalStrength);
+
+  return sortedCandidates;
 };
 
-/**
- * getCurrentSSID(jsonResults) - get info about the current SSID
- * @param - Object that contains output of system_profiler for Wifi
- * @returns WifiResults[] sorted by signalStrength
- */
+// /**
+//  * getCurrentSSID(jsonResults) - get info about the current SSID
+//  * @param - Object that contains output of system_profiler for Wifi
+//  * @returns WifiResults[] sorted by signalStrength
+//  */
 
-export const getCurrentSSID = (
-  data: SPAirPortRoot,
-  currentInterface: string,
-): WifiResults[] => {
-  const current = data.SPAirPortDataType.flatMap(
-    (entry) => entry.spairport_airport_interfaces || [],
-  ).find(
-    (iface) => iface._name === currentInterface,
-  )?.spairport_current_network_information;
+// export const getCurrentSSID = (
+//   data: SPAirPortRoot,
+//   currentInterface: string,
+// ): WifiResults => {
+//   const current = data.SPAirPortDataType.flatMap(
+//     (entry) => entry.spairport_airport_interfaces || [],
+//   ).find(
+//     (iface) => iface._name === currentInterface,
+//   )?.spairport_current_network_information;
 
-  // console.log(`getCurrentSSID results: ${JSON.stringify(current)}`);
-  if (!current) return [];
+//   if (!current) return [];
 
-  console.log(`Current: ${JSON.stringify(current, null, 2)}`);
-  const bobject = mapSPToWifiResult(current, spToWifiResultMap);
-  return bobject;
-};
+//   console.log(`******** getCurrentSSID *********`);
+
+//   console.log(`Current: ${JSON.stringify(current, null, 2)}`);
+//   const result = convertToWifiResults(current);
+//   return result;
+// };
 
 /**
  * Map system_profiler values into a WifiResults object
@@ -439,11 +544,10 @@ const spToWifiResultMap: SPToWifiMap = {
     key: "rssi",
     transform: (val: string) => parseRSSI(val), // e.g. "-56"
   },
+  // we don't use these properties from system_profiler
   // spairport_network_mcs: 15,
   // spairport_network_type: "spairport_network_type_station",
 };
-
-//=====================
 
 function mapSPToWifiResult(
   aObject: Record<string, any>,
@@ -521,6 +625,11 @@ function parseChannelInfo(input: string): {
   };
 }
 
+/**
+ * parseRSSI()
+ * @param input - RSSI string from system_profiler
+ * @returns an object with both rssi: and signalStrength: properties as strings
+ */
 function parseRSSI(input: string): {
   rssi: string;
   signalStrength: string;
@@ -530,4 +639,30 @@ function parseRSSI(input: string): {
     rssi: String(rssi),
     signalStrength: String(rssiToPercentage(rssi)),
   };
+}
+
+/**
+ * convertToWifiResult()
+ * re-map the properties of a system_profiler results into
+ *    a WifiResults object (which are all strings)
+ * Then convert the proper values back to numbers
+ */
+function convertToWifiResults(obj: object): WifiResults {
+  const sp = mapSPToWifiResult(obj, spToWifiResultMap);
+  // console.log(`mapped to WifiResults: ${JSON.stringify(sp, null, 2)}`);
+  const result: WifiResults = {
+    ssid: sp.ssid,
+    bssid: sp.bssid,
+    security: sp.security,
+    phyMode: sp.phyMode,
+    rssi: Number(sp.rssi),
+    signalStrength: Number(sp.signalStrength),
+    channel: Number(sp.channel),
+    band: Number(sp.band),
+    txRate: Number(sp.txRate),
+    channelWidth: Number(sp.channelWidth),
+  };
+  // console.log(`Final mapping: ${JSON.stringify(result, null, 2)}`);
+
+  return result;
 }
