@@ -96,8 +96,7 @@ export const getDefaultWifiNetwork = (): WifiResults => {
     txRate: 0,
     phyMode: "",
     security: "",
-    // v4router: "",
-    // v6router: "",
+    active: false,
   };
 };
 

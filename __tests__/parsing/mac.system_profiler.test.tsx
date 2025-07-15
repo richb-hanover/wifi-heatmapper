@@ -15,7 +15,7 @@ test("Parsing macOS 10.15.7 output", () => {
   );
   const results = getCandidateSSIDs(profiler_output, "en1");
 
-  expect(results.length).toEqual(17);
+  expect(results.length).toEqual(18);
 
   expect(results[0]).toStrictEqual({
     ssid: "SSID-10",
@@ -28,6 +28,7 @@ test("Parsing macOS 10.15.7 output", () => {
     band: 5,
     txRate: 0, // candidates don't give txRate
     channelWidth: 0, // macOS 10.15.7 doesn't supply channel width
+    active: false, // not the one that's in service now
   });
 
   // const curSSID = getCurrentSSID(profiler_output, "en1");
@@ -55,7 +56,7 @@ test("Parsing macOS 15.5 output", () => {
 
   // console.log(`Test routine shows: ${JSON.stringify(results[0], null, 2)}`);
 
-  expect(results.length).toEqual(1);
+  expect(results.length).toEqual(2);
 
   expect(results[0]).toStrictEqual({
     band: 2.4,
@@ -68,6 +69,7 @@ test("Parsing macOS 15.5 output", () => {
     signalStrength: 100,
     ssid: "SSID-2",
     txRate: 0,
+    active: false,
   });
   // console.log(`15.5.json: ${JSON.stringify(results[0])}`);
 
@@ -125,7 +127,7 @@ test("Parsing macOS 12.7.2 output", () => {
   );
   const results = getCandidateSSIDs(profiler_output, "en0");
 
-  expect(results.length).toEqual(3);
+  expect(results.length).toEqual(4);
 
   expect(results[0]).toStrictEqual({
     ssid: "SSID-3",
@@ -138,6 +140,7 @@ test("Parsing macOS 12.7.2 output", () => {
     band: 5,
     txRate: 0, // candidates don't give txRate
     channelWidth: 0, // macOS 10.15.7 doesn't supply channel width
+    active: false,
   });
 
   // const curSSID = getCurrentSSID(profiler_output, "en1");

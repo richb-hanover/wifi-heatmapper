@@ -9,7 +9,7 @@
  * * cancelMeasurement (maybe)
  */
 import type { SSEMessageType } from "@/app/api/events/route";
-import { SurveyResult } from "./types";
+import { SurveyResult, WifiResults } from "./types";
 
 const SSE_KEY = "__sseSend__";
 const CANCEL_KEY = "__sseFlag__";
@@ -71,10 +71,10 @@ export function getSurveyResults(): SurveyResult {
 
 // === Global copy of the current SSID ===
 
-export function setSSID(value: string | null) {
+export function setSSID(value: WifiResults | null) {
   (globalThis as any)[SSID_KEY] = value;
 }
 
-export function getSSID(): string | null {
+export function getSSID(): WifiResults | null {
   return (globalThis as any)[SSID_KEY];
 }

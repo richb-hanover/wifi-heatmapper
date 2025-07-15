@@ -20,9 +20,8 @@ export interface WifiResults {
   phyMode: string;
   channelWidth: number;
   band: number; // frequency band - 2.4 or 5 (GHz)
+  active: boolean; // true if it's the SSID that's found to be current selection
   // frequency: number; // exact frequency (as number) - xxxx GHz
-  // v4router: string; // v4router (and v6router) unlikely to be useful
-  // v6router: string; // if there are extenders/dumb APs
 }
 
 /**
@@ -167,7 +166,7 @@ export interface WifiActions {
   findBestWifi(settings: PartialHeatmapSettings): Promise<WifiScanResults>; // return sorted list of nearby SSIDs
   setWifi(
     settings: PartialHeatmapSettings,
-    ssid: string,
+    bestSSID: WifiResults, // the results with the strongest signal strength
   ): Promise<WifiScanResults>; // associate with the named ssid
   getWifi(settings: PartialHeatmapSettings): Promise<WifiScanResults>; // the the current values
 }

@@ -64,7 +64,7 @@ as needed.
 
 * **preflightSettings()** - _same_
 * **checkIperfServer()** - _same_
-* **scanForSSIDs()** - Survey the wifi, and
+* **findBestWifi()** - Survey the wifi, and
   return an array of WifiResults, sorted
   by signalStrength along with a status of:
   * "" - first item is best
@@ -72,14 +72,45 @@ as needed.
   * "Can't connect..."
   * (maybe) "Current SSID (xxx) is weak"
   * ... etc. 
-* **connectToWifi(SSID)** - associate with the named
+* **setWifi(SSID)** - associate with the named
   SSID, return the WifiResults and a status string.
   May need to "delay" until connection comes back.
   (maybe waiting 'til txRate is non-zero as before).
-* **getCurrentWifi()** - return WifiResults and status string
+* **getWifi()** - return WifiResults and status string
 * **getRecentSSIDs()** - (Optional) Ask the OS for
   a list of SSIDs that have recently been used.
   (This could be used to exclude strong but un-useful SSIDs,
   such as a nearby printer, heat pump, or refrigerator.)
 * ~~**restartWifi()** - _deprecated_~~
 * ~~**scanWifi()** - _deprecated_~~
+
+## Debugging the new SSID selection process
+
+The `findBestWifi()` function returns a list of all the
+SSIDs "in the environment" with their signal strengths
+and other information.
+The desired behavior of **wifi-heatmapper**
+is to associate with an SSID with strongest signal
+that is "usable", then measure from there.
+"Usable" may be affected by whether the laptop can
+authenticate to that SSID: a strong signal from a
+IoT device (printer, toaster, light bulb) won't help.
+
+To verify the proper selection, **wifi-heatmapper** should
+produce a site survey that lists:
+
+1. Current SSID (and its info)
+2. Other SSIDs in the environment
+3. Chosen SSID (the one with the best signal strength)
+4. Results of that choice (did selection actually work?)
+
+`iperfRunner.ts` should keep a global _WifiResults_ that shows the results of the current environment, or null (#1 above).
+It should also log important elements from the _WifiResults_
+including: active, channel, channelWidth, signalStrength (%), bssid,
+and ssid.
+
+`findBestWifi()` returns the list of "nearby SSIDs",
+marking the current "active" SSID (if it's there).
+
+The reports should log: Date/Time, number of active/local SSIDs,
+and information about the SSIDs that have a signal strength.

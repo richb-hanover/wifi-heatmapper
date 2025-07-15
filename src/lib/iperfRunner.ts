@@ -8,11 +8,11 @@ import {
 } from "./types";
 // import { scanWifi, blinkWifi } from "./wifiScanner";
 import { execAsync } from "./server-utils";
-import { getCancelFlag, sendSSEMessage, getSSID } from "./server-globals";
+import { getCancelFlag, sendSSEMessage } from "./server-globals";
 import { percentageToRssi, toMbps } from "./utils";
 import { SSEMessageType } from "@/app/api/events/route";
 import { getLogger } from "./logger";
-import { createWifiInfo } from "./wifiScanner";
+import { createWifiInfo, logScanResults } from "./wifiScanner";
 
 type TestType = "TCP" | "UDP";
 type TestDirection = "Up" | "Down";
@@ -168,22 +168,25 @@ export async function runSurveyTests(
       return { iperfData: null, wifiData: null, status: results.reason };
     }
 
+    await logScanResults(results);
+    // we now know the SSID to use - the strongest signal is the first result returned
+    const theSSID = results.SSIDs[0].ssid;
+    displayStates.header = `Measuring Wi-Fi (${theSSID})`;
+    sendSSEMessage(getUpdatedMessage());
+
     try {
-      const wifiStatus = wifiInfo.setWifi(settings, results.SSIDs[0].ssid);
-      console.log(`wifiStatus: ${JSON.stringify(wifiStatus)}`);
+      const wifiStatus = await wifiInfo.setWifi(settings, results.SSIDs[0]);
+      console.log(`wifiInfo.setWifi returns: ${JSON.stringify(wifiStatus)}`);
     } catch (err) {
+      console.log(`wifiInfo.setWifi error: ${JSON.stringify(err)}`);
+
       return {
         iperfData: null,
         wifiData: null,
         status: `wifiStatus.reason: ${err}`,
       };
     }
-    let theSSID = getSSID();
-    if (theSSID != null) {
-      theSSID = `(${theSSID})`;
-    }
-    displayStates.header = `Measuring Wi-Fi ${theSSID}`;
-    sendSSEMessage(getUpdatedMessage());
+
     while (attempts < maxRetries && !iperfData) {
       try {
         const server = settings.iperfServerAdrs;

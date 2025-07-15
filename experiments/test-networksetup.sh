@@ -29,7 +29,14 @@
 # sleep 1
 
 echo "=== system_profiler ==="
-system_profiler -json SPAirPortDataType > junk.json
+# system_profiler -json SPAirPortDataType > junk.json
+system_profiler -json SPAirPortDataType | \
+jq '.. | objects | select(has("spairport_current_network_information")) | .spairport_current_network_information' 
+# jq '.. | objects | select(has("spairport_airport_other_local_wireless_networks")) | .spairport_airport_other_local_wireless_networks' 
+
+system_profiler -json SPAirPortDataType | \
+jq '.. | objects | select(has("spairport_airport_other_local_wireless_networks")) | .spairport_airport_other_local_wireless_networks' 
+
 echo "=== join $1 ==="
 networksetup -setairportnetwork en0 "$1"
 echo "=== pinging ==="

@@ -9,7 +9,7 @@ import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
 import { rssiToPercentage } from "./utils";
 import { isValidMacAddress, normalizeMacAddress } from "./utils";
-// import { loopUntilCondition } from "./wifiScanner";
+import { logSPResults } from "./wifiScanner";
 import { setSSID, getSSID } from "./server-globals";
 
 const logger = getLogger("wifi-macOS");
@@ -126,8 +126,10 @@ export class MacOSSystemInfo implements WifiActions {
       jsonResults = JSON.parse(result.stdout);
 
       // jsonResults holds the Wifi environment from system_profiler
+      logSPResults(jsonResults);
       response.SSIDs = getCandidateSSIDs(jsonResults, currentIf);
-      console.log(`Local SSIDs: ${JSON.stringify(response.SSIDs, null, 2)}`);
+      // console.log(`Local SSIDs: ${response.SSIDs.length}`);
+      // console.log(`Local SSIDs: ${JSON.stringify(response.SSIDs, null, 2)}`);
     } catch (err) {
       response.reason = `Cannot get wifi info: ${err}"`;
     }
@@ -139,12 +141,12 @@ export class MacOSSystemInfo implements WifiActions {
    * setWifi(settings, newSSID) - associate with the named SSID
    *
    * @param settings - same as always
-   * @param ssid - new SSID to associate with
+   * @param wifiSettings - new SSID to associate with
    * @returns WifiScanResults - empty array of results, only the reason
    */
   async setWifi(
     settings: PartialHeatmapSettings,
-    ssid: string,
+    wifiSettings: WifiResults,
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
@@ -153,18 +155,24 @@ export class MacOSSystemInfo implements WifiActions {
     let reason: string = "";
     let netInfo: WifiResults;
 
+    if (!wifiSettings) {
+      response.reason = `setWifi error: Empty SSID "${JSON.stringify(wifiSettings)}`;
+      return response;
+    }
     try {
-      // save the global copy of the SSID
-      setSSID(ssid);
+      // save the global copy of the WifiResults
+      setSSID(wifiSettings);
 
-      console.log(`Setting Wifi SSID on interface ${this.nameOfWifi}: ${ssid}`);
+      console.log(
+        `Setting Wifi SSID on interface ${this.nameOfWifi}: ${wifiSettings.ssid}`,
+      );
       try {
         await execAsync(
-          `networksetup -setairportnetwork ${this.nameOfWifi} FOOBAR`,
+          `networksetup -setairportnetwork ${this.nameOfWifi} ${wifiSettings.ssid}`,
         );
       } catch (err) {
         setSSID(null);
-        response.reason = `Cannot connect to SSID ${ssid}: ${err}`;
+        response.reason = `Cannot connect to SSID ${wifiSettings.ssid}: ${err}`;
         console.log(`${response.reason}`);
         return response;
       }
@@ -180,13 +188,13 @@ export class MacOSSystemInfo implements WifiActions {
         await delay(200);
       }
       if (Date.now() >= start + timeDelay) {
-        reason = `Timed out attempting to set Wifi to ${ssid}`;
+        reason = `Timed out attempting to set Wifi to ${wifiSettings}`;
       }
     } catch (err) {
-      reason = `Can't set wifi to ${ssid}: ${err}`;
+      reason = `Can't set wifi to ${wifiSettings}: ${err}`;
     }
     response.reason = reason;
-    console.log(`setWifi return: ${JSON.stringify(response)}`);
+    // console.log(`setWifi return: ${JSON.stringify(response)}`);
     return response;
   }
 
@@ -202,10 +210,10 @@ export class MacOSSystemInfo implements WifiActions {
     };
     try {
       const netInfo: WifiResults = await this.getWdutilResults(settings);
-      const realSSID = getSSID(); // SSID we tried to set
+      const wifiResults = getSSID(); // SSID we tried to set
       // if the returned SSID contains "redacted" use the "global SSID"
-      if (realSSID != null && netInfo.ssid.includes("redacted")) {
-        netInfo.ssid = realSSID;
+      if (wifiResults != null && netInfo.ssid.includes("redacted")) {
+        netInfo.ssid = wifiResults.ssid;
       }
       response.SSIDs.push(netInfo);
     } catch (err) {
@@ -449,7 +457,7 @@ export function parseWdutilOutput(output: string): WifiResults {
  */
 
 export const getCandidateSSIDs = (
-  data: SPAirPortRoot,
+  spData: SPAirPortRoot,
   currentInterface: string,
 ): WifiResults[] => {
   // sort by the signalStrength value (may be null)
@@ -471,15 +479,49 @@ export const getCandidateSSIDs = (
   }
 
   // pluck out the local candidate SSIDs from the system_profiler output
-  const spCandidates =
-    data.SPAirPortDataType.flatMap(
+  const localCandidates = (
+    spData.SPAirPortDataType.flatMap(
       (entry) => entry.spairport_airport_interfaces || [],
     ).find((iface) => iface._name === currentInterface)
-      ?.spairport_airport_other_local_wireless_networks ?? [];
+      ?.spairport_airport_other_local_wireless_networks ?? []
+  ).map((network) => ({
+    ...network,
+    active: false,
+  }));
+  const localCount = localCandidates.length;
+  // const localCandidates =
+  //   spData.SPAirPortDataType.flatMap(
+  //     (entry) => entry.spairport_airport_interfaces || [],
+  //   ).find((iface) => iface._name === currentInterface)
+  //     ?.spairport_airport_other_local_wireless_networks ?? [];
 
+  // Get the current SSID (if any)
+  const current = spData.SPAirPortDataType.flatMap(
+    (entry) => entry.spairport_airport_interfaces || [],
+  ).find(
+    (iface) => iface._name === currentInterface,
+  )?.spairport_current_network_information;
+  // add active: true if there is an SSID
+  const fullCurrent = current ? { ...current, active: true } : undefined;
+
+  // const current = spData.SPAirPortDataType.flatMap(
+  //   (entry) => entry.spairport_airport_interfaces || [],
+  // ).find(
+  //   (iface) => iface._name === currentInterface,
+  // )?.spairport_current_network_information;
+
+  let currentCount = 0;
+  if (fullCurrent) {
+    // const currentPlus = { ...current, inUse: true };
+    currentCount = 1;
+    localCandidates.push(fullCurrent);
+  }
   // convert each to a WifiResults
-  const candidates = spCandidates.map((item) => convertToWifiResults(item));
+  const candidates = localCandidates.map((item) => convertToWifiResults(item));
 
+  // console.log(
+  //   `SSIDs: ${localCount} ${currentCount} \n${JSON.stringify(candidates, null, 2)}`,
+  // );
   // eliminate any RSSI=0 (no reading), then sort by RSSI
   const nonZeroCandidates = candidates.filter((item) => item.rssi != 0);
   const sortedCandidates = nonZeroCandidates.sort(bySignalStrength);
@@ -661,6 +703,7 @@ function convertToWifiResults(obj: object): WifiResults {
     band: Number(sp.band),
     txRate: Number(sp.txRate),
     channelWidth: Number(sp.channelWidth),
+    active: Boolean(sp.active),
   };
   // console.log(`Final mapping: ${JSON.stringify(result, null, 2)}`);
 
