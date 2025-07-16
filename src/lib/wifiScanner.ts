@@ -1,12 +1,6 @@
 "use server";
 import os from "os";
-import {
-  WifiActions,
-  WifiScanResults,
-  WifiResults,
-  SPAirPortRoot,
-  AirportNetwork,
-} from "./types";
+import { WifiActions, WifiScanResults, WifiResults } from "./types";
 import { MacOSSystemInfo } from "./wifiScanner-macos";
 import { execAsync, delay, runDetached } from "./server-utils";
 import { getLogger } from "./logger";
@@ -81,34 +75,11 @@ export async function loopUntilCondition(
 export async function logScanResults(results: WifiScanResults): Promise<void> {
   logger.info(`===== WifiResults =====`);
   results.SSIDs.forEach(logResult);
-  logger.info(`==============`);
+  // logger.info(`==============`);
 }
 
 export async function logResult(result: WifiResults) {
   logger.info(
     `active: ${result.active}; signalStrength: ${result.signalStrength}; channel: ${result.channel}; ssid: ${result.ssid}`,
-  );
-}
-
-export async function logSPResults(results: SPAirPortRoot): Promise<void> {
-  logger.info(`===== system_profiler results =====`);
-  logger.info(`Nearby SSIDs`);
-  const locals =
-    results.SPAirPortDataType[0].spairport_airport_interfaces[0]
-      .spairport_airport_other_local_wireless_networks;
-  locals.forEach(logSPResult);
-  logger.info(`Current`);
-  const current =
-    results.SPAirPortDataType[0].spairport_airport_interfaces[0]
-      .spairport_current_network_information;
-  if (current != null) {
-    logSPResult(current);
-  }
-  logger.info(`==============`);
-}
-
-export async function logSPResult(result: AirportNetwork) {
-  logger.info(
-    `signalStrength: ${result.spairport_signal_noise}; channel: ${result.spairport_network_channel}; ssid: ${result._name}`,
   );
 }

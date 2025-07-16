@@ -6,6 +6,15 @@ import { expect, test } from "vitest";
 import fs from "fs";
 import path from "path";
 import { getCandidateSSIDs } from "../../src/lib/wifiScanner-macos";
+import { WifiResults } from "../../src/lib/types";
+
+function checkEachItem(item: WifiResults) {
+  // console.log(`checkEachItem: ${JSON.stringify(item)}`);
+  expect(item.rssi).not.toBe("");
+  expect(item.signalStrength).not.toBe("");
+  expect(item.channelWidth).not.toBe("");
+  expect(item.ssid).toContain("SSID-");
+}
 
 // ========= macOS 10.15.7 ===============
 
@@ -14,6 +23,8 @@ test("Parsing macOS 10.15.7 output", () => {
     fs.readFileSync(path.join(__dirname, "../data/sp_10.15.7.json"), "utf-8"),
   );
   const results = getCandidateSSIDs(profiler_output, "en1");
+
+  // console.log(`Test routine shows: ${JSON.stringify(results[0], null, 2)}`);
 
   expect(results.length).toEqual(18);
 
@@ -27,24 +38,11 @@ test("Parsing macOS 10.15.7 output", () => {
     signalStrength: 82,
     band: 5,
     txRate: 0, // candidates don't give txRate
-    channelWidth: 0, // macOS 10.15.7 doesn't supply channel width
+    channelWidth: 20,
     active: false, // not the one that's in service now
   });
 
-  // const curSSID = getCurrentSSID(profiler_output, "en1");
-  // expect(curSSID).toStrictEqual({
-  //   ssid: "SSID-5",
-  //   phyMode: "802.11n",
-  //   txRate: 145,
-  //   channel: 6,
-  //   channelWidth: 0, // macOS 10.15.7 doesn't supply channel width
-  //   band: 2.4,
-  //   bssid: "fe:dc:ba:09:87:65",
-  //   security: "None",
-  //   rssi: -55,
-  //   signalStrength: 75,
-  // });
-  // console.log(`Test routine shows: ${JSON.stringify(results, null, 2)}`);
+  results.forEach(checkEachItem);
 });
 
 // ========= macOS 15.5 ===============
@@ -54,9 +52,7 @@ test("Parsing macOS 15.5 output", () => {
   );
   const results = getCandidateSSIDs(profiler_output, "en0");
 
-  // console.log(`Test routine shows: ${JSON.stringify(results[0], null, 2)}`);
-
-  expect(results.length).toEqual(2);
+  expect(results.length).toEqual(6);
 
   expect(results[0]).toStrictEqual({
     band: 2.4,
@@ -71,22 +67,8 @@ test("Parsing macOS 15.5 output", () => {
     txRate: 0,
     active: false,
   });
-  // console.log(`15.5.json: ${JSON.stringify(results[0])}`);
 
-  // const curSSID = getCurrentSSID(profiler_output, "en0");
-  // expect(curSSID).toStrictEqual({
-  //   ssid: "SSID-2",
-  //   phyMode: "802.11n",
-  //   txRate: 144,
-  //   channel: 6,
-  //   channelWidth: 20,
-  //   band: 2.4,
-  //   bssid: "",
-  //   security: "None",
-  //   rssi: -40,
-  //   signalStrength: 100,
-  // });
-  // console.log(`Test routine shows: ${JSON.stringify(curSSID, null, 2)}`);
+  results.forEach(checkEachItem);
 });
 
 // ========= macOS 15.5 - wifi disabled ===============
@@ -139,22 +121,9 @@ test("Parsing macOS 12.7.2 output", () => {
     signalStrength: 55,
     band: 5,
     txRate: 0, // candidates don't give txRate
-    channelWidth: 0, // macOS 10.15.7 doesn't supply channel width
+    channelWidth: 20,
     active: false,
   });
 
-  // const curSSID = getCurrentSSID(profiler_output, "en1");
-  // expect(curSSID).toStrictEqual({
-  //   ssid: "SSID-5",
-  //   phyMode: "802.11n",
-  //   txRate: 145,
-  //   channel: 6,
-  //   channelWidth: 0, // macOS 10.15.7 doesn't supply channel width
-  //   band: 2.4,
-  //   bssid: "fe:dc:ba:09:87:65",
-  //   security: "None",
-  //   rssi: -55,
-  //   signalStrength: 75,
-  // });
-  // console.log(`Test routine shows: ${JSON.stringify(results, null, 2)}`);
+  results.forEach(checkEachItem);
 });

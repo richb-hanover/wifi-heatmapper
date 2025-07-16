@@ -200,6 +200,25 @@ This table shows readings both ways: RSSI (dBm) <-> Percentage
 | 90% | -46dBm |  |  -46dBm | 90% |   |
 | 100% | -40dBm |  |  -40dBm | 100% | |
 
+## Inferring Channel Width
+
+`system_profiler` macOS 10.15 and macOS 12 can return these two fields:
+
+*   `spairport_network_channel`: `"149,+1"` (or similar)
+*   `spairport_phymode`: `"802.11n"` or `"802.11ac"`
+
+You can infer channel width as follows:
+
+| `phymode` | `channel` suffix | Inferred Width |
+| --- | --- | --- |
+| `"802.11a"` | _none_ | 20 MHz |
+| `"802.11g"` | _none_ | 20 MHz |
+| `"802.11n"` | `+1` or `-1` | 40 MHz (HT) |
+| `"802.11ac"` | `±1` or `±2` | 80 MHz (VHT) |
+| `"802.11ax"` | `±1`, `±2`, ... | 80+ MHz (HE) |
+| _(any)_ | _no suffix_ | 20 MHz |
+
+
 ## Localization
 
 The Windows `netsh wlan show interfaces` code is localized for the

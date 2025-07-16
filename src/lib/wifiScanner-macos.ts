@@ -9,7 +9,6 @@ import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
 import { rssiToPercentage } from "./utils";
 import { isValidMacAddress, normalizeMacAddress } from "./utils";
-import { logSPResults } from "./wifiScanner";
 import { setSSID, getSSID } from "./server-globals";
 
 const logger = getLogger("wifi-macOS");
@@ -126,7 +125,6 @@ export class MacOSSystemInfo implements WifiActions {
       jsonResults = JSON.parse(result.stdout);
 
       // jsonResults holds the Wifi environment from system_profiler
-      logSPResults(jsonResults);
       response.SSIDs = getCandidateSSIDs(jsonResults, currentIf);
       // console.log(`Local SSIDs: ${response.SSIDs.length}`);
       // console.log(`Local SSIDs: ${JSON.stringify(response.SSIDs, null, 2)}`);
@@ -173,14 +171,14 @@ export class MacOSSystemInfo implements WifiActions {
       } catch (err) {
         setSSID(null);
         response.reason = `Cannot connect to SSID ${wifiSettings.ssid}: ${err}`;
-        console.log(`${response.reason}`);
+        // console.log(`${response.reason}`);
         return response;
       }
       const start = Date.now();
       const timeDelay = 20000; // 20 seconds
       while (start + timeDelay > Date.now()) {
         netInfo = await this.getWdutilResults(settings);
-        console.log(`wdutil results: txRate is ${netInfo.txRate}`);
+        // console.log(`wdutil results: txRate is ${netInfo.txRate}`);
         if (netInfo.txRate != 0) {
           response.SSIDs.push(netInfo);
           break;
@@ -488,12 +486,7 @@ export const getCandidateSSIDs = (
     ...network,
     active: false,
   }));
-  const localCount = localCandidates.length;
-  // const localCandidates =
-  //   spData.SPAirPortDataType.flatMap(
-  //     (entry) => entry.spairport_airport_interfaces || [],
-  //   ).find((iface) => iface._name === currentInterface)
-  //     ?.spairport_airport_other_local_wireless_networks ?? [];
+  // const localCount = localCandidates.length;
 
   // Get the current SSID (if any)
   const current = spData.SPAirPortDataType.flatMap(
@@ -504,18 +497,14 @@ export const getCandidateSSIDs = (
   // add active: true if there is an SSID
   const fullCurrent = current ? { ...current, active: true } : undefined;
 
-  // const current = spData.SPAirPortDataType.flatMap(
-  //   (entry) => entry.spairport_airport_interfaces || [],
-  // ).find(
-  //   (iface) => iface._name === currentInterface,
-  // )?.spairport_current_network_information;
-
-  let currentCount = 0;
+  // let currentCount = 0;
   if (fullCurrent) {
     // const currentPlus = { ...current, inUse: true };
-    currentCount = 1;
+    // currentCount = 1;
     localCandidates.push(fullCurrent);
   }
+  // logSPResults(localCandidates);
+
   // convert each to a WifiResults
   const candidates = localCandidates.map((item) => convertToWifiResults(item));
 
@@ -591,11 +580,18 @@ const spToWifiResultMap: SPToWifiMap = {
   // spairport_network_type: "spairport_network_type_station",
 };
 
-function mapSPToWifiResult(
-  aObject: Record<string, any>,
+/**
+ * mapSPToWifiResults - take the values from system_profiler
+ *   and return the corresponding values placed in a WifiResults
+ * @param aObject values from a system_profiler AirportNetwork
+ * @param aToBMap a mapping function from system_profiler prop names to WifiResults
+ * @returns WifiResults, but with all values as a string
+ */
+function mapSPToWifiResults(
+  aObject: Record<string, any>, // actually it's an AirportNetwork
   aToBMap: Record<string, MappingSpec>,
 ): Record<string, string> {
-  const bObject: Record<string, string> = {};
+  const bObject: Record<string, string> = {}; // a
 
   for (const [aKey, mapping] of Object.entries(aToBMap)) {
     let bKey: string;
@@ -623,8 +619,9 @@ function mapSPToWifiResult(
       Object.assign(bObject, result);
     }
   }
+  return postProcessWifiResults(bObject); // return final object as STRINGs
 
-  return bObject;
+  // return bObject;
 }
 
 const SECURITY_LABELS: Record<string, string> = {
@@ -640,30 +637,49 @@ const SECURITY_LABELS: Record<string, string> = {
 };
 
 /**
- * parseChannelInfo - parse "6 (2GHz, 20MHz)", return "6" and "20"
- *  or parse "6" and return "6" and ""
- * @param input
- * @returns
+ * parseChannelInfo - parse channel: from system_profiler
+ * @param input - string received from system_profiler
+ * @returns channel, channelWidth, channelWidthIndicator,
+ *
+ * All return values are STRINGS
+ * - "6 (2GHz, 20MHz)", return "6", "20", "" (15.5)
+ * - 6 (a number), return "6", "20", "",  (10.15)
+ * - "149,+1", return "149", "", "+1"  (10.15)
+ *
+ * channelWidthIndicator is a string that is used
+ *  along with the phyMode to determine channelWidth
+ *  See Theory of Operation
  */
 function parseChannelInfo(input: string): {
   channel: string;
   channelWidth: string;
-  band: string;
+  channelWidthIndicator: string;
 } {
+  // if a bare number, macOS 10.15 style data, default (20MHz) channel width
   if (typeof input === "number") {
-    const bareChannel = input;
     return {
       channel: String(input),
-      channelWidth: "",
-      band: parseInt(bareChannel) < 14 ? "2.4" : "5",
+      channelWidth: "20", // default channel width
+      channelWidthIndicator: "", // no further processing needed
     };
   }
+  // look for "+" - macOS 10.15 style channel, with width indication
+  if (input.includes("+") || input.includes("-")) {
+    const chMatch = input.match(/(\d+),([+-\d+])/);
+    // console.log(`Found + in channel ${input}: ${chMatch[1]}, ${chMatch[2]}`);
+    return {
+      channel: chMatch?.[1] ?? "",
+      channelWidth: "", // determine this in postProcessWifiResults()
+      channelWidthIndicator: chMatch?.[2] ?? "", // ditto
+    };
+  }
+  // parse out "6 (2GHz, 20MHz)"
   const match = input.match(/^(\d+)(?:\s+\([^(,]+,\s*(\d+)MHz\))?$/);
   const channel = match?.[1] ?? "";
   return {
     channel: channel,
     channelWidth: match?.[2] ?? "",
-    band: parseInt(channel) < 14 ? "2.4" : "5",
+    channelWidthIndicator: "",
   };
 }
 
@@ -690,7 +706,7 @@ function parseRSSI(input: string): {
  * Then convert the proper values back to numbers
  */
 function convertToWifiResults(obj: object): WifiResults {
-  const sp = mapSPToWifiResult(obj, spToWifiResultMap);
+  const sp = mapSPToWifiResults(obj, spToWifiResultMap);
   // console.log(`mapped to WifiResults: ${JSON.stringify(sp, null, 2)}`);
   const result: WifiResults = {
     ssid: sp.ssid,
@@ -709,3 +725,49 @@ function convertToWifiResults(obj: object): WifiResults {
 
   return result;
 }
+
+/**
+ * postProcessWifiResults - examine channel and channelWidthIndicator
+ *   to return proper band and channelWidth
+ * @param obj almost complete WifiResults
+ * @returns WifiResults (but with values as strings)
+ */
+function postProcessWifiResults(
+  obj: Record<string, string>,
+): Record<string, string> {
+  obj.band = parseInt(obj.channel) < 14 ? "2.4" : "5";
+  obj.channelWidth = inferChannelWidth(obj.channelWidthIndicator, obj.phyMode);
+  if (!obj.rssi) {
+    // console.log(`No RSSI found...`);
+    obj.rssi = "-100";
+    obj.signalStrength = "0";
+  }
+
+  return obj;
+}
+
+function inferChannelWidth(channel: string, phymode: string): string {
+  const hasOffset = channel != "";
+
+  switch (phymode) {
+    case "802.11ac":
+      return hasOffset ? "80" : "20";
+    case "802.11n":
+      return hasOffset ? "40" : "20";
+    case "802.11ax":
+      return hasOffset ? "80" : "20"; // or 160 if needed, but 80 is safer default
+    default:
+      return "20";
+  }
+}
+
+// function logSPResults(results: Record<string, string>[]): void {
+//   logger.info(`===== system_profiler results =====`);
+//   results.forEach(logSPResult);
+// }
+
+// export async function logSPResult(result: Record<string, string>) {
+//   logger.info(
+//     `active: ${result.active}; signalStrength: ${result.spairport_signal_noise}; channel: ${result.spairport_network_channel}; ssid: ${result._name}`,
+//   );
+// }

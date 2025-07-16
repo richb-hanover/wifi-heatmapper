@@ -172,7 +172,7 @@
          "spairport_caps_airdrop" : "spairport_caps_supported",
          "spairport_caps_autounlock" : "spairport_caps_supported",
          "spairport_current_network_information" : {
-           "_name" : "SSID-5",
+           "_name" : "SSID-6",
            "spairport_network_bssid" : "fe:dc:ba:09:87:65",
            "spairport_network_channel" : 6,
            "spairport_network_country_code" : "US",

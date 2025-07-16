@@ -36,7 +36,7 @@
           "spairport_caps_autounlock" : "spairport_caps_supported",
           "spairport_caps_wow" : "spairport_caps_supported",
           "spairport_current_network_information" : {
-            "_name" : "iPhone 28",
+            "_name" : "SSID-4",
             "spairport_network_channel" : 149,
             "spairport_network_country_code" : "X0",
             "spairport_network_mcs" : 7,
