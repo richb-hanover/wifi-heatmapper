@@ -1,9 +1,9 @@
 "use server";
 import os from "os";
 import { WifiActions, WifiScanResults, WifiResults } from "./types";
-import { MacOSSystemInfo } from "./wifiScanner-macos";
 import { execAsync, delay, runDetached } from "./server-utils";
 import { getLogger } from "./logger";
+import { MacOSWifiActions } from "./wifiScanner-macos";
 
 /**
  * wifiScanner.ts is a factory module that returns the proper set of
@@ -16,9 +16,9 @@ export async function createWifiInfo(): Promise<WifiActions> {
   const platform = os.platform();
   switch (platform) {
     case "darwin":
-      return new MacOSSystemInfo();
+      return new MacOSWifiActions();
     // case "win32":
-    //   return new WindowsSystemInfo();
+    //   return new WindowsSystemActions();
     // case "linux":
     //   return new LinuxSystemInfo();
     default:

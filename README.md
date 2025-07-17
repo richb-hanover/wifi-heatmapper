@@ -152,6 +152,11 @@ See the note in the Dockerfile for more information._
 
 use `-v` options if you want to save db + floorplanpicture to the _datas_ folder
 
+## Current Status
+
+This is version 0.4.0 of **wifi-heatmapper**.
+See the [CHANGELOG](./CHANGELOG.md) for details.
+
 ## History
 
 This project is a WiFi heatmapper solution for macOS/Windows/Linux, inspired by

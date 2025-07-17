@@ -4,19 +4,27 @@ _This section follows the precepts of [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
-* "Blink the Wi-Fi" - turn off the wifi, then turn it on to allow the device
-  to associate with the strongest access point (not the previous one)
-* The platform-specific code must turn off/on the wifi,
-  wait to re-associate and become fully connected
+### Major features
+
+* **wifi-heatmapper** now scans the Wifi environment and
+  measures the strongest SSID that the laptop has previously associated with.
+  (Earlier versions always used the same SSID, even if the laptop
+  has moved away from the original access point close to a stronger one.)
+* Improved messages to describe the measurement process.
+
+### Other features
+
 * Switch to client polling for results so that client-server communication
   is not disrupted by turning off wifi
-* Coalesce all pre-measurement tests into preflightSettings()
-* Keep a separate test for iperf3 server available: it's OK to test the 
-  wifi signal strength even if the iperf3 server isn't available
+* Create platform-specific classes that provide an API to the
+  Wifi-detection facilities.
+  This coalesced all pre-measurement tests into preflightSettings()
+  and creates a separate "iperf3 server available" test.
+  (It's OK to test the
+  wifi signal strength even if the iperf3 server isn't available.)
 * Refactor error detection/flow to provide more meaningful messages
 * Modify Test duration field to ignore non-numeric values (gets reset to zero)
 * Rename many definitions in `types.ts` to fit their actual function
-* Add (but don't use) pref's for v4router and v6router.
 * Editorial pass with spellcheck on all .md files
 
 ---

@@ -6,26 +6,20 @@ Random observations and questions that arise at the start of the project
 
 Ideas for making the program better - in no particular order:
 
-* Export `wifi-heatmapper-imagename` and the image itself to a saved file so it can be loaded later
+* Scale the size of the surveyPoint dot to the image, to prevent
+  dots from appearing as tiny dots on a large image.
 * A click on the `Floorplan` pane should immediately display an
   empty dot (no color) to indicate that's where the click was.
   (Improves behavior on a touch-screen - you can see where you clicked.)
-* Scale the size of the surveyPoint dot to the image, to prevent
-  dots from appearing as tiny dots on a large image.
+* Export `wifi-heatmapper-imagename` and the image itself to a saved file so it can be loaded later
 * (Maybe) During the FloorPlan measurement process, display the wifi signal
   strength heatmap underneath or as a separate floating window.
   This helps the user determine if they need
   more measurements (finer granularity) for the map.
 * Bundle this into an installable (electron?) app so it can be easily installed on a tablet. Might also allow the app to get Localization permissions on macOS 15 and above so it could show the SSID/AP Name, etc.
-* "Blink"" WiFi off and then back on before measurement to improve the values.
-  This might give the Wi-Fi driver a chance to select a better Wi-Fi SSID
-  Use case: you have used SSID-A and SSID-B in the past. You start the test near SSID-A, but subsequent survey points get farther and farther away - and closer to
-  SSID-B. Since your device tends to select the strongest signal, "blinking" the Wi-FI
-  might choose SSID-B automatically.
-  (The current behavior is that the measured signal level gets lower and lower until
-  manually switching to SSID-B.)
-* This behavior would probably require some kind of "Use this SSID" / "Use best SSID"
-  option, since blinking the Wi-Fi frequently adds 10-12 seconds to each measurement.
+* If the "scanning for wifi channels" takes too long, add some kind of
+  "Use this SSID" / "Use best SSID" setting
+  since the Wi-Fi scan frequently adds 10-12 seconds to each measurement.
 
 ## Bugs
 
@@ -135,3 +129,11 @@ Ideas for making the program better - in no particular order:
 * Test code from wifiScanner_windows should be moved to a separate \_test.ts file [DONE]
 * Make the app more user-friendly and informative (step by step wizard for the measurements) [DONE for now]
 * Add leaflet to make the maps interactive [NOT FOR NOW]
+* _No longer needed: scanning Wi-Fi environment to see "local SSIDs".
+  "Blink"" WiFi off and then back on before measurement to improve the values.
+  This might give the Wi-Fi driver a chance to select a better Wi-Fi SSID
+  Use case: you have used SSID-A and SSID-B in the past. You start the test near SSID-A, but subsequent survey points get farther and farther away - and closer to
+  SSID-B. Since your device tends to select the strongest signal, "blinking" the Wi-FI
+  might choose SSID-B automatically.
+  (The current behavior is that the measured signal level gets lower and lower until
+  manually switching to SSID-B.)

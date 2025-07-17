@@ -13,7 +13,7 @@ import { setSSID, getSSID } from "./server-globals";
 
 const logger = getLogger("wifi-macOS");
 
-export class MacOSSystemInfo implements WifiActions {
+export class MacOSWifiActions implements WifiActions {
   nameOfWifi: string = "";
 
   /**
@@ -503,7 +503,7 @@ export const getCandidateSSIDs = (
     // currentCount = 1;
     localCandidates.push(fullCurrent);
   }
-  // logSPResults(localCandidates);
+  logSPResults(localCandidates);
 
   // convert each to a WifiResults
   const candidates = localCandidates.map((item) => convertToWifiResults(item));
@@ -761,13 +761,13 @@ function inferChannelWidth(channel: string, phymode: string): string {
   }
 }
 
-// function logSPResults(results: Record<string, string>[]): void {
-//   logger.info(`===== system_profiler results =====`);
-//   results.forEach(logSPResult);
-// }
+function logSPResults(results: Record<string, string>[]): void {
+  logger.info(`===== system_profiler results =====`);
+  results.forEach(logSPResult);
+}
 
-// export async function logSPResult(result: Record<string, string>) {
-//   logger.info(
-//     `active: ${result.active}; signalStrength: ${result.spairport_signal_noise}; channel: ${result.spairport_network_channel}; ssid: ${result._name}`,
-//   );
-// }
+export async function logSPResult(result: Record<string, string>) {
+  logger.info(
+    `active: ${result.active}; signalStrength: ${result.spairport_signal_noise}; channel: ${result.spairport_network_channel}; ssid: ${result._name}`,
+  );
+}
