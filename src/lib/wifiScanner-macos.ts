@@ -91,7 +91,7 @@ export class MacOSWifiActions implements WifiActions {
 
   /**
    * findWifi() - find the name of the wifi interface
-   * save in an object variable
+   * save in a class variable
    * @returns name of (the first) wifi interface (string)
    */
   async findWifi(): Promise<string> {
@@ -447,31 +447,6 @@ export const getCandidateSSIDs = (
 
   return sortedCandidates;
 };
-
-// /**
-//  * getCurrentSSID(jsonResults) - get info about the current SSID
-//  * @param - Object that contains output of system_profiler for Wifi
-//  * @returns WifiResults[] sorted by signalStrength
-//  */
-
-// export const getCurrentSSID = (
-//   data: SPAirPortRoot,
-//   currentInterface: string,
-// ): WifiResults => {
-//   const current = data.SPAirPortDataType.flatMap(
-//     (entry) => entry.spairport_airport_interfaces || [],
-//   ).find(
-//     (iface) => iface._name === currentInterface,
-//   )?.spairport_current_network_information;
-
-//   if (!current) return [];
-
-//   console.log(`******** getCurrentSSID *********`);
-
-//   console.log(`Current: ${JSON.stringify(current, null, 2)}`);
-//   const result = convertToWifiResults(current);
-//   return result;
-// };
 
 /**
  * Map system_profiler values into a WifiResults object
