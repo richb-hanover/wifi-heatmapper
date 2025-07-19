@@ -4,7 +4,8 @@ import {
   WifiScanResults,
   WifiActions,
   SPAirPortRoot,
-} from "./types";import { execAsync } from "./server-utils";
+} from "./types";
+import { execAsync } from "./server-utils";
 import { getLogger } from "./logger";
 import {
   getDefaultWifiNetwork,
@@ -128,7 +129,7 @@ export class WindowsWifiActions implements WifiActions {
       jsonResults = JSON.parse(result.stdout);
 
       // jsonResults holds the Wifi environment from system_profiler
-      response.SSIDs = getCandidateSSIDs(jsonResults, currentIf);
+      // response.SSIDs = getCandidateSSIDs(jsonResults, currentIf);
       // console.log(`Local SSIDs: ${response.SSIDs.length}`);
       // console.log(`Local SSIDs: ${JSON.stringify(response.SSIDs, null, 2)}`);
     } catch (err) {
@@ -153,49 +154,6 @@ export class WindowsWifiActions implements WifiActions {
       SSIDs: [],
       reason: "",
     };
-    let reason: string = "";
-    let netInfo: WifiResults;
-
-    if (!wifiSettings) {
-      response.reason = `setWifi error: Empty SSID "${JSON.stringify(wifiSettings)}`;
-      return response;
-    }
-    try {
-      // save the global copy of the WifiResults
-      setSSID(wifiSettings);
-
-      console.log(
-        `Setting Wifi SSID on interface ${this.nameOfWifi}: ${wifiSettings.ssid}`,
-      );
-      try {
-        await execAsync(
-          `networksetup -setairportnetwork ${this.nameOfWifi} ${wifiSettings.ssid}`,
-        );
-      } catch (err) {
-        setSSID(null);
-        response.reason = `Cannot connect to SSID ${wifiSettings.ssid}: ${err}`;
-        // console.log(`${response.reason}`);
-        return response;
-      }
-      const start = Date.now();
-      const timeDelay = 20000; // 20 seconds
-      while (start + timeDelay > Date.now()) {
-        netInfo = await this.getWdutilResults(settings);
-        // console.log(`wdutil results: txRate is ${netInfo.txRate}`);
-        if (netInfo.txRate != 0) {
-          response.SSIDs.push(netInfo);
-          break;
-        }
-        await delay(200);
-      }
-      if (Date.now() >= start + timeDelay) {
-        reason = `Timed out attempting to set Wifi to ${wifiSettings}`;
-      }
-    } catch (err) {
-      reason = `Can't set wifi to ${wifiSettings}: ${err}`;
-    }
-    response.reason = reason;
-    // console.log(`setWifi return: ${JSON.stringify(response)}`);
     return response;
   }
 
@@ -209,20 +167,10 @@ export class WindowsWifiActions implements WifiActions {
       SSIDs: [],
       reason: "",
     };
-    try {
-      const netInfo: WifiResults = await this.getWdutilResults(settings);
-      const wifiResults = getSSID(); // SSID we tried to set
-      // if the returned SSID contains "redacted" use the "global SSID"
-      if (wifiResults != null && netInfo.ssid.includes("redacted")) {
-        netInfo.ssid = wifiResults.ssid;
-      }
-      response.SSIDs.push(netInfo);
-    } catch (err) {
-      response.reason = `Can't getWifi: ${err}`;
-    }
+
     return response;
   }
-
+}
 export async function blinkWifiWindows(
   settings: HeatmapSettings,
 ): Promise<void> {

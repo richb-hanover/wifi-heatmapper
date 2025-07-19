@@ -4,6 +4,8 @@
 # [presumably, code would pick the strongest]
 # and pass that SSID down to the "-setairportnetwork" command
 
+# USAGE: test-network.sh en0 "wifi ssid name"
+
 # Wrap the whole thing in `time` (e.g. time test-networksetup.sh HBTL)
 # then wait until "ping 1.1.1.1" returns an actual response
 # then Ctl-C to see the time needed to switch to that SSID
@@ -23,9 +25,9 @@
 # jq '.. | objects | select(has("spairport_current_network_information")) | .spairport_current_network_information' 
 
 # echo "=== off ==="
-# networksetup -setairportpower en0 off
+# networksetup -setairportpower "$1" off
 # echo "=== on ==="
-# networksetup -setairportpower en0 on
+# networksetup -setairportpower "$1" on
 # sleep 1
 
 echo "=== system_profiler ==="
@@ -37,8 +39,8 @@ jq '.. | objects | select(has("spairport_current_network_information")) | .spair
 system_profiler -json SPAirPortDataType | \
 jq '.. | objects | select(has("spairport_airport_other_local_wireless_networks")) | .spairport_airport_other_local_wireless_networks' 
 
-echo "=== join $1 ==="
-networksetup -setairportnetwork en0 "$1"
+echo "=== join $2 on device $1 ==="
+networksetup -setairportnetwork "$1" "$2"
 echo "=== pinging ==="
 ping 1.1.1.1
 

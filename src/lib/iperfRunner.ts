@@ -155,8 +155,8 @@ export async function runSurveyTests(
     sendSSEMessage(getUpdatedMessage()); // immediately send initial values
     displayStates.header = "Measurement in progress...";
 
-    // "blink" the wifi to get best signal
-    console.log(`Scanning for best wifi`);
+    // scan the wifi environment for the best signal
+    console.log(`Seeking best Wi-Fi`);
     displayStates.header = "Seeking best Wi-Fi";
     sendSSEMessage(getUpdatedMessage());
     const startTime = Date.now();
@@ -167,9 +167,8 @@ export async function runSurveyTests(
     if (results.reason != "") {
       return { iperfData: null, wifiData: null, status: results.reason };
     }
-
-    await logScanResults(results);
-    // we now know the SSID to use - the strongest signal is the first result returned
+    await logScanResults(results); // display the results of the scan
+    // The first result is the strongest signal - use it
     const theSSID = results.SSIDs[0].ssid;
     displayStates.header = `Measuring Wi-Fi (${theSSID})`;
     sendSSEMessage(getUpdatedMessage());
@@ -183,7 +182,7 @@ export async function runSurveyTests(
       return {
         iperfData: null,
         wifiData: null,
-        status: `wifiStatus.reason: ${err}`,
+        status: `${err}`, // just use the status string that was thrown
       };
     }
 

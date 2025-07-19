@@ -136,64 +136,56 @@ export class MacOSWifiActions implements WifiActions {
   }
 
   /**
-   * setWifi(settings, newSSID) - associate with the named SSID
+   * setWifi(settings, newWifiSettings) - associate with the named SSID
    *
    * @param settings - same as always
-   * @param wifiSettings - new SSID to associate with
-   * @returns WifiScanResults - empty array of results, only the reason
+   * @param newWifiSettings - .ssid has the new SSID to associate with
+   * @returns either:
+   *    WifiScanResults
+   *    or throw("reason explaining the error")
    */
   async setWifi(
     settings: PartialHeatmapSettings,
-    wifiSettings: WifiResults,
+    newWifiSettings: WifiResults,
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
       reason: "",
     };
-    let reason: string = "";
+    setSSID(null); // assume a bad outcome
     let netInfo: WifiResults;
 
-    if (!wifiSettings) {
-      response.reason = `setWifi error: Empty SSID "${JSON.stringify(wifiSettings)}`;
-      return response;
+    if (!newWifiSettings) {
+      throw `setWifi error: Empty SSID "${JSON.stringify(newWifiSettings)}`;
     }
-    try {
-      // save the global copy of the WifiResults
-      setSSID(wifiSettings);
 
-      console.log(
-        `Setting Wifi SSID on interface ${this.nameOfWifi}: ${wifiSettings.ssid}`,
-      );
-      try {
-        await execAsync(
-          `networksetup -setairportnetwork ${this.nameOfWifi} ${wifiSettings.ssid}`,
-        );
-      } catch (err) {
-        setSSID(null);
-        response.reason = `Cannot connect to SSID ${wifiSettings.ssid}: ${err}`;
-        // console.log(`${response.reason}`);
+    console.log(
+      `Setting Wifi SSID on interface ${this.nameOfWifi}: ${newWifiSettings.ssid}`,
+    );
+    // `networksetup -setairportnetwork ${this.nameOfWifi} ${newWifiSettings.ssid}`
+    const { stdout, stderr } = await execAsync(
+      `networksetup -setairportnetwork ${this.nameOfWifi} ${newWifiSettings.ssid}`,
+    );
+    if (stdout != "" || stderr != "") {
+      throw stdout + stderr;
+    }
+
+    const start = Date.now();
+    const timeout = 40_000; // 40 seconds
+    while (true) {
+      if (Date.now() > start + timeout) {
+        throw `Can't set wifi to "${newWifiSettings.ssid}": Timed out after ${timeout / 1000} seconds`;
+      }
+      netInfo = await this.getWdutilResults(settings);
+      console.log(`wdutils: SSID: ${netInfo.ssid} txRate: ${netInfo.txRate}`);
+      if (netInfo.txRate != 0) {
+        netInfo.ssid = newWifiSettings.ssid;
+        setSSID(netInfo); // save it globally
+        response.SSIDs.push(netInfo);
         return response;
       }
-      const start = Date.now();
-      const timeDelay = 20000; // 20 seconds
-      while (start + timeDelay > Date.now()) {
-        netInfo = await this.getWdutilResults(settings);
-        // console.log(`wdutil results: txRate is ${netInfo.txRate}`);
-        if (netInfo.txRate != 0) {
-          response.SSIDs.push(netInfo);
-          break;
-        }
-        await delay(200);
-      }
-      if (Date.now() >= start + timeDelay) {
-        reason = `Timed out attempting to set Wifi to ${wifiSettings}`;
-      }
-    } catch (err) {
-      reason = `Can't set wifi to ${wifiSettings}: ${err}`;
+      await delay(200);
     }
-    response.reason = reason;
-    // console.log(`setWifi return: ${JSON.stringify(response)}`);
-    return response;
   }
 
   /**
@@ -219,68 +211,6 @@ export class MacOSWifiActions implements WifiActions {
     }
     return response;
   }
-
-  /**
-   * restartWifi - turn wifi off then on, wait 'til it reassociates
-   * (presumably on the strongest signal)
-   * @param settings
-   *
-   * NB: the "settings" parameter is unused,
-   * so it is prefixed by "_" to avoid a Typescript warning
-   */
-  // async restartWifi(_settings: PartialHeatmapSettings): Promise<void> {
-  //   // logger.info(`Called restartWifi():`);
-
-  //   this.nameOfWifi = await this.findWifi();
-
-  //   // console.log(`turned off:`);
-  //   await loopUntilCondition(
-  //     // until an error (no ipconfig for the wifi)
-  //     `networksetup -setairportpower ${this.nameOfWifi} off`,
-  //     `ipconfig getifaddr ${this.nameOfWifi}`,
-  //     1,
-  //     5,
-  //   );
-
-  //   // console.log(`turn it back on:`);
-  //   await loopUntilCondition(
-  //     `networksetup -setairportpower ${this.nameOfWifi} on`,
-  //     `ipconfig getifaddr ${this.nameOfWifi}`,
-  //     0,
-  //     20,
-  //   );
-  // }
-
-  /**
-   * scanWifi() scan the wifi to get the signal strength, etc.
-   * @param settings - the full set of settings, including sudoerPassword
-   * @returns a WiFiResults description to be added to the surveyPoints
-   *
-   * Scans the local wifi environment (with system_profiler) to get
-   * the SSID with the strongest signal, then switches to that SSID
-   *
-   * ~~After blinking the wifi, call `wdutil` multiple times
-   * until the txRate is non-zero. Pause 200 msec before re-trying.
-   * (Apparently, the wifi interface gets an address well before
-   * all the rest of its settings (particularly txRate) are set.)~~
-   */
-  // async scanWifi(settings: PartialHeatmapSettings): Promise<WifiResults> {
-  //   let netInfo: WifiResults;
-  //   // logger.info(`Called scanWifi():`);
-
-  //   const candidates:  = this.findBestWifi(settings);
-
-  //   const netinfo = candidates[0];
-
-  // while (true) {
-  //   netInfo = await this.getWdutilResults(settings);
-  //   // console.log(`wdutil results: txRate is ${netInfo.txRate}`);
-  //   if (netInfo.txRate != 0) {
-  //     return netInfo;
-  //   }
-  //   await delay(200);
-  // }
-  // }
 
   /**
    * getWdutilResults() call `wdutil` to get the signal strength, etc.
@@ -761,12 +691,12 @@ function inferChannelWidth(channel: string, phymode: string): string {
   }
 }
 
-function logSPResults(results: Record<string, string>[]): void {
+function logSPResults(results: Record<string, any>[]): void {
   logger.info(`===== system_profiler results =====`);
   results.forEach(logSPResult);
 }
 
-export async function logSPResult(result: Record<string, string>) {
+export async function logSPResult(result: Record<string, any>) {
   logger.info(
     `active: ${result.active}; signalStrength: ${result.spairport_signal_noise}; channel: ${result.spairport_network_channel}; ssid: ${result._name}`,
   );
