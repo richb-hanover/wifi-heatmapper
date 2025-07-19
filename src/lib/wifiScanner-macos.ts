@@ -78,6 +78,14 @@ export class MacOSWifiActions implements WifiActions {
       reason: "",
     };
     let reason: string = "";
+
+    // check that iperf3 is really installed
+    try {
+      await execAsync("iperf3 --version");
+    } catch {
+      reason =
+        "iperf3 not installed. Install it,\n or set the iperfServer to 'localhost'.";
+    }
     // check that we can actually connect to the iperf3 server
     // command throws if there is an error
     try {
