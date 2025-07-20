@@ -12,7 +12,7 @@ import { getCancelFlag, sendSSEMessage } from "./server-globals";
 import { percentageToRssi, toMbps } from "./utils";
 import { SSEMessageType } from "@/app/api/events/route";
 import { getLogger } from "./logger";
-import { createWifiInfo, logScanResults } from "./wifiScanner";
+import { createWifiInfo, logWifiResults } from "./wifiScanner";
 
 type TestType = "TCP" | "UDP";
 type TestDirection = "Up" | "Down";
@@ -167,7 +167,7 @@ export async function runSurveyTests(
     if (results.reason != "") {
       return { iperfData: null, wifiData: null, status: results.reason };
     }
-    await logScanResults(results); // display the results of the scan
+    await logWifiResults(results); // display the results of the scan
     // The first result is the strongest signal - use it
     const theSSID = results.SSIDs[0].ssid;
     displayStates.header = `Measuring Wi-Fi (${theSSID})`;

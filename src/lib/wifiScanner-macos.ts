@@ -136,7 +136,11 @@ export class MacOSWifiActions implements WifiActions {
       jsonResults = JSON.parse(result.stdout);
 
       // jsonResults holds the Wifi environment from system_profiler
-      response.SSIDs = getCandidateSSIDs(jsonResults, currentIf);
+      response.SSIDs = getCandidateSSIDs(
+        jsonResults,
+        currentIf,
+        _settings.ignoredSSIDs,
+      );
       // console.log(`Local SSIDs: ${response.SSIDs.length}`);
       // console.log(`Local SSIDs: ${JSON.stringify(response.SSIDs, null, 2)}`);
     } catch (err) {
@@ -398,6 +402,7 @@ export function parseWdutilOutput(output: string): WifiResults {
 export const getCandidateSSIDs = (
   spData: SPAirPortRoot,
   currentInterface: string,
+  ignoredSSIDs: string[],
 ): WifiResults[] => {
   // sort by the signalStrength value (may be null)
   function bySignalStrength(a: any, b: any): number {
@@ -452,9 +457,15 @@ export const getCandidateSSIDs = (
   // console.log(
   //   `SSIDs: ${localCount} ${currentCount} \n${JSON.stringify(candidates, null, 2)}`,
   // );
+
   // eliminate any RSSI=0 (no reading), then sort by RSSI
   const nonZeroCandidates = candidates.filter((item) => item.rssi != 0);
-  const sortedCandidates = nonZeroCandidates.sort(bySignalStrength);
+  // eliminate any SSIDs to be ignored
+  const nonIgnoredCandidates = nonZeroCandidates.filter(
+    (item) => !ignoredSSIDs.includes(item.ssid),
+  );
+  // sort the remainder by signal strength
+  const sortedCandidates = nonIgnoredCandidates.sort(bySignalStrength);
 
   return sortedCandidates;
 };

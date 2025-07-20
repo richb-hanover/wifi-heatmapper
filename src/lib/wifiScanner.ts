@@ -72,13 +72,13 @@ export async function loopUntilCondition(
   }
 }
 
-export async function logScanResults(results: WifiScanResults): Promise<void> {
+export async function logWifiResults(results: WifiScanResults): Promise<void> {
   logger.info(`===== WifiResults =====`);
-  results.SSIDs.forEach(logResult);
+  results.SSIDs.forEach(logWifiResult);
   // logger.info(`==============`);
 }
 
-export async function logResult(result: WifiResults) {
+export async function logWifiResult(result: WifiResults) {
   logger.info(
     `active: ${result.active}; signalStrength: ${result.signalStrength}; channel: ${result.channel}; ssid: ${result.ssid}`,
   );

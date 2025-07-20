@@ -14,8 +14,7 @@ Ideas for making the program better - in no particular order:
 * Export `wifi-heatmapper-imagename` and the image itself to a saved file so it can be loaded later
 * (Maybe) During the FloorPlan measurement process, display the wifi signal
   strength heatmap underneath or as a separate floating window.
-  This helps the user determine if they need
-  more measurements (finer granularity) for the map.
+  This helps determine if more measurements/finer granularity would help the map.
 * Bundle this into an installable (electron?) app so it can be easily installed on a tablet. Might also allow the app to get Localization permissions on macOS 15 and above so it could show the SSID/AP Name, etc.
 * If the "scanning for wifi channels" takes too long, add some kind of
   "Use this SSID" / "Use best SSID" setting
@@ -37,9 +36,10 @@ Ideas for making the program better - in no particular order:
 * Improve "fetch error" message when the web GUI has lost contact
   with the server (perhaps because `npm run dev` has been stopped)
 * Fix display of BSSID; Windows parsing test code not updated;
-  macOS shows `<R-ED-AC-TED>` or some such nonsense (should be "Not available")
+  macOS shows `<R-ED-AC-TE-D>` or some such nonsense (should be "Not available")
 * Fix display of dBm in the heatmap scale when not showing as %. Currently, it shows 100dBm (positive number) as green, with 0 dBm as red. The scale should use the limits of the rssiToPercentage() function.
-* If browser window is at 30%, the TabPanel looks too small, yet the FloorPlan is OK.
+* If browser window is at 30%, the TabPanel looks too small,
+  yet the FloorPlan is OK.
   Do we need to give an indication of this?
 
 ## Questions

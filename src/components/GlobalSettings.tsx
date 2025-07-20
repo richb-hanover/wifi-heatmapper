@@ -25,6 +25,7 @@ const getDefaults = (floorPlan: string): HeatmapSettings => {
     apMapping: [],
     testDuration: 1,
     sudoerPassword: "",
+    ignoredSSIDs: ["AP-WH4E-C0BFBE6ACDA3", "LochLymeLodge-UB"],
     nextPointNum: 1,
     dimensions: { width: 100, height: 100 },
     radiusDivider: null,

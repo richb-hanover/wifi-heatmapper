@@ -88,6 +88,7 @@ export interface HeatmapSettings {
   testDuration: number;
   sudoerPassword: string; // kept in settings, removed before writing to file
   apMapping: ApMapping[];
+  ignoredSSIDs: string[];
   nextPointNum: number;
   dimensions: { width: number; height: number };
   radiusDivider: number | null; // null - use calculated value
