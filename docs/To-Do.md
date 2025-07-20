@@ -1,6 +1,6 @@
 # To-Do
 
-Random observations and questions that arise at the start of the project
+Random observations and questions that arise during the project
 
 ## Feature and Behavior Improvements
 
@@ -9,8 +9,11 @@ Ideas for making the program better - in no particular order:
 * Scale the size of the surveyPoint dot to the image, to prevent
   dots from appearing as tiny dots on a large image.
 * A click on the `Floorplan` pane should immediately display an
-  empty dot (no color) to indicate that's where the click was.
+  open dot (no color) to indicate that's where the click was.
   (Improves behavior on a touch-screen - you can see where you clicked.)
+* Add a new setting of "Ignored SSIDs" - a comma-separated
+  set of items in a TextArea (equivalent).
+  These fill the ignoredSSIDs array (string[]) in HeatmapSettings.
 * Export `wifi-heatmapper-imagename` and the image itself to a saved file so it can be loaded later
 * (Maybe) During the FloorPlan measurement process, display the wifi signal
   strength heatmap underneath or as a separate floating window.
@@ -44,16 +47,9 @@ Ideas for making the program better - in no particular order:
 
 ## Questions
 
-* What's the best gradient for signal strength? Linear between -40 and -80 dBm?
-  Emphasize differences between good (-40 to -60?) Emphasize the bad?
-  Good rule might be "green or above (yellow, orange, red) is good...
-* I think the magic of this heat map system is that if drawing
-  is not actually to scale it'll still give good "relative strength" info
-  relative to other places on the drawing
-* How to explain the difference between signal strength and throughput rates?
 * Would it improve the heatmap if small dots were placed at the locations of SurveyPoints?
 * What _does_ **Access Point Mappings** do? (On macOS, not much, since that info is not available in macOS 15 and above.)
-* The current code runs `runIperfTest()` three times if there was an error. What problem does that solve? What caused that enhancement?
+* ~~The current code runs `runIperfTest()` three times if there was an error. What problem does that solve? What caused that enhancement?~~ Not any more...
 * Is it important to call `hasValidData()` in wifiScanner.ts? What information does that provide - that we can do anything about?
 
 ## DONE
@@ -130,10 +126,18 @@ Ideas for making the program better - in no particular order:
 * Make the app more user-friendly and informative (step by step wizard for the measurements) [DONE for now]
 * Add leaflet to make the maps interactive [NOT FOR NOW]
 * _No longer needed: scanning Wi-Fi environment to see "local SSIDs".
-  "Blink"" WiFi off and then back on before measurement to improve the values.
-  This might give the Wi-Fi driver a chance to select a better Wi-Fi SSID
+  No need to "Blink"" WiFi off and then back on: simply tell the 
+  Wi-fi driver to use the strongest signal level found.
+  This should give the Wi-Fi driver a chance to select a better Wi-Fi SSID
   Use case: you have used SSID-A and SSID-B in the past. You start the test near SSID-A, but subsequent survey points get farther and farther away - and closer to
   SSID-B. Since your device tends to select the strongest signal, "blinking" the Wi-FI
   might choose SSID-B automatically.
   (The current behavior is that the measured signal level gets lower and lower until
-  manually switching to SSID-B.)
+  manually switching to SSID-B.) [DONE]
+  * What's the best gradient for signal strength? Linear between -40 and -80 dBm?
+  Emphasize differences between good (-40 to -60?) Emphasize the bad? 
+  Good rule might be "green or above (yellow, orange, red) is good... [DONE]
+* I think the magic of this heat map system is that if drawing
+  is not actually to scale it'll still give good "relative strength" info
+  relative to other places on the drawing [DONE]
+* How to explain the difference between signal strength and throughput rates? [DONE]

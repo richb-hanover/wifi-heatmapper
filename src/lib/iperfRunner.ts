@@ -206,7 +206,9 @@ export async function runSurveyTests(
         let udpUpload = emptyIperfTestProperty;
 
         const wifiDataBefore = await wifiInfo.getWifi(settings);
-        console.log(`Elapsed time for blinking: ${Date.now() - startTime}`);
+        console.log(
+          `Elapsed time for scan and switch: ${Date.now() - startTime}`,
+        );
         wifiStrengths.push(wifiDataBefore.SSIDs[0].signalStrength);
         displayStates.strength = arrayAverage(wifiStrengths).toString();
         checkForCancel();
