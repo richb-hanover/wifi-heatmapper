@@ -8,7 +8,7 @@ import {
 import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
 import { rssiToPercentage } from "./utils";
-import { isValidMacAddress, normalizeMacAddress } from "./utils";
+import { isValidMacAddress, normalizeMacAddress, channelToBand } from "./utils";
 import { setSSID, getSSID } from "./server-globals";
 
 const logger = getLogger("wifi-macOS");
@@ -449,7 +449,7 @@ export const getCandidateSSIDs = (
     // currentCount = 1;
     localCandidates.push(fullCurrent);
   }
-  logSPResults(localCandidates);
+  // logSPResults(localCandidates);
 
   // convert each to a WifiResults
   const candidates = localCandidates.map((item) => convertToWifiResults(item));
@@ -657,12 +657,12 @@ function convertToWifiResults(obj: object): WifiResults {
  * postProcessWifiResults - examine channel and channelWidthIndicator
  *   to return proper band and channelWidth
  * @param obj almost complete WifiResults
- * @returns WifiResults (but with values as strings)
+ * @returns WifiResults (but with all values as strings)
  */
 function postProcessWifiResults(
   obj: Record<string, string>,
 ): Record<string, string> {
-  obj.band = parseInt(obj.channel) < 14 ? "2.4" : "5";
+  obj.band = String(channelToBand(parseInt(obj.channel)));
   obj.channelWidth = inferChannelWidth(obj.channelWidthIndicator, obj.phyMode);
   if (!obj.rssi) {
     // console.log(`No RSSI found...`);

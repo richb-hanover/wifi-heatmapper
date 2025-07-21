@@ -1,4 +1,5 @@
 import {
+  HeatmapSettings,
   PartialHeatmapSettings,
   WifiResults,
   WifiScanResults,
@@ -256,3 +257,66 @@ export function parseNetshOutput(
 
   return networkInfo;
 }
+
+const input = `...`; // place your multiline text here
+
+interface BssidRecord {
+  SSID: string;
+  Authentication: string;
+  BSSID: string;
+  Signal: string;
+  "Radio Type": string;
+  Channel: string;
+}
+
+function parseNetshBssid(text: string): BssidRecord[] {
+  const lines = text.split("\n");
+  const results: BssidRecord[] = [];
+
+  let currentSSID = "";
+  let currentAuth = "";
+  let currentBSSID = "";
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    const ssidMatch = line.match(/^SSID \d+ : (.+)$/);
+    if (ssidMatch) {
+      currentSSID = ssidMatch[1];
+      currentAuth = ""; // Reset auth in case it's missing in next section
+      continue;
+    }
+
+    const authMatch = line.match(/^Authentication\s+:\s+(.+)$/);
+    if (authMatch) {
+      currentAuth = authMatch[1];
+      continue;
+    }
+
+    const bssidMatch = line.match(/^BSSID \d+\s+:\s+([0-9a-f:]+)$/i);
+    if (bssidMatch) {
+      currentBSSID = bssidMatch[1];
+
+      const signal = lines[++i].trim().match(/^Signal\s+:\s+(.+)$/)?.[1] || "";
+      const radio =
+        lines[++i].trim().match(/^Radio type\s+:\s+(.+)$/)?.[1] || "";
+      lines[++i]; // skip "Band"
+      const channel =
+        lines[++i].trim().match(/^Channel\s+:\s+(.+)$/)?.[1] || "";
+
+      results.push({
+        SSID: currentSSID,
+        Authentication: currentAuth,
+        BSSID: currentBSSID,
+        Signal: signal,
+        "Radio Type": radio,
+        Channel: channel,
+      });
+    }
+  }
+
+  return results;
+}
+
+const parsed = parseNetshBssid(input);
+console.log(JSON.stringify(parsed, null, 2));

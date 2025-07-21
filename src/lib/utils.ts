@@ -216,3 +216,7 @@ export function extractIperfResults(
     signalStrength: 0,
   };
 }
+
+export function channelToBand(channel: number): number {
+  return channel < 14 ? 2.4 : 5;
+}

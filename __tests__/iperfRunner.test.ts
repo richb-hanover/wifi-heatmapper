@@ -5,11 +5,11 @@ import path from "path";
 
 // Load the sample test data
 const iperfUdpMacResult = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "data/iperf_udp_mac.json"), "utf-8"),
+  fs.readFileSync(path.join(__dirname, "data/mac_iperf_udp.json"), "utf-8"),
 );
 
 const iperfUdpUbuntuResult = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "data/iperf_udp_ubuntu.json"), "utf-8"),
+  fs.readFileSync(path.join(__dirname, "data/ubuntu_iperf_udp.json"), "utf-8"),
 );
 
 describe("extractIperfResults", () => {

@@ -105,6 +105,7 @@ export interface PartialHeatmapSettings {
   iperfServerAdrs: string;
   testDuration: number;
   sudoerPassword: string;
+  ignoredSSIDs: string[];
 }
 
 /**
