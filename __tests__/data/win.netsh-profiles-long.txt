@@ -1,0 +1,36 @@
+# C:\Users\richb>netsh wlan show profile name="HBTL5 2" key=clear
+
+Profile HBTL5 2 on interface Wi-Fi:
+=======================================================================
+Applied: All User Profile
+Profile information
+-------------------
+   Version                : 1
+   Type                   : Wireless LAN
+   Name                   : HBTL5 2
+   Control options        :
+       Connection mode    : Connect manually
+       Network broadcast  : Connect only if this network is broadcasting
+       AutoSwitch         : Do not switch to other networks
+       MAC Randomization  : Disabled
+Connectivity settings
+---------------------
+   Number of SSIDs        : 1
+   SSID name              : "HBTL5"
+   Network type           : Infrastructure
+   Radio type             : [ Any Radio Type ]
+   Vendor extension          : Not present
+Security settings
+-----------------
+   Authentication         : Open
+   Cipher                 : None
+   Security key           : Absent
+   Key Index              : 1
+Cost settings
+-------------
+   Cost                   : Unrestricted
+   Congested              : No
+   Approaching Data Limit : No
+   Over Data Limit        : No
+   Roaming                : No
+   Cost Source            : Default

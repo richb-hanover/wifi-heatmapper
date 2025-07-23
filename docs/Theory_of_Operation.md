@@ -21,28 +21,42 @@ These include:
 
 ## Platform-Specific Commands
 
-**wifi-heatmapper** parses the outputs of the following CLI commands
-to get the measurements of the Wi-Fi strength and throughput.
+**wifi-heatmapper** issues and parses the outputs
+of the following CLI commands to get the measurements
+of the Wi-Fi strength and throughput.
 
 | Platform | Commands          | Notes                                                                                                                                                    |
 | -------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| macOS    | `wdutil`, `ioreg` | Both are usually part of the system, sudo password is needed for `wdutil`                                             |
-| Windows  | `netsh`           | Part of the system  |
+| macOS    | `system_profiler` | Information about all nearby SSIDs | 
+| macOS    | `networksetup -setairportnetwork ...` | Associate with named SSID | 
+| macOS    | `wdutil` | Detailed information about current wifi; sudo password required                                             |
+| macOS    | `ioreg` | Fallback if details aren't available from `wdutil` (Not used in 0.4.0 or later)  | 
+| Windows  | `netsh wlan show interfaces`           | Detailed information about the current wifi  |
+| Windows  | `netsh wlan show network`           | Information about all nearby SSIDs  |
+| Windows  | `netsh wlan show profiles`           | Get relationship between named profile and SSID  |
+| Windows  | `netsh wlan connect ...`           | Supply Profile and SSID to associate |
 | Linux    | `iw`              | `iw` might need to be installed via your distro package manager, you will need to provide your wireless device id (e.g. "wlp4s0", we do try to infer it) |
+| All    | `iperf3` | Starts the iperf3 measurement | 
 
-**wifi-heatmapper** requires that `iperf3` be installed locally to make TCP
-or UDP measurements.
+**wifi-heatmapper** requires that `iperf3` be installed locally
+to make TCP or UDP measurements.
+The version of at least 3.17 is mildly recommended for `iperf3`
+on both server and client (ideally the same version,
+but that's not strictly necessary).
 
-In all cases, `iperf3` must be available in `PATH`. For Windows you might have to do something like `set PATH=%PATH%;C:\path\to\iperf3`, e.g. do `set PATH=%PATH%;C:\iperf3` (or `setx` to make it permanent) before running `npm run dev`. The version of at least 3.17 is weakly recommended for `iperf3` on both server and client (ideally the same version, but that's not strictly necessary).
+`iperf3` must be available in `PATH`.
+`brew install iperf3` (macOS); 
+`apt install iperf3` (or equivalent - Linux);
+`choco install iperf3` (Windows) seem to do this.
+For Windows you might have to do something like `set PATH=%PATH%;C:\path\to\iperf3`, e.g. do `set PATH=%PATH%;C:\iperf3` (or `setx` to make it permanent). 
 
 ## How wifi-heatmapper works
 
 To get the information, **wifi-heatmapper** invokes
-`iperf3`, `wdutil` and `ioreg` commands
-(or equivalent on different platforms)
-via JS `child_process` and parses the output.
-The webapp then just stores everything in simple JSON
-"database" file in localStorage().
+the commands above via JS `child_process` (the `execAsync()` function)
+and parses the output.
+The webapp then just stores all the data for a floor plan
+in a simple JSON "database" file in localStorage().
 
 ## Running with higher LOG_LEVEL
 
@@ -93,20 +107,13 @@ The _App()_ in `page.tsx` returns two major GUI components:
 
 ## How measurements proceed
 
-Earlier versions of the program simply await'ed the measurement
-process (iperfRunner.ts) to return a set of measurements (or null).
-But when the wifi gets turned off, a couple problems cropped up.
-The Next development server appears to have an internal time out,
-and some fetch() requests give errors when the wifi is off.
+The GUI app uses an API to control the measurement process:
 
-To circumvent this, the client now polls using `/api/start-task`
-to control the measurement process:
-
-* POST action=start - starts the measurement process, which returns immediately
-* POST action=stop - halts/cancels the measurement process
-* GET action=status - returns the current Server Side Event object
+* `POST action=start` start the measurement process, which returns immediately
+* `POST action=stop`  halt/cancel the measurement process
+* `GET action=status`  return the current Server Side Event object
   (NewToast still uses the Server Side Event mechanism)
-* GET action=results - returns { {wifiData, iperfData}, error, status } with the results.
+* `GET action=results`  return `{ {wifiData, iperfData}, error, status }` with the results.
   The measurement process runs asynchronously, then uses setSurveyResults()
   to set the TaskStatus
 

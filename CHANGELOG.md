@@ -15,7 +15,7 @@ _This section follows the precepts of [Keep a Changelog](https://keepachangelog.
 ### Other features
 
 * Switch to client polling for results so that client-server communication
-  is not disrupted by turning off wifi
+  is not disrupted by changing wifi SSID
 * Create platform-specific classes that provide an API to the
   Wifi-detection facilities.
   This coalesced all pre-measurement tests into preflightSettings()

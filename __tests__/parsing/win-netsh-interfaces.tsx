@@ -6,7 +6,7 @@
 import { expect, test, describe, it, beforeAll } from "vitest";
 import fs from "fs";
 import path from "path";
-import { parseNetshOutput } from "../../src/lib/wifiScanner-windows";
+import { parseNetshInterfaces } from "../../src/lib/wifiScanner-windows";
 import { initLocalization } from "../../src/lib/localization";
 
 let reverseLookupTable: Map<string, string>;
@@ -27,7 +27,7 @@ test("parsing netsh output where no labels match", () => {
     "utf-8",
   );
 
-  expect(() => parseNetshOutput(reverseLookupTable, netsh_output)).toThrow(
+  expect(() => parseNetshInterfaces(reverseLookupTable, netsh_output)).toThrow(
     `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`,
   );
 });
@@ -37,7 +37,7 @@ test("parsing english netsh output", () => {
     path.join(__dirname, "../data/win-netsh-interfaces-en.txt"),
     "utf-8",
   );
-  const output = parseNetshOutput(reverseLookupTable, netsh_output);
+  const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
   expect(output).toStrictEqual({
     ssid: "SomeSSID",
     bssid: "1234567890ac",
@@ -58,7 +58,7 @@ test("parsing italian netsh output", () => {
     path.join(__dirname, "../data/win-netsh-interfaces-it.txt"),
     "utf-8",
   );
-  const output = parseNetshOutput(reverseLookupTable, netsh_output);
+  const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
   expect(output).toStrictEqual({
     ssid: "SomeSSID",
     bssid: "12345610f7a8",
@@ -79,7 +79,7 @@ test("parsing German netsh output", () => {
     path.join(__dirname, "../data/win-netsh-interfaces-de.txt"),
     "utf-8",
   );
-  const output = parseNetshOutput(reverseLookupTable, netsh_output);
+  const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
   expect(output).toStrictEqual({
     ssid: "SomeSSID",
     bssid: "1234567890ab",
@@ -100,7 +100,7 @@ test("parsing French netsh output", () => {
     path.join(__dirname, "../data/win-netsh-interfaces-fr.txt"),
     "utf-8",
   );
-  const output = parseNetshOutput(reverseLookupTable, netsh_output);
+  const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
   expect(output).toStrictEqual({
     ssid: "SomeSSID",
     bssid: "1234567890ab",

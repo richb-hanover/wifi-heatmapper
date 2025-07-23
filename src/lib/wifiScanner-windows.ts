@@ -1,10 +1,8 @@
 import {
-  HeatmapSettings,
   PartialHeatmapSettings,
   WifiResults,
   WifiScanResults,
   WifiActions,
-  SPAirPortRoot,
 } from "./types";
 import { execAsync } from "./server-utils";
 import { getLogger } from "./logger";
@@ -13,8 +11,11 @@ import {
   isValidMacAddress,
   normalizeMacAddress,
   percentageToRssi,
+  channelToBand,
 } from "./utils";
-import { getReverseLookupMap } from "./localization";
+import { initLocalization, getReverseLookupMap } from "./localization";
+
+const reverseLookupTable = await initLocalization(); // build the structure
 
 const logger = getLogger("wifi-Windows");
 
@@ -51,19 +52,19 @@ export class WindowsWifiActions implements WifiActions {
     }
 
     // macOS requires a sudo password
-    else if (!settings.sudoerPassword || settings.sudoerPassword == "") {
-      reason = "Please set sudo password. It is required on macOS.";
-    }
+    // else if (!settings.sudoerPassword || settings.sudoerPassword == "") {
+    //   reason = "Please set sudo password. It is required on macOS.";
+    // }
 
     // check that the sudo password is actually correct
     // execAsync() throws if there is an error
-    else {
-      try {
-        await execAsync(`echo ${settings.sudoerPassword} | sudo -S ls`);
-      } catch {
-        reason = "Please enter a valid sudo password.";
-      }
-    }
+    // else {
+    //   try {
+    //     await execAsync(`echo ${settings.sudoerPassword} | sudo -S ls`);
+    //   } catch {
+    //     reason = "Please enter a valid sudo password.";
+    //   }
+    // }
 
     // fill in the reason and return it
     response.reason = reason;
@@ -83,10 +84,11 @@ export class WindowsWifiActions implements WifiActions {
       reason: "",
     };
     let reason: string = "";
+    const cmd = `$r=[System.Net.Sockets.TcpClient]::new();$r.ConnectAsync(${settings.iperfServerAdrs},5201).Wait(100);$r.Close();$r.Connected`;
     // check that we can actually connect to the iperf3 server
     // command throws if there is an error
     try {
-      await execAsync(`nc -vz ${settings.iperfServerAdrs} 5201`);
+      await execAsync(cmd);
     } catch {
       reason = "Cannot connect to iperf3 server.";
     }
@@ -110,29 +112,20 @@ export class WindowsWifiActions implements WifiActions {
   }
 
   /**
-   * findBestWifi() - return an array of available wifi SSIDs plus a reason string
+   * scanWifi() - return an array of available wifi SSIDs plus a reason string
    * These are sorted by the strongest RSSI
    */
-  async findBestWifi(
-    _settings: PartialHeatmapSettings,
-  ): Promise<WifiScanResults> {
+  async scanWifi(_settings: PartialHeatmapSettings): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
       reason: "",
     };
-    // let stdout: string;
-    let jsonResults: SPAirPortRoot;
-    const currentIf = await this.findWifi();
 
     try {
-      // Get the Wifi information from system_profiler
-      const result = await execAsync(`system_profiler -json SPAirPortDataType`);
-      jsonResults = JSON.parse(result.stdout);
-
-      // jsonResults holds the Wifi environment from system_profiler
-      // response.SSIDs = getCandidateSSIDs(jsonResults, currentIf);
-      // console.log(`Local SSIDs: ${response.SSIDs.length}`);
-      // console.log(`Local SSIDs: ${JSON.stringify(response.SSIDs, null, 2)}`);
+      // Get the Wifi information from `netsh`
+      const { stdout } = await execAsync(`netsh wlan show networks mode=bssid`);
+      response.SSIDs = parseNetshNetworks(stdout);
+      console.log(`Local SSIDs: ${JSON.stringify(response.SSIDs, null, 2)}`);
     } catch (err) {
       response.reason = `Cannot get wifi info: ${err}"`;
     }
@@ -142,6 +135,7 @@ export class WindowsWifiActions implements WifiActions {
 
   /**
    * setWifi(settings, newSSID) - associate with the named SSID
+   * Use: netsh wlan connect name="YourSSID"
    *
    * @param settings - same as always
    * @param wifiSettings - new SSID to associate with
@@ -155,6 +149,10 @@ export class WindowsWifiActions implements WifiActions {
       SSIDs: [],
       reason: "",
     };
+    const { stdout } = await execAsync(
+      `netsh wlan connect name="${wifiSettings.ssid}`,
+    );
+
     return response;
   }
 
@@ -172,12 +170,6 @@ export class WindowsWifiActions implements WifiActions {
     return response;
   }
 }
-export async function blinkWifiWindows(
-  settings: HeatmapSettings,
-): Promise<void> {
-  // toggle WiFi off and on to get fresh data
-  console.error(`Toggling WiFi off & on - Windows ${settings.sudoerPassword}`);
-}
 
 /**
  * scanWifiWindows() scan the Wifi for Windows
@@ -188,7 +180,7 @@ export async function scanWifiWindows(): Promise<WifiResults> {
   const command = "netsh wlan show interfaces";
   const { stdout } = await execAsync(command);
   logger.trace("NETSH output:", stdout);
-  const parsed = parseNetshOutput(reverseLookupTable, stdout);
+  const parsed = parseNetshInterfaces(reverseLookupTable, stdout);
   logger.trace("Final WiFi data:", parsed);
   return parsed;
 }
@@ -205,13 +197,115 @@ function assignWindowsNetworkInfoValue<K extends keyof WifiResults>(
     networkInfo[label] = val as any;
   }
 }
+
+/**
+ * Note: parseNetshNetworks() and parseNetshInterfaces() both rely
+ * on the same reverseTableLookup.get() function to handle
+ * localized `netsh` output
+ *
+ * Their structure is rather different because they deal with somewhat
+ * different commandline output formats.
+ *
+ * It seems possible that they could be factored to have a more
+ * similar structure, however they DO seem to produce the proper results.
+ */
+
+/**
+ * parseNetshNetworks() parses the `netsh wlan show networks mode=bssid`
+ * @param string Output of the command
+ * @returns array of WifiResults
+ */
+export function parseNetshNetworks(text: string): WifiResults[] {
+  const results: WifiResults[] = [];
+
+  let currentSSID = "";
+  let currentBSSID = "";
+  let currentSecurity = "";
+  let wifiResult = getDefaultWifiNetwork();
+
+  const lines = text.split("\n");
+  console.log(`input text is ${lines.length} long`);
+  for (const line of lines) {
+    const rawLine = line.trim();
+    const colonIndex = rawLine.indexOf(":");
+    if (colonIndex === -1) continue;
+
+    const rawLabel = rawLine
+      .slice(0, colonIndex)
+      .trim()
+      .replace(/\s*\d+$/, "");
+    const rawValue = rawLine.slice(colonIndex + 1).trim();
+    // console.log(`rawLabel: "${rawLabel}" rawValue: "${rawValue}" `);
+    const localizedLabel = reverseLookupTable.get(rawLabel);
+    // if (translatedLabel) {
+    //   console.log(
+    //     `translatedLabel: "${translatedLabel}" rawValue: "${rawValue}" `,
+    //   );
+    // }
+
+    // Now have translatedLabel and its value
+    // push out the collected data if currentSSID and currentBSSID are set
+    if (localizedLabel == "ssid" || localizedLabel == "bssid") {
+      if (currentSSID != "" && currentBSSID != "") {
+        results.push(wifiResult);
+        currentBSSID = ""; // reset the parameters
+        console.log(`***** wifiResult: ${JSON.stringify(wifiResult)}`);
+        wifiResult = getDefaultWifiNetwork();
+      }
+    }
+
+    // starts a new SSID: just remember its SSID
+    if (localizedLabel == "ssid") {
+      currentSSID = rawValue;
+      continue;
+    }
+
+    // "security" follows the SSID line: remember it
+    if (localizedLabel == "security") {
+      currentSecurity = rawValue;
+      continue;
+    }
+
+    // encountering "BSSID" starts a new WifiResult
+    // record its ssid, bssid, security
+    if (localizedLabel == "bssid") {
+      currentBSSID = rawValue;
+      wifiResult.ssid = currentSSID;
+      wifiResult.bssid = currentBSSID;
+      wifiResult.security = currentSecurity;
+      continue;
+    }
+
+    if (localizedLabel == "signalStrength") {
+      wifiResult.signalStrength = Number(rawValue.replace("%", "")); // remove any "%"
+      wifiResult.rssi = percentageToRssi(wifiResult.signalStrength);
+      continue;
+    }
+
+    if (localizedLabel == "phyMode") {
+      wifiResult.phyMode = rawValue;
+      continue;
+    }
+
+    if (localizedLabel == "channel") {
+      wifiResult.channel = Number(rawValue);
+      wifiResult.band = channelToBand(wifiResult.channel);
+      continue;
+    }
+  }
+  results.push(wifiResult); // push out the final one
+  console.log(`***** wifiResult: ${JSON.stringify(wifiResult)}`);
+
+  return results;
+}
+
 /**
  * Parse the output of the `netsh wlan show interfaces` command.
  *
  * This code looks up the labels from the netsh... command
  * in a localization map that determines the proper label for the WifiNetwork
  */
-export function parseNetshOutput(
+export function parseNetshInterfaces(
   reverseLookupTable: Map<string, string>,
   output: string,
 ): WifiResults {
@@ -251,72 +345,19 @@ export function parseNetshOutput(
       `Invalid BSSID when parsing netsh output: ${networkInfo.bssid}`,
     );
   }
-  //update frequency band
-  networkInfo.band = networkInfo.channel > 14 ? 5 : 2.4;
+  //set frequency band and rssi
+  networkInfo.band = channelToBand(networkInfo.channel);
   networkInfo.rssi = percentageToRssi(networkInfo.signalStrength);
 
   return networkInfo;
 }
 
-const input = `...`; // place your multiline text here
+/**
+ * getProfiles - issue `netsh wlan show profiles` and return an
+ * array of profile names (string)
+ */
+async function getProfiles(): string[] {
+  const { stdout } = await execAsync("netsh wlan show profiles");
 
-interface BssidRecord {
-  SSID: string;
-  Authentication: string;
-  BSSID: string;
-  Signal: string;
-  "Radio Type": string;
-  Channel: string;
+  return [stdout];
 }
-
-function parseNetshBssid(text: string): BssidRecord[] {
-  const lines = text.split("\n");
-  const results: BssidRecord[] = [];
-
-  let currentSSID = "";
-  let currentAuth = "";
-  let currentBSSID = "";
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-
-    const ssidMatch = line.match(/^SSID \d+ : (.+)$/);
-    if (ssidMatch) {
-      currentSSID = ssidMatch[1];
-      currentAuth = ""; // Reset auth in case it's missing in next section
-      continue;
-    }
-
-    const authMatch = line.match(/^Authentication\s+:\s+(.+)$/);
-    if (authMatch) {
-      currentAuth = authMatch[1];
-      continue;
-    }
-
-    const bssidMatch = line.match(/^BSSID \d+\s+:\s+([0-9a-f:]+)$/i);
-    if (bssidMatch) {
-      currentBSSID = bssidMatch[1];
-
-      const signal = lines[++i].trim().match(/^Signal\s+:\s+(.+)$/)?.[1] || "";
-      const radio =
-        lines[++i].trim().match(/^Radio type\s+:\s+(.+)$/)?.[1] || "";
-      lines[++i]; // skip "Band"
-      const channel =
-        lines[++i].trim().match(/^Channel\s+:\s+(.+)$/)?.[1] || "";
-
-      results.push({
-        SSID: currentSSID,
-        Authentication: currentAuth,
-        BSSID: currentBSSID,
-        Signal: signal,
-        "Radio Type": radio,
-        Channel: channel,
-      });
-    }
-  }
-
-  return results;
-}
-
-const parsed = parseNetshBssid(input);
-console.log(JSON.stringify(parsed, null, 2));

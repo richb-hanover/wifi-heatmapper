@@ -1,31 +1,4 @@
 
-PS C:\Users\richb> netsh wlan show networks mode^C
-PS C:\Users\richb> netsh wlan show interfaces mode=bssid
-
-Es ist 1 Schnittstelle auf dem System vorhanden:
-   Name                   : Wi-Fi
-   Beschreibung            : Intel(R) Wi-Fi 6 AX201 160MHz
-   GUID                   : f899e530-fd03-44a9-8307-4d4fc4827eab
-   Physische Adresse       : fe:dc:ba:09:87:00 
-   Benutzeroberflächentyp         : Primär
-   Status                  : Verbunden
-   SSID                   : SSID-1
-   AP BSSID               : fe:dc:ba:09:87:01
-   Bereich                   : 2,4 GHz
-   Kanal                : 11
-   Netzwerktyp            : Infrastruktur
-   Funktyp                   : 802.11ax
-   Authentifizierung   : Offen
-   Verschlüsselungsverfahren                 : Keine
-   Verbindungsmodus        : Automat. Verbindung
-   Empfangsrate (MBit/s)  : 103
-   Übertragungsrate (MBit/s) : 122
-   Signal              : 80%
-   Profil                 : SomeProfile
-   QoS MSCS konfiguriert         : 0
-   QoS-Zuordnung konfiguriert         : 0
-   Durch Richtlinie zugelassene QoS-Zuordnung   :  0
-   
    
 PS C:\Users\richb> netsh wlan show networks mode=bssid
 Schnittstellenname : Wi-Fi
@@ -150,7 +123,7 @@ SSID 5 : SSID-5
    Netzwerktyp             : Infrastruktur
    Authentifizierung       : WPA2-Personal
    Verschlüsselung         : CCMP
-   BSSID 1                 : cfe:dc:ba:09:87:08
+   BSSID 1                 : cfe:dc:ba:09:87:09
         Signal             : 87%
         Funktyp         : 802.11n
         Band               : 2,4 GHz

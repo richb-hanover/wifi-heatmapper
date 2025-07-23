@@ -4,7 +4,7 @@ import { WifiActions, WifiScanResults, WifiResults } from "./types";
 import { execAsync, delay, runDetached } from "./server-utils";
 import { getLogger } from "./logger";
 import { MacOSWifiActions } from "./wifiScanner-macos";
-
+import { WindowsWifiActions } from "./wifiScanner-windows";
 /**
  * wifiScanner.ts is a factory module that returns the proper set of
  * functions for the underlying OS
@@ -17,10 +17,10 @@ export async function createWifiInfo(): Promise<WifiActions> {
   switch (platform) {
     case "darwin":
       return new MacOSWifiActions();
-    // case "win32":
-    //   return new WindowsSystemActions();
+    case "win32":
+      return new WindowsWifiActions();
     // case "linux":
-    //   return new LinuxSystemInfo();
+    //   return new LinuxWifiActions();
     default:
       throw new Error(`Unsupported platform: ${platform}`);
   }

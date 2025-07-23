@@ -13,6 +13,7 @@ import { PopoverHelper } from "@/components/PopoverHelpText";
 import { useSettings } from "@/components/GlobalSettings";
 import { HeatmapSettings } from "@/lib/types";
 import { debounce } from "lodash";
+import { execAsync } from "@/lib/server-utils";
 
 // const logger = getLogger("HeatmapAdvancedConfig");
 
@@ -33,6 +34,24 @@ const hexToRgba = (hex: string, alpha: number) => {
   const b = parseInt(hex.slice(5, 7), 16);
 
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+/**
+ * Run the command from id="cmdToRun" and show stdout and stderr
+ * Also display error if it's caught
+ * Runs on the client (which is OK, since that's also the same machine as the server)
+ */
+const runCommand = async () => {
+  const cmd = (document.getElementById("cmdToRun") as HTMLInputElement).value;
+  if (cmd) {
+    console.log(`command to run: "${cmd}"`);
+    try {
+      const { stdout, stderr } = await execAsync(cmd);
+      console.log(`STDOUT: "${stdout}"`);
+      console.log(`STDERR: "${stderr}"`);
+    } catch (err) {
+      console.log(`CAUGHT ERR:\n${err}`);
+    }
+  }
 };
 
 export function HeatmapAdvancedConfig() {
@@ -132,6 +151,7 @@ export function HeatmapAdvancedConfig() {
                   />
                 </td>
               </tr>
+
               <tr>
                 <td className="align-top p-4">
                   <Label>
@@ -219,6 +239,28 @@ export function HeatmapAdvancedConfig() {
                       Add Color Stop
                     </button>
                   </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <Label htmlFor="cmdToRun" className="">
+                    Command for testing&nbsp;
+                    <PopoverHelper text="Enter a command-line command to test its response." />
+                  </Label>
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    id="cmdToRun"
+                    className="w-full border border-gray-200 rounded-sm p-2 focus:outline-none focus:ring focus:ring-blue-300 focus:border-blue-400"
+                    defaultValue=""
+                  />
+                  <button
+                    className="mt-2 px-2 py-1 bg-blue-500 text-white rounded"
+                    onClick={runCommand}
+                  >
+                    Do it...
+                  </button>
                 </td>
               </tr>
             </tbody>

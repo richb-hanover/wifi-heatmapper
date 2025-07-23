@@ -1,0 +1,13 @@
+# C:\Users\richb>netsh wlan show profiles
+Profiles on interface Wi-Fi:
+Group policy profiles (read only)
+---------------------------------
+   <None>
+User profiles
+-------------
+   All User Profile     : HBTL5 2
+   All User Profile     : Fourteen Pro
+   All User Profile     : HBTL
+   All User Profile     : CAMERA_5G-1
+   All User Profile     : PACHNET
+   All User Profile     : RK Production

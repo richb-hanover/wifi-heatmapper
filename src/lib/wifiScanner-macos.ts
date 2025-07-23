@@ -119,9 +119,7 @@ export class MacOSWifiActions implements WifiActions {
    * findBestWifi() - return an array of available wifi SSIDs plus a reason string
    * These are sorted by the strongest RSSI
    */
-  async findBestWifi(
-    _settings: PartialHeatmapSettings,
-  ): Promise<WifiScanResults> {
+  async scanWifi(_settings: PartialHeatmapSettings): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
       reason: "",
@@ -688,7 +686,7 @@ function inferChannelWidth(channel: string, phymode: string): string {
   }
 }
 
-function logSPResults(results: Record<string, any>[]): void {
+export function logSPResults(results: Record<string, any>[]): void {
   logger.info(`===== system_profiler results =====`);
   results.forEach(logSPResult);
 }

@@ -1,41 +1,12 @@
-Copyright (C) Microsoft Corporation. Tous droits réservés.
-Installez la dernière version de PowerShell pour de nouvelles fonctionnalités et améliorations ! https://aka.ms/PSWindows
-PS C:\Users\richb> netsh wlan show interfaces mode=bssid
-Il existe 1 interface sur le système :
-   Nom                   : Wi-Fi
-   Description            : Intel(R) Wi-Fi 6 AX201 160MHz
-   GUID                   : f899e530-fd03-44a9-8307-4d4fc4827eab
-   Adresse physique       : f0:77:c3:e4:ac:50
-   Type d’interface         : Primaire
-   État                  : connecté
-   SSID                  : HBTL
-      Point d'accès d’identificateur SSID (Service Set Identifier)                 : 20:05:b6:ff:1f:22
-   Bande                   : 2,4 GHz
-   Canal                : 11
-   Type de réseau           : Infrastructure
-   Type de radio             : 802.11ax
-   Authentification         : Ouvrir
-   Chiffrement                 : Aucun
-   Mode de connexion        : Profil
-   Réception (Mbits/s)    : 103
-   Transmission (Mbits/s)   : 206
-   Signal                 : 80%
-   Profil                : HBTL
-   QoS MSCS configuré : 0
-   Carte QoS configurée : 0
-   Mappage QoS autorisé par la stratégie : 0
-   État du réseau hébergé: Non disponible
-   
-   
-   
-PS C:\Users\richb> netsh wlan show networks mode=bssid
+
+#  C:\Users\richb> netsh wlan show networks mode=bssid
 Nom de l’interface : Wi-Fi
 Actuellement 3 réseaux sont visibles.
-SSID 1 : HBTL5
+SSID 1 : SSID-1
    Type de réseau          : Infrastructure
    Authentification        : Ouvrir
    Chiffrement             : Aucun
-   BSSID 1                 : 20:05:b6:ff:1f:29
+   BSSID 1                 : fe:dc:ba:09:87:01
         Signal             : 40%
         Type de radio         : 802.11ax
         Bande               : 5 GHz
@@ -48,7 +19,7 @@ SSID 1 : HBTL5
         Mappage QoS pris en charge :  1
         Taux de base (Mbits/s) : 6 12 24
         Autres taux (Mbits/s)  : 9 18 36 48 54
-   BSSID 2                 : e8:9f:80:e3:c1:8f
+   BSSID 2                 : fe:dc:ba:09:87:02
         Signal             : 33%
         Type de radio         : 802.11ax
         Bande               : 5 GHz
@@ -61,7 +32,7 @@ SSID 1 : HBTL5
         Mappage QoS pris en charge :  1
         Taux de base (Mbits/s) : 6 12 24
         Autres taux (Mbits/s)  : 9 18 36 48 54
-   BSSID 3                 : 94:83:c4:a7:29:c6
+   BSSID 3                 : fe:dc:ba:09:87:03
         Signal             : 78%
         Type de radio         : 802.11ax
         Bande               : 5 GHz
@@ -74,11 +45,11 @@ SSID 1 : HBTL5
         Mappage QoS pris en charge :  1
         Taux de base (Mbits/s) : 6 12 24
         Autres taux (Mbits/s)  : 9 18 36 48 54
-SSID 2 : HBTL-Garage
+SSID 2 : SSID-2
    Type de réseau          : Infrastructure
    Authentification        : Ouvrir
    Chiffrement             : Aucun
-   BSSID 1                 : 98:de:d0:7d:77:f8
+   BSSID 1                 : fe:dc:ba:09:87:04
         Signal             : 31%
         Type de radio         : 802.11n
         Bande               : 2,4 GHz
@@ -91,11 +62,11 @@ SSID 2 : HBTL-Garage
         Mappage QoS pris en charge :  1
         Taux de base (Mbits/s) : 6 12 24
         Autres taux (Mbits/s)  : 9 18 36 48 54
-SSID 3 : HBTL
+SSID 3 : SSID-3
    Type de réseau          : Infrastructure
    Authentification        : Ouvrir
    Chiffrement             : Aucun
-   BSSID 1                 : e8:9f:80:e7:ed:6a
+   BSSID 1                 : fe:dc:ba:09:87:05
         Signal             : 20%
         Type de radio         : 802.11n
         Bande               : 2,4 GHz
@@ -108,7 +79,7 @@ SSID 3 : HBTL
         Mappage QoS pris en charge :  1
         Taux de base (Mbits/s) : 6 12 24
         Autres taux (Mbits/s)  : 9 18 36 48 54
-   BSSID 2                 : e8:9f:80:e3:c1:8e
+   BSSID 2                 : fe:dc:ba:09:87:06
         Signal             : 67%
         Type de radio         : 802.11n
         Bande               : 2,4 GHz
@@ -121,7 +92,7 @@ SSID 3 : HBTL
         Mappage QoS pris en charge :  1
         Taux de base (Mbits/s) : 6 12 24
         Autres taux (Mbits/s)  : 9 18 36 48 54
-   BSSID 3                 : 94:83:c4:a7:29:c5
+   BSSID 3                 : fe:dc:ba:09:87:07
         Signal             : 81%
         Type de radio         : 802.11ax
         Bande               : 2,4 GHz
@@ -134,7 +105,7 @@ SSID 3 : HBTL
         Mappage QoS pris en charge :  1
         Taux de base (Mbits/s) : 6 12 24
         Autres taux (Mbits/s)  : 9 18 36 48 54
-   BSSID 4                 : 20:05:b6:ff:1f:22
+   BSSID 4                 : fe:dc:ba:09:87:08
         Signal             : 80%
         Type de radio         : 802.11ax
         Bande               : 2,4 GHz

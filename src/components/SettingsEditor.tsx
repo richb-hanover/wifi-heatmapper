@@ -87,6 +87,43 @@ export default function SettingsEditor() {
           </td>
         </tr>
 
+        {/* <tr>
+          <td className="text-right pr-4">
+            <Label htmlFor="ssidToUse" className="font-bold text-lg">
+              SSID to use&nbsp;
+              <PopoverHelper text="Use same SSID, or switch to use best (strongest) SSID" />
+            </Label>
+          </td>
+          <td>
+            <input
+              type="text"
+              className="w-full border border-gray-200 rounded-sm p-2 focus:outline-none focus:ring focus:ring-blue-300 focus:border-blue-400"
+              value={settings.iperfServerAdrs}
+              onChange={(e) =>
+                updateSettings({ iperfServerAdrs: e.target.value.trim() })
+              }
+            />
+          </td>
+        </tr> */}
+
+        {/* <tr>
+          <td>
+            <Label htmlFor="ssidsToIgnore">
+              SSIDs to ignore&nbsp;
+              <PopoverHelper text="A comma-separated list of SSIDs to ignore" />
+            </Label>
+          </td>
+          <td>
+            <input
+              type="text"
+              className="w-full border border-gray-200 rounded-sm p-2 focus:outline-none focus:ring focus:ring-blue-300 focus:border-blue-400"
+              value={settings.iperfServerAdrs}
+              onChange={(e) =>
+                updateSettings({ iperfServerAdrs: e.target.value.trim() })
+              }
+            />
+          </td>
+        </tr> */}
         <tr>
           <td colSpan={2} className="text-right">
             <HeatmapAdvancedConfig />

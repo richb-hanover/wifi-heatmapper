@@ -165,7 +165,7 @@ export interface WifiScanResults {
 export interface WifiActions {
   preflightSettings(settings: PartialHeatmapSettings): Promise<WifiScanResults>; // returns error message
   checkIperfServer(settings: PartialHeatmapSettings): Promise<WifiScanResults>; // returns error message
-  findBestWifi(settings: PartialHeatmapSettings): Promise<WifiScanResults>; // return sorted list of nearby SSIDs
+  scanWifi(settings: PartialHeatmapSettings): Promise<WifiScanResults>; // return sorted list of nearby SSIDs
   setWifi(
     settings: PartialHeatmapSettings,
     bestSSID: WifiResults, // the results with the strongest signal strength
