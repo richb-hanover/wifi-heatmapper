@@ -5,10 +5,10 @@ There are 1 interfaces on the system:
     Name                   : Wi-Fi
     Description           : Intel(R) Wi-Fi 6 AX201 160MHz
     GUID                  : 7825d47a-5d59-4c93-8d91-2b0e1b5f6c4b
-    Physical address      : 12:34:56:78:90:ab
+    Physical address      : fe:dc:ba:09:87:01
     State                 : connected
-    SSID                  : SomeSSID
-    BSSID                 : 12:34:56:78:90:ac
+    SSID                  : SSID-1
+    BSSID                 : fe:dc:ba:09:87:02
     Network type         : Infrastructure
     Radio type           : 802.11ax
     Authentication       : WPA2-Personal

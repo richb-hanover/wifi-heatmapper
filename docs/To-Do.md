@@ -22,7 +22,9 @@ Ideas for making the program better - in no particular order:
 * If the "scanning for wifi channels" takes too long, add some kind of
   "Use this SSID" / "Use best SSID" setting
   since the Wi-Fi scan frequently adds 10-12 seconds to each measurement.
-
+* Add `netsh wlan show profiles` and `netsh wlan show profile ...`
+  for other languages; fill out the test routines
+  
 ## Bugs
 
 * Check for the earliest version of Node that supports all these features (fetch, etc)?

@@ -27,27 +27,27 @@ of the Wi-Fi strength and throughput.
 
 | Platform | Commands          | Notes                                                                                                                                                    |
 | -------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| macOS    | `system_profiler` | Information about all nearby SSIDs | 
+| macOS    | `system_profiler` | Retrieves information about all nearby SSIDs | 
 | macOS    | `networksetup -setairportnetwork ...` | Associate with named SSID | 
 | macOS    | `wdutil` | Detailed information about current wifi; sudo password required                                             |
 | macOS    | `ioreg` | Fallback if details aren't available from `wdutil` (Not used in 0.4.0 or later)  | 
-| Windows  | `netsh wlan show interfaces`           | Detailed information about the current wifi  |
+| Windows  | `netsh wlan show interfaces`           | Detailed information about the current wifi SSID |
 | Windows  | `netsh wlan show network`           | Information about all nearby SSIDs  |
-| Windows  | `netsh wlan show profiles`           | Get relationship between named profile and SSID  |
-| Windows  | `netsh wlan connect ...`           | Supply Profile and SSID to associate |
+| Windows  | `netsh wlan show profiles ...`           | Get relationship between named Profile and SSID  |
+| Windows  | `netsh wlan connect ...`           | Requires Profile and SSID to associate with |
 | Linux    | `iw`              | `iw` might need to be installed via your distro package manager, you will need to provide your wireless device id (e.g. "wlp4s0", we do try to infer it) |
 | All    | `iperf3` | Starts the iperf3 measurement | 
 
-**wifi-heatmapper** requires that `iperf3` be installed locally
-to make TCP or UDP measurements.
+`iperf3` must be installed locally
+to make TCP or UDP throughput measurements.
 The version of at least 3.17 is mildly recommended for `iperf3`
 on both server and client (ideally the same version,
 but that's not strictly necessary).
 
 `iperf3` must be available in `PATH`.
 `brew install iperf3` (macOS); 
-`apt install iperf3` (or equivalent - Linux);
-`choco install iperf3` (Windows) seem to do this.
+`apt install iperf3` (or equivalent, on Linux);
+`choco install iperf3` (or equivalent, on Windows) seem to do this.
 For Windows you might have to do something like `set PATH=%PATH%;C:\path\to\iperf3`, e.g. do `set PATH=%PATH%;C:\iperf3` (or `setx` to make it permanent). 
 
 ## How wifi-heatmapper works

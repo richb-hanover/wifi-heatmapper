@@ -5,7 +5,8 @@
   "channel": "Kanal",
   "security": "Authentifizierung",
   "txRate": "Übertragungsrate (MBit/s)",
-  "phyMode": "Funktyp"
+  "phyMode": "Funktyp",
+  "name": "Name"
 }
 
 // Output from netsh wlan show interfaces on Windows 10 (or 11?) - German

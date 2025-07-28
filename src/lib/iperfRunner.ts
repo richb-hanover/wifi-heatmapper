@@ -162,7 +162,7 @@ export async function runSurveyTests(
     const startTime = Date.now();
 
     // get the array of candidates SSIDs, sorted by RSSI/signalStrength
-    const results: WifiScanResults = await wifiInfo.findBestWifi(settings);
+    const results: WifiScanResults = await wifiInfo.scanWifi(settings);
     // if there's an error, return that as the status
     if (results.reason != "") {
       return { iperfData: null, wifiData: null, status: results.reason };

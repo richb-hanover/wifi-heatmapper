@@ -5,7 +5,8 @@
   "channel": "Canal",
   "security": "Authentification",
   "txRate": "Transmission (Mbits/s)",
-  "phyMode": "Type de radio"
+  "phyMode": "Type de radio",
+  "name": "Nom"
 }
 
 // \Users\Test User> netsh wlan show interfaces - Win11 French

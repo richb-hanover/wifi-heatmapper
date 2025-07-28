@@ -40,6 +40,7 @@ const hexToRgba = (hex: string, alpha: number) => {
  * Also display error if it's caught
  * Runs on the client (which is OK, since that's also the same machine as the server)
  */
+
 const runCommand = async () => {
   const cmd = (document.getElementById("cmdToRun") as HTMLInputElement).value;
   if (cmd) {
@@ -153,8 +154,8 @@ export function HeatmapAdvancedConfig() {
               </tr>
 
               <tr>
-                <td className="align-top p-4">
-                  <Label>
+                <td className="align-top pr-2 pt-2">
+                  <Label className="inline-flex items-start">
                     Gradient&nbsp;
                     <PopoverHelper text="Define the color gradient for the heatmap. Each key represents a point in the gradient (0 to 1), and the value is the color. See heatmap.js gradient configuration." />
                   </Label>
@@ -242,10 +243,10 @@ export function HeatmapAdvancedConfig() {
                 </td>
               </tr>
               <tr>
-                <td>
-                  <Label htmlFor="cmdToRun" className="">
+                <td className="align-top pr-2 pt-2">
+                  <Label htmlFor="cmdToRun" className="inline-flex items-start">
                     Command for testing&nbsp;
-                    <PopoverHelper text="Enter a command-line command to test its response." />
+                    <PopoverHelper text="Enter a command-line command to test it. View its output in the Console window." />
                   </Label>
                 </td>
                 <td>

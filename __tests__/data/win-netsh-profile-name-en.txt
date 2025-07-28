@@ -34,3 +34,25 @@ Cost settings
    Over Data Limit        : No
    Roaming                : No
    Cost Source            : Default
+
+# Bogus second entry added for test code
+---------------------
+   Number of SSIDs        : 1
+   SSID name              : "HBTL6"
+   Network type           : Infrastructure
+   Radio type             : [ Any Radio Type ]
+   Vendor extension          : Not present
+Security settings
+-----------------
+   Authentication         : Open
+   Cipher                 : None
+   Security key           : Absent
+   Key Index              : 1
+Cost settings
+-------------
+   Cost                   : Unrestricted
+   Congested              : No
+   Approaching Data Limit : No
+   Over Data Limit        : No
+   Roaming                : No
+   Cost Source            : Default

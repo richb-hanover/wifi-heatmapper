@@ -8,7 +8,7 @@ const reverseMap: Map<string, string> = new Map();
 
 /**
  * initLocalization() - reads the files from _data/localization_
- * builds a "reverse map" then returns it so the caler
+ * builds a "reverse map" then returns it so the caller
  * can look up (localized) strings to get canonical names
  * @returns "reverse map"
  */

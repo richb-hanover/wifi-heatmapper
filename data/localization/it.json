@@ -5,7 +5,8 @@
   "channel": "Canale",
   "security": "Autenticazione",
   "txRate": "Velocità trasmissione (Mbps)",
-  "phyMode": "Tipo frequenza radio"
+  "phyMode": "Tipo frequenza radio",
+  "name": "Nome"
 }
 
 // Output from netsh wlan show interfaces on Windows 10 - Italian

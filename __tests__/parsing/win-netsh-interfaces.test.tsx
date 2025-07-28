@@ -32,15 +32,16 @@ test("parsing netsh output where no labels match", () => {
   );
 });
 
-test("parsing english netsh output", () => {
+test("parsing english netsh ... interfaces output", () => {
   const netsh_output = fs.readFileSync(
     path.join(__dirname, "../data/win-netsh-interfaces-en.txt"),
     "utf-8",
   );
   const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
   expect(output).toStrictEqual({
-    ssid: "SomeSSID",
-    bssid: "1234567890ac",
+    name: "Wi-Fi",
+    ssid: "SSID-1",
+    bssid: "fedcba098702",
     rssi: -75,
     signalStrength: 42,
     channel: 44,
@@ -60,6 +61,7 @@ test("parsing italian netsh output", () => {
   );
   const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
   expect(output).toStrictEqual({
+    name: "Wi-Fi",
     ssid: "SomeSSID",
     bssid: "12345610f7a8",
     rssi: -49,
@@ -81,6 +83,7 @@ test("parsing German netsh output", () => {
   );
   const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
   expect(output).toStrictEqual({
+    name: "WLAN",
     ssid: "SomeSSID",
     bssid: "1234567890ab",
     rssi: -74,
@@ -102,16 +105,17 @@ test("parsing French netsh output", () => {
   );
   const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
   expect(output).toStrictEqual({
-    ssid: "SomeSSID",
-    bssid: "1234567890ab",
-    rssi: -61,
-    signalStrength: 65,
-    channel: 144,
-    band: 5, // 2.4GHz since channel is <= 14
+    name: "Wi-Fi",
+    ssid: "SSID-1",
+    bssid: "fedcba098702",
+    rssi: -52,
+    signalStrength: 80,
+    channel: 11,
+    band: 2.4, // 2.4GHz since channel is <= 14
     channelWidth: 0, // Windows doesn't provide this info
-    txRate: 310,
+    txRate: 206,
     phyMode: "802.11ax",
-    security: "WPA2 - Personnel",
+    security: "Ouvrir",
     active: false,
   });
 });

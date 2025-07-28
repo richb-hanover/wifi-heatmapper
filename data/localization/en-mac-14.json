@@ -6,7 +6,8 @@
   "security": "Authentication",
   "txRate": "Transmit rate (Mbps)",
   "phyMode": "Radio type",
-  "channelWidth": "number"
+  "channelWidth": "number",
+  "name": "Name"
 }
 
 // Output from netsh wlan show interfaces on Windows 

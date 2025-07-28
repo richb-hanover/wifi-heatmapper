@@ -5,7 +5,8 @@
   "channel": "Canal",
   "security": "Autenticación",
   "txRate": "Velocidad de transmisión (Mbps)",
-  "phyMode": "Tipo de radio"
+  "phyMode": "Tipo de radio",
+  "name": "Nombre"
 }
 
 // Output from netsh wlan show interfaces on Win 11 Spanish (ES)
