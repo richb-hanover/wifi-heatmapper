@@ -4,7 +4,7 @@ import {
   WifiScanResults,
   WifiActions,
 } from "./types";
-import { execAsync } from "./server-utils";
+import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
 import {
   getDefaultWifiNetwork,
@@ -13,7 +13,7 @@ import {
   percentageToRssi,
   channelToBand,
 } from "./utils";
-import { initLocalization, getReverseLookupMap } from "./localization";
+import { initLocalization } from "./localization";
 
 const reverseLookupTable = await initLocalization(); // build the structure
 
@@ -104,8 +104,8 @@ export class WindowsWifiActions implements WifiActions {
       reason: "",
     };
 
+    // Get information about local SSIDs
     try {
-      // Get the Wifi information from `netsh`
       const { stdout } = await execAsync(`netsh wlan show networks mode=bssid`);
       response.SSIDs = parseNetshNetworks(stdout);
     } catch (err) {
@@ -135,13 +135,15 @@ export class WindowsWifiActions implements WifiActions {
 
     try {
       await execAsync(
-        `netsh wlan connect name="${theProfile}" ssid="${wifiSettings.ssid}`,
+        `netsh wlan connect name="${theProfile}" ssid="${wifiSettings.ssid}"`,
       );
     } catch (err) {
       response.reason = `${err}`;
+      return response;
     }
 
-    return response;
+    // if it worked, return information about that interface/SSID
+    return await this.getWifi(settings);
   }
 
   /**
@@ -154,12 +156,18 @@ export class WindowsWifiActions implements WifiActions {
       SSIDs: [],
       reason: "",
     };
-    const reverseLookupTable = await getReverseLookupMap();
+    let stdout: string;
     const command = "netsh wlan show interfaces";
-    const { stdout } = await execAsync(command);
-    logger.trace("NETSH output:", stdout);
-    const parsed = parseNetshInterfaces(reverseLookupTable, stdout);
-    logger.trace("Final WiFi data:", parsed);
+    while (true) {
+      const execOutput = await execAsync(command);
+      stdout = execOutput.stdout;
+      const lines = stdout.split("\n");
+      const state = lines.filter((line) => line.includes("State:"));
+      if (state.includes("connected")) break;
+      await delay(200);
+    }
+    const parsed = parseNetshInterfaces(stdout);
+    logger.info("Final WiFi data:", parsed);
     response.SSIDs.push(parsed);
     return response;
   }
@@ -293,10 +301,7 @@ function splitLines(line: string): string[] {
  * This code looks up the labels from the netsh... command
  * in a localization map that determines the proper label for the WifiNetwork
  */
-export function parseNetshInterfaces(
-  reverseLookupTable: Map<string, string>,
-  output: string,
-): WifiResults {
+export function parseNetshInterfaces(output: string): WifiResults {
   const networkInfo = getDefaultWifiNetwork();
   const lines = output.split("\n");
   for (const line of lines) {
@@ -377,10 +382,10 @@ async function getProfileFromSSID(
   profiles: string[],
   theSSID: string,
 ): Promise<string> {
-  for (const profile in profiles) {
+  for (const profile of profiles) {
     // netsh wlan show profile name = "HBTL5 2" key = clear
     const { stdout } = await execAsync(
-      `netsh wlan show profile name="${profile}" key=clear`,
+      `netsh wlan show profile name="${profile}"`,
     );
     const matchedProfile = findProfileFromSSID(stdout, theSSID);
     if (matchedProfile) return matchedProfile;

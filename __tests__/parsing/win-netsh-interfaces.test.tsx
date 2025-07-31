@@ -3,23 +3,14 @@
  *   several localized languages
  */
 
-import { expect, test, describe, it, beforeAll } from "vitest";
+import {
+  expect,
+  test,
+  //describe, it, beforeAll
+} from "vitest";
 import fs from "fs";
 import path from "path";
 import { parseNetshInterfaces } from "../../src/lib/wifiScanner-windows";
-import { initLocalization } from "../../src/lib/localization";
-
-let reverseLookupTable: Map<string, string>;
-
-beforeAll(async () => {
-  reverseLookupTable = await initLocalization(); // build the structure
-});
-
-describe("Checking localization code", () => {
-  it("should use the preloaded structure", () => {
-    expect(reverseLookupTable).toBeDefined();
-  });
-});
 
 test("parsing netsh output where no labels match", () => {
   const netsh_output = fs.readFileSync(
@@ -27,7 +18,7 @@ test("parsing netsh output where no labels match", () => {
     "utf-8",
   );
 
-  expect(() => parseNetshInterfaces(reverseLookupTable, netsh_output)).toThrow(
+  expect(() => parseNetshInterfaces(netsh_output)).toThrow(
     `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`,
   );
 });
@@ -37,7 +28,7 @@ test("parsing english netsh ... interfaces output", () => {
     path.join(__dirname, "../data/win-netsh-interfaces-en.txt"),
     "utf-8",
   );
-  const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
+  const output = parseNetshInterfaces(netsh_output);
   expect(output).toStrictEqual({
     name: "Wi-Fi",
     ssid: "SSID-1",
@@ -59,7 +50,7 @@ test("parsing italian netsh output", () => {
     path.join(__dirname, "../data/win-netsh-interfaces-it.txt"),
     "utf-8",
   );
-  const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
+  const output = parseNetshInterfaces(netsh_output);
   expect(output).toStrictEqual({
     name: "Wi-Fi",
     ssid: "SomeSSID",
@@ -81,7 +72,7 @@ test("parsing German netsh output", () => {
     path.join(__dirname, "../data/win-netsh-interfaces-de.txt"),
     "utf-8",
   );
-  const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
+  const output = parseNetshInterfaces(netsh_output);
   expect(output).toStrictEqual({
     name: "WLAN",
     ssid: "SomeSSID",
@@ -103,7 +94,7 @@ test("parsing French netsh output", () => {
     path.join(__dirname, "../data/win-netsh-interfaces-fr.txt"),
     "utf-8",
   );
-  const output = parseNetshInterfaces(reverseLookupTable, netsh_output);
+  const output = parseNetshInterfaces(netsh_output);
   expect(output).toStrictEqual({
     name: "Wi-Fi",
     ssid: "SSID-1",

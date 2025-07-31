@@ -79,7 +79,7 @@ export default function MediaDropdown({
    * to work OK without the call, so I'm leaving it commented out...
    */
   const handleSelect = (value: string) => {
-    // setSelected(value); // why can this be commented out?
+    // setSelected(value); // Disabled to avoid Firefox-specific freeze; value is likely set in useEffect
     onChange?.(value);
   };
 
