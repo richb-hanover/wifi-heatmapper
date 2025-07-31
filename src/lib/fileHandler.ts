@@ -1,22 +1,21 @@
 /**
  * wifi-heatmapper localStorage() rules:
  *
- * - There is always a "base" value (a string) named `wifi*heatmapper` that
- *    is the name of the floor plan that contains all the settings
- *    that were collected for that floor plan.
- * - There is also a wifi-heatmapper-floorplanImageName object
+ * - localStorage always holds a "base" value named `wifi*heatmapper`
+ *    whose (string) value matches the floor plan in use.
+ * - localStorage also contains a `wifi-heatmapper-imageName` object
  *    that contains the survey points and other settings that
- *    match the floorplanImageName from the base value.
+ *    go with the floorplanImageName from the base value.
  *
  * - readSettingsFromFile(fileName) has three actions:
  *  - read the base `wifi*heatmapper` value to get the floorplanImageName
  *    - if it doesn't exist, return null, so the caller can provide default values
- *    - if the fileName doesn't match it, return null (same reason)
+ *    - if the fileName doesn't match the base, return null (same reason)
  *    - Otherwise, return the settings from the wifi-heatmapper-fileName object
  *
  * - writeSettingsToFile(fileName) has two actions:
  *  - update the base `wifi*heatmapper` value with the current fileName
- *  - update the wifi-heatmapper-fileName object with the passed-in settings
+ *  - update the wifi-heatmapper-imageName object with the passed-in settings
  */
 
 import { HeatmapSettings } from "./types";

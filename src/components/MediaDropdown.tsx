@@ -74,9 +74,12 @@ export default function MediaDropdown({
    * Call parent onChange() function with that new name
    * @param name of new file to be used
    *
+   * Odd behavior: in Firefox on macOS (no other browser or OS)
+   * the setSelected() call causes a freeze. The app seems
+   * to work OK without the call, so I'm leaving it commented out...
    */
   const handleSelect = (value: string) => {
-    setSelected(value);
+    // setSelected(value); // why can this be commented out?
     onChange?.(value);
   };
 
@@ -90,7 +93,7 @@ export default function MediaDropdown({
   };
 
   /**
-   * handleFileChange - handle a programmatic "click"
+   * handleFileUpload - handle a programmatic "click"
    * to select a new file from the local file system,
    * then send that file to the server via /api/media POST
    * @param e
