@@ -33,7 +33,7 @@ export class WindowsWifiActions implements WifiActions {
    * @returns string - empty, or error message to display
    */
   async preflightSettings(
-    settings: PartialHeatmapSettings,
+    settings: PartialHeatmapSettings
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
@@ -61,7 +61,7 @@ export class WindowsWifiActions implements WifiActions {
    * @returns "" or error string
    */
   async checkIperfServer(
-    settings: PartialHeatmapSettings,
+    settings: PartialHeatmapSettings
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
@@ -124,7 +124,7 @@ export class WindowsWifiActions implements WifiActions {
    */
   async setWifi(
     settings: PartialHeatmapSettings,
-    wifiSettings: WifiResults,
+    wifiSettings: WifiResults
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
@@ -135,7 +135,7 @@ export class WindowsWifiActions implements WifiActions {
 
     try {
       await execAsync(
-        `netsh wlan connect name="${theProfile}" ssid="${wifiSettings.ssid}"`,
+        `netsh wlan connect name="${theProfile}" ssid="${wifiSettings.ssid}"`
       );
     } catch (err) {
       response.reason = `${err}`;
@@ -161,9 +161,11 @@ export class WindowsWifiActions implements WifiActions {
     while (true) {
       const execOutput = await execAsync(command);
       stdout = execOutput.stdout;
+      // console.log(`Interfaces: ${stdout}`);
       const lines = stdout.split("\n");
-      const state = lines.filter((line) => line.includes("State:"));
-      if (state.includes("connected")) break;
+      const state = lines.filter((line) => line.includes("State"));
+      console.log(`State line: ${state}`);
+      if (state.includes("connecte")) break;
       await delay(200);
     }
     const parsed = parseNetshInterfaces(stdout);
@@ -176,7 +178,7 @@ export class WindowsWifiActions implements WifiActions {
 function assignWindowsNetworkInfoValue<K extends keyof WifiResults>(
   networkInfo: WifiResults,
   label: K,
-  val: string,
+  val: string
 ) {
   const current = networkInfo[label];
   if (typeof current === "number") {
@@ -200,8 +202,11 @@ function assignWindowsNetworkInfoValue<K extends keyof WifiResults>(
 
 /**
  * parseNetshNetworks() parses the `netsh wlan show networks mode=bssid`
+ * 
+ * Ignore any SSID that is ""
+ * 
  * @param string Output of the command
- * @returns array of WifiResults
+ * @returns array of WifiResults, sorted by signalStrength
  */
 export function parseNetshNetworks(text: string): WifiResults[] {
   const results: WifiResults[] = [];
@@ -270,6 +275,7 @@ export function parseNetshNetworks(text: string): WifiResults[] {
   results.push(wifiResult);
   // console.log(`***** wifiResult: ${JSON.stringify(wifiResult)}`);
 
+  const sortedResults = results.
   return results;
 }
 
@@ -325,12 +331,12 @@ export function parseNetshInterfaces(output: string): WifiResults {
     networkInfo.txRate == 0
   ) {
     throw new Error(
-      `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`,
+      `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`
     );
   }
   if (!isValidMacAddress(networkInfo.bssid)) {
     throw new Error(
-      `Invalid BSSID when parsing netsh output: ${networkInfo.bssid}`,
+      `Invalid BSSID when parsing netsh output: ${networkInfo.bssid}`
     );
   }
   //set frequency band and rssi
@@ -380,18 +386,18 @@ export function parseProfiles(stdout: string): string[] {
 
 async function getProfileFromSSID(
   profiles: string[],
-  theSSID: string,
+  theSSID: string
 ): Promise<string> {
   for (const profile of profiles) {
-    // netsh wlan show profile name = "HBTL5 2" key = clear
+    // netsh wlan show profile name = "HBTL5 2"
     const { stdout } = await execAsync(
-      `netsh wlan show profile name="${profile}"`,
+      `netsh wlan show profile name="${profile}"`
     );
     const matchedProfile = findProfileFromSSID(stdout, theSSID);
     if (matchedProfile) return matchedProfile;
   }
   // tried them all, didn't find a match. Throw an error
-  throw "Didn't find a profile to match ${theSSID}";
+  throw `Didn't find a profile to match ${theSSID}`;
 }
 
 /**
@@ -406,7 +412,7 @@ async function getProfileFromSSID(
  */
 export function findProfileFromSSID(
   stdout: string,
-  theSSID: string,
+  theSSID: string
 ): string | null {
   const profileLine = stdout
     .split("\n")
