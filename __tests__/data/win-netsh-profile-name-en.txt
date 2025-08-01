@@ -1,4 +1,4 @@
-# C:\Users\richb>netsh wlan show profile name="HBTL5 2" key=clear
+# C:\Users\richb>netsh wlan show profile name="HBTL5 2"
 
 Profile HBTL5 2 on interface Wi-Fi:
 =======================================================================

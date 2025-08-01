@@ -380,6 +380,7 @@ export function parseProfiles(stdout: string): string[] {
       response.push(val);
     }
   }
+  // console.log(`Profiles: ${JSON.stringify(response)}`);
   return response;
 }
 /**
@@ -421,14 +422,16 @@ export function findProfileFromSSID(
   stdout: string,
   theSSID: string,
 ): string | null {
-  const profileLine = stdout
-    .split("\n")
-    .filter((line) => line.includes("Name"))[0]; // get first line with "Name"
-  if (!profileLine) {
-    throw new Error("No profile name found");
+  let profile = "";
+  const profileLines = stdout
+    .split("\n");
+for (const line of profileLines) {
+  const [,key,val] = splitLine(line);
+  if (key == "name"){
+    profile = val;
+    break;
   }
-  const [, , profile] = splitLine(profileLine);
-  if (!profile) {
+}  if (!profile) {
     throw new Error("No profile name found");
   }
 

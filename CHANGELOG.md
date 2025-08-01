@@ -4,13 +4,14 @@ _This section follows the precepts of [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased]
 
-### Major features
+### Major features - heading toward 0.4.0
 
 * **wifi-heatmapper** now scans the Wifi environment and
   measures the strongest SSID that the laptop has previously associated with.
   (Earlier versions always used the same SSID, even if the laptop
   has moved away from the original access point close to a stronger one.)
-* Improved messages to describe the measurement process.
+* Improved progress messages to describe the measurement process.
+* More test routines for various localized Windows systems
 
 ### Other features
 
@@ -18,9 +19,9 @@ _This section follows the precepts of [Keep a Changelog](https://keepachangelog.
   is not disrupted by changing wifi SSID
 * Create platform-specific classes that provide an API to the
   Wifi-detection facilities.
-  This coalesced all pre-measurement tests into preflightSettings()
+  This coalesces all pre-measurement tests into preflightSettings()
   and creates a separate "iperf3 server available" test.
-  (It's OK to test the
+  (It's useful for wifi-heatmapper to test the
   wifi signal strength even if the iperf3 server isn't available.)
 * Refactor error detection/flow to provide more meaningful messages
 * Modify Test duration field to ignore non-numeric values (gets reset to zero)

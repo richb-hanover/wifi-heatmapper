@@ -24,6 +24,7 @@ Ideas for making the program better - in no particular order:
   since the Wi-Fi scan frequently adds 10-12 seconds to each measurement.
 * Add `netsh wlan show profiles` and `netsh wlan show profile ...`
   for other languages; fill out the test routines
+* To avoid Windows localization hassles, investigate Windows.Devices.WiFi (for UWP or packaged desktop apps) or PowerShell (Get-NetAdapter, Get-NetConnectionProfile, etc.) See https://learn.microsoft.com/en-us/windows/win32/nativewifi/wi-fi-access-location-changes. This will impose the same WiFi privacy restrictions as seen in current macOS. Someone with more Windows chops than I have can look into this.
   
 ## Bugs
 

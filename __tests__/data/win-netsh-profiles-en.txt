@@ -5,9 +5,9 @@ Group policy profiles (read only)
    <None>
 User profiles
 -------------
-   All User Profile     : HBTL5 2
-   All User Profile     : Fourteen Pro
-   All User Profile     : HBTL
-   All User Profile     : CAMERA_5G-1
-   All User Profile     : PACHNET
-   All User Profile     : RK Production
+   All User Profile     : Profile1 2
+   All User Profile     : Profile2
+   All User Profile     : Profile3
+   All User Profile     : Profile4
+   All User Profile     : Profile5
+   All User Profile     : Profile6
