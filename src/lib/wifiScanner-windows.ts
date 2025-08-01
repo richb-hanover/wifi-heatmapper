@@ -5,19 +5,19 @@ import {
   WifiActions,
 } from "./types";
 import { execAsync, delay } from "./server-utils";
-import { getLogger } from "./logger";
 import {
   getDefaultWifiNetwork,
   isValidMacAddress,
   normalizeMacAddress,
   percentageToRssi,
   channelToBand,
+  bySignalStrength,
 } from "./utils";
 import { initLocalization } from "./localization";
 
 const reverseLookupTable = await initLocalization(); // build the structure
 
-const logger = getLogger("wifi-Windows");
+// const logger = getLogger("wifi-Windows");
 
 export class WindowsWifiActions implements WifiActions {
   nameOfWifi: string = "";
@@ -33,7 +33,7 @@ export class WindowsWifiActions implements WifiActions {
    * @returns string - empty, or error message to display
    */
   async preflightSettings(
-    settings: PartialHeatmapSettings
+    settings: PartialHeatmapSettings,
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
@@ -61,7 +61,7 @@ export class WindowsWifiActions implements WifiActions {
    * @returns "" or error string
    */
   async checkIperfServer(
-    settings: PartialHeatmapSettings
+    settings: PartialHeatmapSettings,
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
@@ -89,9 +89,15 @@ export class WindowsWifiActions implements WifiActions {
     // logger.info(`Called findWifi():`);
 
     const { stdout } = await execAsync("netsh wlan show interfaces");
-
-    this.nameOfWifi = stdout;
-    return stdout;
+    const lines = stdout.split("]n");
+    for (const line of lines) {
+      const [, key, val] = splitLine(line);
+      if (key == "name") {
+        this.nameOfWifi = val;
+        return val;
+      }
+    }
+    return "";
   }
 
   /**
@@ -124,7 +130,7 @@ export class WindowsWifiActions implements WifiActions {
    */
   async setWifi(
     settings: PartialHeatmapSettings,
-    wifiSettings: WifiResults
+    wifiSettings: WifiResults,
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
@@ -135,7 +141,7 @@ export class WindowsWifiActions implements WifiActions {
 
     try {
       await execAsync(
-        `netsh wlan connect name="${theProfile}" ssid="${wifiSettings.ssid}"`
+        `netsh wlan connect name="${theProfile}" ssid="${wifiSettings.ssid}"`,
       );
     } catch (err) {
       response.reason = `${err}`;
@@ -165,11 +171,12 @@ export class WindowsWifiActions implements WifiActions {
       const lines = stdout.split("\n");
       const state = lines.filter((line) => line.includes("State"));
       console.log(`State line: ${state}`);
-      if (state.includes("connecte")) break;
+      const [, , val] = splitLine(state[0]);
+      if (val == "connected") break;
       await delay(200);
     }
     const parsed = parseNetshInterfaces(stdout);
-    logger.info("Final WiFi data:", parsed);
+    // logger.info("Final WiFi data:", parsed);
     response.SSIDs.push(parsed);
     return response;
   }
@@ -178,7 +185,7 @@ export class WindowsWifiActions implements WifiActions {
 function assignWindowsNetworkInfoValue<K extends keyof WifiResults>(
   networkInfo: WifiResults,
   label: K,
-  val: string
+  val: string,
 ) {
   const current = networkInfo[label];
   if (typeof current === "number") {
@@ -202,9 +209,9 @@ function assignWindowsNetworkInfoValue<K extends keyof WifiResults>(
 
 /**
  * parseNetshNetworks() parses the `netsh wlan show networks mode=bssid`
- * 
+ *
  * Ignore any SSID that is ""
- * 
+ *
  * @param string Output of the command
  * @returns array of WifiResults, sorted by signalStrength
  */
@@ -218,7 +225,7 @@ export function parseNetshNetworks(text: string): WifiResults[] {
 
   const lines = text.split("\n");
   for (const line of lines) {
-    const [, key, val] = splitLines(line);
+    const [, key, val] = splitLine(line);
 
     // If we have accumulated a SSID and BSSID, push out that record
     // because the new ssid/bssid start a new record
@@ -275,8 +282,10 @@ export function parseNetshNetworks(text: string): WifiResults[] {
   results.push(wifiResult);
   // console.log(`***** wifiResult: ${JSON.stringify(wifiResult)}`);
 
-  const sortedResults = results.
-  return results;
+  const sortedResults = results.sort(bySignalStrength);
+  const nonEmptyResults = sortedResults.filter((item) => item.ssid != "");
+  // console.log(`Network Results: ${JSON.stringify(nonEmptyResults, null, 2)}`);
+  return nonEmptyResults;
 }
 
 /**
@@ -287,7 +296,7 @@ export function parseNetshNetworks(text: string): WifiResults[] {
  * @param line - a "label" separated by a ":" followed by a value
  * @returns array of strings: [label, key, value] may be ["", "",""] if no ":"
  */
-function splitLines(line: string): string[] {
+function splitLine(line: string): string[] {
   const pos = line.indexOf(":");
   if (pos == -1) return ["", "", ""]; // no ":"? return empty values
   let label = line.slice(0, pos - 1).trim(); // the (trimmed) label up to the ":"
@@ -312,7 +321,7 @@ export function parseNetshInterfaces(output: string): WifiResults {
   const lines = output.split("\n");
   for (const line of lines) {
     // eslint-disable-next-line prefer-const
-    let [, key, val] = splitLines(line);
+    let [, key, val] = splitLine(line);
     if (key == "signalStrength") {
       val = val.replace(/%/g, ""); // remove all "%"
     }
@@ -331,12 +340,12 @@ export function parseNetshInterfaces(output: string): WifiResults {
     networkInfo.txRate == 0
   ) {
     throw new Error(
-      `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`
+      `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`,
     );
   }
   if (!isValidMacAddress(networkInfo.bssid)) {
     throw new Error(
-      `Invalid BSSID when parsing netsh output: ${networkInfo.bssid}`
+      `Invalid BSSID when parsing netsh output: ${networkInfo.bssid}`,
     );
   }
   //set frequency band and rssi
@@ -366,9 +375,7 @@ export function parseProfiles(stdout: string): string[] {
   // break into lines, removing those without ":"
   const lines = stdout.split("\n").filter((line) => line.includes(":"));
   for (const line of lines) {
-    const [, , val] = splitLines(line);
-    // const match = line.match(/:\s*(.*)$/);
-    // const result = match ? match[1].trim() : null;
+    const [, , val] = splitLine(line);
     if (val) {
       response.push(val);
     }
@@ -386,12 +393,12 @@ export function parseProfiles(stdout: string): string[] {
 
 async function getProfileFromSSID(
   profiles: string[],
-  theSSID: string
+  theSSID: string,
 ): Promise<string> {
   for (const profile of profiles) {
     // netsh wlan show profile name = "HBTL5 2"
     const { stdout } = await execAsync(
-      `netsh wlan show profile name="${profile}"`
+      `netsh wlan show profile name="${profile}"`,
     );
     const matchedProfile = findProfileFromSSID(stdout, theSSID);
     if (matchedProfile) return matchedProfile;
@@ -412,7 +419,7 @@ async function getProfileFromSSID(
  */
 export function findProfileFromSSID(
   stdout: string,
-  theSSID: string
+  theSSID: string,
 ): string | null {
   const profileLine = stdout
     .split("\n")
@@ -420,7 +427,7 @@ export function findProfileFromSSID(
   if (!profileLine) {
     throw new Error("No profile name found");
   }
-  const [, , profile] = splitLines(profileLine);
+  const [, , profile] = splitLine(profileLine);
   if (!profile) {
     throw new Error("No profile name found");
   }
@@ -431,7 +438,7 @@ export function findProfileFromSSID(
     throw new Error(`Can't find an SSID for profile ${profile}`);
   }
   for (const line of lines) {
-    const [, , ssid] = splitLines(line);
+    const [, , ssid] = splitLine(line);
     if (ssid == theSSID) {
       return profile;
     }

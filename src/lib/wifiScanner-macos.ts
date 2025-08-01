@@ -7,7 +7,7 @@ import {
 } from "./types";
 import { execAsync, delay } from "./server-utils";
 import { getLogger } from "./logger";
-import { rssiToPercentage } from "./utils";
+import { rssiToPercentage, bySignalStrength } from "./utils";
 import { isValidMacAddress, normalizeMacAddress, channelToBand } from "./utils";
 import { setSSID, getSSID } from "./server-globals";
 
@@ -402,24 +402,6 @@ export const getCandidateSSIDs = (
   currentInterface: string,
   ignoredSSIDs: string[],
 ): WifiResults[] => {
-  // sort by the signalStrength value (may be null)
-  function bySignalStrength(a: any, b: any): number {
-    // const parseSignal = (val: string | undefined): number | null => {
-    //   const match = val?.match(/^(-?\d+)\s+dBm/);
-    //   return match ? parseInt(match[1], 10) : null;
-    // };
-
-    const signalA = a.signalStrength;
-    const signalB = b.signalStrength;
-
-    if (signalA === null && signalB === null) return 0;
-    if (signalA === null) return 1; // move A to end
-    if (signalB === null) return -1; // move B to end
-
-    // Descending: stronger (less negative) signal first
-    return signalB - signalA;
-  }
-
   // pluck out the local candidate SSIDs from the system_profiler output
   const localCandidates = (
     spData.SPAirPortDataType.flatMap(

@@ -33,12 +33,42 @@ test("Parsing English Win11 'netsh ... networks'", () => {
 
   expect(results[0]).toStrictEqual({
     ssid: "SSID-1",
-    bssid: "fe:dc:ba:09:87:01",
-    channel: 1,
+    bssid: "fe:dc:ba:09:87:03",
+    channel: 6,
+    phyMode: "802.11n",
+    security: "Open",
+    rssi: -47,
+    signalStrength: 88,
+    band: 2.4,
+    txRate: 0, // candidates don't give txRate
+    channelWidth: 0,
+    active: false, // not the one that's in service now
+  });
+
+  results.forEach(checkEachItem);
+});
+
+// ========= English Win11 'netsh wlan show networks' with blank SSID ===============
+
+test("Parsing English Win11 'netsh ... networks'-Blank SSID", () => {
+  const netsh_output = fs.readFileSync(
+    path.join(__dirname, "../data/win-netsh-networks-blank-ssid-en.txt"),
+    "utf-8",
+  );
+  const results = parseNetshNetworks(netsh_output);
+
+  // console.log(`Test routine shows: ${JSON.stringify(results, null, 2)}`);
+
+  expect(results.length).toEqual(14);
+
+  expect(results[0]).toStrictEqual({
+    ssid: "SSID-2",
+    bssid: "fe:dc:ba:09:87:03",
+    channel: 11,
     phyMode: "802.11ax",
     security: "Open",
-    rssi: -81,
-    signalStrength: 31,
+    rssi: -51,
+    signalStrength: 81,
     band: 2.4,
     txRate: 0, // candidates don't give txRate
     channelWidth: 0,
@@ -62,14 +92,14 @@ test("Parsing French Win11 'netsh ... networks'", () => {
   expect(results.length).toEqual(8);
 
   expect(results[0]).toStrictEqual({
-    ssid: "SSID-1",
-    bssid: "fe:dc:ba:09:87:01",
-    channel: 149,
+    ssid: "SSID-3",
+    bssid: "fe:dc:ba:09:87:07",
+    channel: 1,
     phyMode: "802.11ax",
     security: "Ouvrir",
-    rssi: -76,
-    signalStrength: 40,
-    band: 5,
+    rssi: -51,
+    signalStrength: 81,
+    band: 2.4,
     txRate: 0, // candidates don't give txRate
     channelWidth: 0,
     active: false, // not the one that's in service now
@@ -92,13 +122,13 @@ test("Parsing German Win11 'netsh ... networks'", () => {
   expect(results.length).toEqual(9);
 
   expect(results[0]).toStrictEqual({
-    ssid: "SSID-1",
-    bssid: "fe:dc:ba:09:87:01",
+    ssid: "SSID-4",
+    bssid: "fe:dc:ba:09:87:06",
     channel: 6,
     phyMode: "802.11n",
-    security: "WPA2-Personal",
-    rssi: -92,
-    signalStrength: 13,
+    security: "Offen",
+    rssi: -47,
+    signalStrength: 88,
     band: 2.4,
     txRate: 0, // candidates don't give txRate
     channelWidth: 0,

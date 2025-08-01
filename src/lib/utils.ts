@@ -220,3 +220,27 @@ export function extractIperfResults(
 export function channelToBand(channel: number): number {
   return channel < 14 ? 2.4 : 5;
 }
+
+/**
+ * bySignalStrength() - takes the signalStrength from two WifiResults and gives their ordering
+ * @param a
+ * @param b
+ * @returns
+ */
+// sort by the signalStrength value (may be null)
+export function bySignalStrength(a: any, b: any): number {
+  // const parseSignal = (val: string | undefined): number | null => {
+  //   const match = val?.match(/^(-?\d+)\s+dBm/);
+  //   return match ? parseInt(match[1], 10) : null;
+  // };
+
+  const signalA = a.signalStrength;
+  const signalB = b.signalStrength;
+
+  if (signalA === null && signalB === null) return 0;
+  if (signalA === null) return 1; // move A to end
+  if (signalB === null) return -1; // move B to end
+
+  // Descending: stronger (less negative) signal first
+  return signalB - signalA;
+}
