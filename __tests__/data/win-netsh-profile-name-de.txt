@@ -1,6 +1,6 @@
-# netsh wlan show profile name="HBTL5 2"
+# netsh wlan show profile name="Profile1 2"
 
-# Das Profil "HBTL5 2" auf Schnittstelle Wi-Fi:
+# Das Profil "Profile1 2" auf Schnittstelle Wi-Fi:
 
 Angewendet: Profil für alle Benutzer
 
@@ -8,7 +8,7 @@ Angewendet: Profil für alle Benutzer
 
     Version                : 1
     Typ                    : Drahtlos-LAN
-    Name                   : HBTL5 2
+    Name                   : Profile1 2
     Steuerungsoptionen     :
         Verbindungsmodus   : Manuell verbinden
         Netzwerkübertragung  : Verbinden, nur wenn dieses Netzwerk überträgt
@@ -18,7 +18,7 @@ Angewendet: Profil für alle Benutzer
 ## Konnektivitätseinstellungen
 
     Anzahl von SSIDs        : 1
-    SSID-Name              : "HBTL5"
+    SSID-Name              : "SSID-1"
     Netzwerktyp            : Infrastruktur
     Funktyp                : [ Beliebiger Funktyp ]
     Herstellererweiterung          : Nicht vorhanden

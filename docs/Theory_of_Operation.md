@@ -228,20 +228,15 @@ You can infer channel width as follows:
 
 ## Localization
 
-The Windows `netsh wlan show interfaces` code is localized for the
+The Windows `netsh ...` commands are localized for the
 system's language setting.
-Curiously, different English systems also use slightly different
-labels (e.g. "AP BSSID" vs "BSSID").
-Consequently, there is no obvious algorithm for retrieving values
-from the `netsh...` output.
-
 At server startup, the _lib/localization.ts_ code reads a set of
-_xxxx.json_ files to build a reverse lookup table of the localized string
-that maps to the corresponding WifiNetwork property (or null).
+_xxxx.json_ files to build an object that maps the localized string
+to the corresponding WifiNetwork property (or null).
 
 The Windows parsing code then retrieves each label from the
-`netsh ...` command, does a reverse lookup, and sets the
-appropriate property.
+`netsh ...` command, looks up the label, and if present
+uses the value as the internal name.
 
 ### Creating a localization file for your system
 
@@ -251,15 +246,20 @@ To create a localization file for your Windows system's language:
 * Rename it to _XX.json_, where "XX" is the proper code for the language
   (e.g., _fr.json_ for a French system). The exact name is not important
   except for the _.json_ suffix.
-* Run `netsh wlan show interfaces` from the command line
-* Paste the output of the `netsh wlan...` into the bottom of the window.
-* Comment out those lines (use `//` at the start of the line),
-  and remove the prior output
+* There are four commands to review: enter each on the command line
+  * `netsh wlan show interfaces`
+  * `netsh wlan show networks mode="bssid"`
+  * `netsh wlan show profiles`
+  * `netsh wlan show profile name="profile"` where "profile"
+    is one of the profiles from the previous command.
+* Paste the output of all the `netsh ...` commands into the bottom of the file
+  (remove any prior commented-out lines).
+* Comment out those lines (use `//` at the start of the line)
 * Add a comment indicating the version of Windows (Win10, Win11)
   and the system language
 * In the JSON structure at the top of the file, replace the localized
-  phrases (on the right) with the corresponding phrase from the new
-  `netsh wlan...` output.
+  phrases (on the left) with the corresponding phrase from the new
+  `netsh ...` output.
 * Restart the `wifi-heatmapper` server (`npm run dev`)
   to read the new localized values
 * Please add the new file as an Issue to the

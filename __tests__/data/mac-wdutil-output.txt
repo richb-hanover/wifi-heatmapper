@@ -91,7 +91,7 @@ BLUETOOTH
 ————————————————————————————————————————————————————————————————————
 AWDL
 ————————————————————————————————————————————————————————————————————
-    MAC Address            : a2:8e:ff:0e:03:43 (hw=a2:8e:ff:0e:03:43)
+    MAC Address            : fe:dc:ba:09:87:01 (hw=fe:dc:ba:09:87:01)
     AirDrop Disc Mode      : Contacts Only
     AWDL Enabled           : No
     Interface Name         : awdl0

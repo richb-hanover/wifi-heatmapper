@@ -1,13 +1,13 @@
-# C:\Users\richb>netsh wlan show profile name="HBTL5 2"
+# C:\Users\richb>netsh wlan show profile name="Profile1 2"
 
-Profile HBTL5 2 on interface Wi-Fi:
+Profile Profile1 2 on interface Wi-Fi:
 =======================================================================
 Applied: All User Profile
 Profile information
 -------------------
    Version                : 1
    Type                   : Wireless LAN
-   Name                   : HBTL5 2
+   Name                   : Profile1 2
    Control options        :
        Connection mode    : Connect manually
        Network broadcast  : Connect only if this network is broadcasting
@@ -16,7 +16,7 @@ Profile information
 Connectivity settings
 ---------------------
    Number of SSIDs        : 1
-   SSID name              : "HBTL5"
+   SSID name              : "SSID-1"
    Network type           : Infrastructure
    Radio type             : [ Any Radio Type ]
    Vendor extension          : Not present
@@ -38,7 +38,7 @@ Cost settings
 # Bogus second entry added for test code
 ---------------------
    Number of SSIDs        : 1
-   SSID name              : "HBTL6"
+   SSID name              : "SSID-2"
    Network type           : Infrastructure
    Radio type             : [ Any Radio Type ]
    Vendor extension          : Not present

@@ -138,32 +138,62 @@ test("Parsing German Win11 'netsh ... networks'", () => {
   results.forEach(checkEachItem);
 });
 
-// // ========= Italian Win11 'netsh wlan show networks mode=bssid' ===============
+// ========= Italian Win11 'netsh wlan show networks mode=bssid' ===============
 
-// test("Parsing Italian Win11 'netsh ... networks'", () => {
-//   const netsh_output = fs.readFileSync(
-//     path.join(__dirname, "../data/win-netsh-networks-hbtl.txt"),
-//     "utf-8",
-//   );
-//   const results = parseNetshNetworks(netsh_output);
+test("Parsing Italian Win11 'netsh ... networks'", () => {
+  const netsh_output = fs.readFileSync(
+    path.join(__dirname, "../data/win-netsh-networks-it.txt"),
+    "utf-8",
+  );
+  const results = parseNetshNetworks(netsh_output);
 
-//  // console.log(`Test routine shows: ${JSON.stringify(results, null, 2)}`);
+  // console.log(`Test routine shows: ${JSON.stringify(results, null, 2)}`);
 
-//   expect(results.length).toEqual(8);
+  expect(results.length).toEqual(10);
 
-//   expect(results[0]).toStrictEqual({
-//     ssid: "SSID-1",
-//     bssid: "fe:dc:ba:09:87:01",
-//     channel: 1,
-//     phyMode: "802.11ax",
-//     security: "Open",
-//     rssi: -81,
-//     signalStrength: 31,
-//     band: 2.4,
-//     txRate: 0, // candidates don't give txRate
-//     channelWidth: 0,
-//     active: false, // not the one that's in service now
-//   });
+  expect(results[0]).toStrictEqual({
+    ssid: "SSID-6",
+    bssid: "fe:dc:ba:09:87:09",
+    channel: 6,
+    phyMode: "802.11n",
+    security: "Aperta",
+    rssi: -45,
+    signalStrength: 92,
+    band: 2.4,
+    txRate: 0, // candidates don't give txRate
+    channelWidth: 0,
+    active: false, // not the one that's in service now
+  });
 
-//   results.forEach(checkEachItem);
-// });
+  results.forEach(checkEachItem);
+});
+
+// ========= Spanish Win11 'netsh wlan show networks mode=bssid' ===============
+
+test("Parsing Spanish Win11 'netsh ... networks'", () => {
+  const netsh_output = fs.readFileSync(
+    path.join(__dirname, "../data/win-netsh-networks-es.txt"),
+    "utf-8",
+  );
+  const results = parseNetshNetworks(netsh_output);
+
+  // console.log(`Test routine shows: ${JSON.stringify(results, null, 2)}`);
+
+  expect(results.length).toEqual(7);
+
+  expect(results[0]).toStrictEqual({
+    ssid: "SSID-3",
+    bssid: "fe:dc:ba:09:87:06",
+    channel: 6,
+    phyMode: "802.11n",
+    security: "Abierta",
+    rssi: -46,
+    signalStrength: 90,
+    band: 2.4,
+    txRate: 0, // candidates don't give txRate
+    channelWidth: 0,
+    active: false, // not the one that's in service now
+  });
+
+  results.forEach(checkEachItem);
+});

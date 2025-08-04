@@ -6,7 +6,7 @@
 
 # USAGE: test-network.sh en0 "wifi ssid name"
 
-# Wrap the whole thing in `time` (e.g. time test-networksetup.sh HBTL)
+# Wrap the whole thing in `time` (e.g. time test-networksetup.sh SSID)
 # then wait until "ping 1.1.1.1" returns an actual response
 # then Ctl-C to see the time needed to switch to that SSID
 

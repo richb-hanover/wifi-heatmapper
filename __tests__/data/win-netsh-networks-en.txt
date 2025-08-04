@@ -1,4 +1,4 @@
-# Win11 on LG at HBTL
+# Win11 on LG at Location1
 # netsh wlan show networks mode=bssid
 Interface name : Wi-Fi
 There are 3 networks currently visible.

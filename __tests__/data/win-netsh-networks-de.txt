@@ -93,7 +93,7 @@ SSID 4 : SSID-4
         Unterstützte QoS-Zuordnung:  1
         Basisraten (MBit/s)   : 6 12 24
         Andere Raten (MBit/s) : 9 18 36 48 54
-   BSSID 2                 : 5fe:dc:ba:09:87:07
+   BSSID 2                 : fe:dc:ba:09:87:07
         Signal             : 43%
         Funktyp         : 802.11n
         Band               : 2,4 GHz
@@ -123,7 +123,7 @@ SSID 5 : SSID-5
    Netzwerktyp             : Infrastruktur
    Authentifizierung       : WPA2-Personal
    Verschlüsselung         : CCMP
-   BSSID 1                 : cfe:dc:ba:09:87:09
+   BSSID 1                 : fe:dc:ba:09:87:09
         Signal             : 87%
         Funktyp         : 802.11n
         Band               : 2,4 GHz

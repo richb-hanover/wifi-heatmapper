@@ -4,41 +4,53 @@
  */
 
 import { expect, test, describe, it, beforeAll } from "vitest";
-// import fs from "fs";
-// import path from "path";
-// import { parseNetshInterfaces } from "../../src/lib/wifiScanner-windows";
 import { initLocalization } from "../../src/lib/localization";
+import { splitLine } from "../../src/lib/wifiScanner-windows";
 
-let reverseLookupTable: Map<string, string>;
+let localizer: Record<string, string>;
+
+// Checking the localizer object with properties that are the localized strings
 
 beforeAll(async () => {
-  reverseLookupTable = await initLocalization(); // build the structure
+  localizer = await initLocalization();
+  // console.log(`localizer: ${JSON.stringify(localizer, null, 2)}`);
 });
 
-describe("Checking localization code", () => {
-  it("should use the preloaded structure", () => {
-    expect(reverseLookupTable).toBeDefined();
+test("splitLine with 'Canal:11'", () => {
+  const line = "Canal:11";
+  const [label, key, val] = splitLine(line);
+  expect(label).toEqual("Canal");
+  expect(key).toEqual("channel");
+  expect(val).toEqual("11");
+});
+
+describe("Checking new localization code", () => {
+  it("should be an object", () => {
+    expect(Object.keys(localizer).length).toBeGreaterThan(20);
   });
 });
 
 test("check 'Nom'", () => {
-  expect(reverseLookupTable.get("Nom")).toBe("name");
+  expect(localizer["Nom"]).toBe("name");
 });
 test("check 'Kanal'", () => {
-  expect(reverseLookupTable.get("Kanal")).toBe("channel");
+  expect(localizer["Kanal"]).toBe("channel");
 });
 test("check 'Tipo de radio'", () => {
-  expect(reverseLookupTable.get("Tipo de radio")).toBe("phyMode");
+  expect(localizer["Tipo de radio"]).toBe("phyMode");
 });
 test("check 'Authentification'", () => {
-  expect(reverseLookupTable.get("Authentification")).toBe("security");
+  expect(localizer["Authentification"]).toBe("security");
 });
 test("check 'Velocità trasmissione (Mbps)'", () => {
-  expect(reverseLookupTable.get("Velocità trasmissione (Mbps)")).toBe("txRate");
+  expect(localizer["Velocità trasmissione (Mbps)"]).toBe("txRate");
 });
 test("check 'Name'", () => {
-  expect(reverseLookupTable.get("Name")).toBe("name");
+  expect(localizer["Name"]).toBe("name");
 });
 test("check 'Nom'", () => {
-  expect(reverseLookupTable.get("Señal")).toBe("signalStrength");
+  expect(localizer["Señal"]).toBe("signalStrength");
+});
+test("check 'glorph'", () => {
+  expect(localizer["glorph"]).toBeUndefined();
 });

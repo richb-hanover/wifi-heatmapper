@@ -15,7 +15,7 @@ import {
 } from "./utils";
 import { initLocalization } from "./localization";
 
-const reverseLookupTable = await initLocalization(); // build the structure
+const localizer = await initLocalization();
 
 // const logger = getLogger("wifi-Windows");
 
@@ -170,7 +170,7 @@ export class WindowsWifiActions implements WifiActions {
       // console.log(`Interfaces: ${stdout}`);
       const lines = stdout.split("\n");
       const state = lines.filter((line) => line.includes("State"));
-      console.log(`State line: ${state}`);
+      // console.log(`State line: ${state}`);
       const [, , val] = splitLine(state[0]);
       if (val == "connected") break;
       await delay(200);
@@ -197,8 +197,7 @@ function assignWindowsNetworkInfoValue<K extends keyof WifiResults>(
 
 /**
  * Note: parseNetshNetworks() and parseNetshInterfaces() both rely
- * on the same reverseTableLookup.get() function to handle
- * localized `netsh` output
+ * on splitLine() to handle localized `netsh` output
  *
  * Their structure is rather different because they deal with somewhat
  * different commandline output formats.
@@ -296,18 +295,19 @@ export function parseNetshNetworks(text: string): WifiResults[] {
  * @param line - a "label" separated by a ":" followed by a value
  * @returns array of strings: [label, key, value] may be ["", "",""] if no ":"
  */
-function splitLine(line: string): string[] {
+export function splitLine(line: string): string[] {
   const pos = line.indexOf(":");
   if (pos == -1) return ["", "", ""]; // no ":"? return empty values
-  let label = line.slice(0, pos - 1).trim(); // the (trimmed) label up to the ":"
-  // remove trailing digits from BSSID or SSID line
-  label = label.replace(/^(B?SSID)\s*\d*\s*$/, "$1");
-  let key = reverseLookupTable.get(label) ?? null; // translate to get the key
-  if (!key) key = "";
+  let label = line.slice(0, pos).trim(); // the (trimmed) label up to the ":"
+  let key = "";
   const val = line
     .slice(pos + 1)
     .trim()
     .replace(/"/g, ""); // use the rest of the line trimming '"' and whitespace
+  // remove trailing digits from BSSID or SSID line
+  label = label.replace(/^(B?SSID)\s*\d*\s*$/, "$1");
+  key = localizer[label];
+  if (!key) key = "";
   return [label, key, val];
 }
 /**
@@ -339,6 +339,7 @@ export function parseNetshInterfaces(output: string): WifiResults {
     networkInfo.channel == 0 ||
     networkInfo.txRate == 0
   ) {
+    // console.log(`NetworkInfo: ${JSON.stringify(networkInfo, null, 2)}`);
     throw new Error(
       `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`,
     );
@@ -397,7 +398,7 @@ async function getProfileFromSSID(
   theSSID: string,
 ): Promise<string> {
   for (const profile of profiles) {
-    // netsh wlan show profile name = "HBTL5 2"
+    // netsh wlan show profile name="Profile 2"
     const { stdout } = await execAsync(
       `netsh wlan show profile name="${profile}"`,
     );
@@ -410,7 +411,7 @@ async function getProfileFromSSID(
 
 /**
  * findProfilefrom SSID() - find the Profile for the named SSID
- * Parse the output of `netsh wlan show profile name = "HBTL5 2" key = clear`
+ * Parse the output of `netsh wlan show profile name="Profile 2"
  *
  * - The profile name if it contains the passed-in SSID
  * - null if not
@@ -423,25 +424,35 @@ export function findProfileFromSSID(
   theSSID: string,
 ): string | null {
   let profile = "";
-  const profileLines = stdout
-    .split("\n");
-for (const line of profileLines) {
-  const [,key,val] = splitLine(line);
-  if (key == "name"){
-    profile = val;
-    break;
+  const profileLines = stdout.split("\n");
+  for (const line of profileLines) {
+    const [, key, val] = splitLine(line);
+    if (key == "name") {
+      profile = val;
+      break;
+    }
   }
-}  if (!profile) {
+  if (!profile) {
     throw new Error("No profile name found");
   }
 
   // Now see what SSIDs this file contains
-  const lines = stdout.split("\n").filter((line) => line.includes("SSID name"));
-  if (lines.length == 0) {
+  const lines = stdout.split("\n");
+  const ssidLines = [];
+  for (const line of lines) {
+    // console.log(`theLine: ${line}`);
+
+    const [, key, value] = splitLine(line);
+    // console.log(`Key/Val: "${key}" "${value}"`);
+    if (key == "ssid") {
+      ssidLines.push(value);
+    }
+  }
+  // no SSIDs at all is an error
+  if (ssidLines.length == 0) {
     throw new Error(`Can't find an SSID for profile ${profile}`);
   }
-  for (const line of lines) {
-    const [, , ssid] = splitLine(line);
+  for (const ssid of ssidLines) {
     if (ssid == theSSID) {
       return profile;
     }

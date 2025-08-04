@@ -15,15 +15,15 @@ import { findProfileFromSSID } from "../../src/lib/wifiScanner-windows";
 test("parsing English netsh profile name output", () => {
   const netsh_output = fs.readFileSync(
     path.join(__dirname, "../data/win-netsh-profile-name-en.txt"),
-    "utf-8"
+    "utf-8",
   );
-  let output = findProfileFromSSID(netsh_output, "HBTL5");
-  expect(output).toEqual("HBTL5 2");
+  let output = findProfileFromSSID(netsh_output, "SSID-1");
+  expect(output).toEqual("Profile1 2");
 
-  output = findProfileFromSSID(netsh_output, "HBTL6"); // bogus second SSID works, too
-  expect(output).toEqual("HBTL5 2");
+  output = findProfileFromSSID(netsh_output, "SSID-2"); // bogus second SSID works, too
+  expect(output).toEqual("Profile1 2");
 
-  output = findProfileFromSSID(netsh_output, "HBTL10");
+  output = findProfileFromSSID(netsh_output, "SSID-3");
   expect(output).toBe(null);
 
   // create a bad profile with no "Name" for the profile
@@ -31,82 +31,76 @@ test("parsing English netsh profile name output", () => {
     .split("\n")
     .filter((line) => !line.includes("Name"))
     .join("\n");
-  expect(() => findProfileFromSSID(noProfile, "HBTL5")).toThrowError(
-    "No profile name found"
+  expect(() => findProfileFromSSID(noProfile, "SSID-1")).toThrowError(
+    "No profile name found",
   );
 
   // create a bad profile stripping out "SSID Name" lines
   const noSSID = netsh_output
     .split("\n")
     .filter((line) => !line.includes("SSID name"))
-    .join();
-  expect(() => findProfileFromSSID(noSSID, "HBTL5")).toThrowError(
-    /^Can't find an SSID/
+    .join("\n");
+  expect(() => findProfileFromSSID(noSSID, "SSID-1")).toThrowError(
+    /^Can't find an SSID/,
   );
 });
+
+// Remove multiple SSID tests; bad profile test; no SSID test
+// that are present in the English tests for other languages
 
 test("parsing French netsh profile name output", () => {
   const netsh_output = fs.readFileSync(
     path.join(__dirname, "../data/win-netsh-profile-name-fr.txt"),
-    "utf-8"
+    "utf-8",
   );
-  let output = findProfileFromSSID(netsh_output, "HBTL5");
-  expect(output).toEqual("HBTL5 2");
+  let output = findProfileFromSSID(netsh_output, "SSID-1");
+  expect(output).toEqual("Profile1 2");
 
-  output = findProfileFromSSID(netsh_output, "HBTL6"); // bogus second SSID works, too
-  expect(output).toEqual("HBTL5 2");
-
-  output = findProfileFromSSID(netsh_output, "HBTL10");
+  output = findProfileFromSSID(netsh_output, "SSID-2");
   expect(output).toBe(null);
-
-  // create a bad profile with no "Name" for the profile
-  const noProfile = netsh_output
-    .split("\n")
-    .filter((line) => !line.includes("Name"))
-    .join("\n");
-  expect(() => findProfileFromSSID(noProfile, "HBTL5")).toThrowError(
-    "No profile name found"
-  );
-
-  // create a bad profile stripping out "SSID Name" lines
-  const noSSID = netsh_output
-    .split("\n")
-    .filter((line) => !line.includes("SSID name"))
-    .join();
-  expect(() => findProfileFromSSID(noSSID, "HBTL5")).toThrowError(
-    /^Can't find an SSID/
-  );
 });
 
-// test("parsing German netsh profile name output", () => {
-//   const netsh_output = fs.readFileSync(
-//     path.join(__dirname, "../data/win-netsh-profile-name-de.txt"),
-//     "utf-8"
-//   );
-//   let output = findProfileFromSSID(netsh_output, "HBTL5");
-//   expect(output).toEqual("HBTL5 2");
+// Remove multiple SSID tests; bad profile test; no SSID test
+// that are present in the English tests for other languages
 
-//   output = findProfileFromSSID(netsh_output, "HBTL6"); // bogus second SSID works, too
-//   expect(output).toEqual("HBTL5 2");
+test("parsing German netsh profile name output", () => {
+  const netsh_output = fs.readFileSync(
+    path.join(__dirname, "../data/win-netsh-profile-name-de.txt"),
+    "utf-8",
+  );
+  let output = findProfileFromSSID(netsh_output, "SSID-1");
+  expect(output).toEqual("Profile1 2");
 
-//   output = findProfileFromSSID(netsh_output, "HBTL10");
-//   expect(output).toBe(null);
+  output = findProfileFromSSID(netsh_output, "SSID-2");
+  expect(output).toBe(null);
+});
 
-//   // create a bad profile with no "Name" for the profile
-//   const noProfile = netsh_output
-//     .split("\n")
-//     .filter((line) => !line.includes("Name"))
-//     .join("\n");
-//   expect(() => findProfileFromSSID(noProfile, "HBTL5")).toThrowError(
-//     "No profile name found"
-//   );
+// Remove multiple SSID tests; bad profile test; no SSID test
+// that are present in the English tests for other languages
 
-//   // create a bad profile stripping out "SSID Name" lines
-//   const noSSID = netsh_output
-//     .split("\n")
-//     .filter((line) => !line.includes("SSID name"))
-//     .join();
-//   expect(() => findProfileFromSSID(noSSID, "HBTL5")).toThrowError(
-//     /^Can't find an SSID/
-//   );
-// });
+test("parsing Spanish netsh profile name output", () => {
+  const netsh_output = fs.readFileSync(
+    path.join(__dirname, "../data/win-netsh-profile-name-es.txt"),
+    "utf-8",
+  );
+  let output = findProfileFromSSID(netsh_output, "SSID-1");
+  expect(output).toEqual("Profile1 2");
+
+  output = findProfileFromSSID(netsh_output, "SSID-2");
+  expect(output).toBe(null);
+});
+
+// Remove multiple SSID tests; bad profile test; no SSID test
+// that are present in the English tests for other languages
+
+test("parsing Italian netsh profile name output", () => {
+  const netsh_output = fs.readFileSync(
+    path.join(__dirname, "../data/win-netsh-profile-name-it.txt"),
+    "utf-8",
+  );
+  let output = findProfileFromSSID(netsh_output, "SSID-1");
+  expect(output).toEqual("Profile1 2");
+
+  output = findProfileFromSSID(netsh_output, "SSID-2");
+  expect(output).toBe(null);
+});
