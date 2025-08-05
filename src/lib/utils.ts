@@ -17,6 +17,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const rssiToPercentage = (rssi: number): number => {
+  if (rssi == 0) return 0;
   if (rssi <= -100) return 0;
   if (rssi >= -40) return 100;
   return Math.round(((rssi + 100) / 60) * 100);

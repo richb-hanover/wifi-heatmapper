@@ -24,8 +24,9 @@ _This section follows the precepts of [Keep a Changelog](https://keepachangelog.
   (It's useful for wifi-heatmapper to test the
   wifi signal strength even if the iperf3 server isn't available.)
 * Refactor error detection/flow to provide more meaningful messages
-* Modify Test duration field to ignore non-numeric values (gets reset to zero)
+* Modify Test duration setting to ignore non-numeric values (gets reset to zero)
 * Rename many definitions in `types.ts` to fit their actual function
+* If rssi is zero (if there is no wifi signal at all) now returns 0%
 * Editorial pass with spellcheck on all .md files
 
 ---
