@@ -34,13 +34,21 @@ echo "=== system_profiler ==="
 # system_profiler -json SPAirPortDataType > junk.json
 system_profiler -json SPAirPortDataType | \
 jq '.. | objects | select(has("spairport_current_network_information")) | .spairport_current_network_information' 
+# # jq '.. | objects | select(has("spairport_airport_other_local_wireless_networks")) | .spairport_airport_other_local_wireless_networks' 
+
+# system_profiler -json SPAirPortDataType | \
 # jq '.. | objects | select(has("spairport_airport_other_local_wireless_networks")) | .spairport_airport_other_local_wireless_networks' 
 
-system_profiler -json SPAirPortDataType | \
-jq '.. | objects | select(has("spairport_airport_other_local_wireless_networks")) | .spairport_airport_other_local_wireless_networks' 
+echo "=== turn en0 off ==="
+sudo ifconfig en0 down
+sleep 2
+
+echo "=== turn en0 on ==="
+sudo ifconfig en0 up
+sleep 10
 
 echo "=== join $2 on device $1 ==="
-networksetup -setairportnetwork "$1" "$2"
+sudo networksetup -setairportnetwork "$1" "$2"
 echo "=== pinging ==="
 ping 1.1.1.1
 
