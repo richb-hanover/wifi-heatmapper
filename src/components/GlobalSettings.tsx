@@ -25,6 +25,7 @@ const getDefaults = (floorPlan: string): HeatmapSettings => {
     apMapping: [],
     testDuration: 1,
     sudoerPassword: "",
+    sameSSID: "same",
     ignoredSSIDs: ["AP-WH4E-C0BFBE6ACDA3", "LochLymeLodge-UB"],
     nextPointNum: 1,
     dimensions: { width: 100, height: 100 },
@@ -35,10 +36,9 @@ const getDefaults = (floorPlan: string): HeatmapSettings => {
     gradient: {
       0: "rgba(255, 0, 0, 0.6)", // 0%, -100 dBm
       0.35: "rgba(255, 255, 0, 0.6)", // 35%, -83 dBm
-      // 0.5: "rgba(0, 0, 0, 0.6)", // -% --dBm
-      0.4: "rgba(0, 0, 255, 0.6)", // 40%, -76 dBm
+      0.5: "rgba(0, 0, 255, 0.6)", // 50%, -70 dBm
       0.6: "rgba(0, 255, 255, 0.6)", // 60%, -64 dBm
-      0.9: "rgba(0, 255, 0, 0.6)", // 90%, -46 dBm
+      0.8: "rgba(0, 255, 0, 0.6)", // 80%, -52 dBm
       1.0: "rgba(0, 255, 0, 0.6)", // 100%, -40 dBm
     },
   };

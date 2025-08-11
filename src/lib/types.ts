@@ -87,6 +87,7 @@ export interface HeatmapSettings {
   iperfServerAdrs: string;
   testDuration: number;
   sudoerPassword: string; // kept in settings, removed before writing to file
+  sameSSID: string; // "same", "best"
   apMapping: ApMapping[];
   ignoredSSIDs: string[];
   nextPointNum: number;
@@ -98,6 +99,8 @@ export interface HeatmapSettings {
   gradient: Gradient;
 }
 
+export type SsidStrategy = "same" | "best";
+
 /**
  * Settings passed to iperfRunner.ts
  */
@@ -106,6 +109,7 @@ export interface PartialHeatmapSettings {
   testDuration: number;
   sudoerPassword: string;
   ignoredSSIDs: string[];
+  sameSSID: SsidStrategy;
 }
 
 /**

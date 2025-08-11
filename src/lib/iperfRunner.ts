@@ -36,33 +36,6 @@ const validateWifiDataConsistency = (
   logger.info(logString);
 };
 
-/**
- * startSurvey - kick off the entire process for surveying the clicked point
- * @returns void
- */
-// export async function startSurvey(settings: HeatmapSettings): Promise<void> {
-//   try {
-//     const { iperfData, wifiData } = await runSurveyTests(settings);
-
-//     // null indicates measurement was canceled
-//     if (!iperfData || !wifiData) {
-//       setSurveyResults({ error: "Measurement was cancelled", status: "error" });
-//       return;
-//     }
-
-//     const results: SurveyResults = {
-//       wifiData,
-//       iperfData,
-//     };
-//     setSurveyResults({ point: results, status: "done" });
-//     return;
-//   } catch (error) {
-//     console.log(`caught error in startSurvey(): ${error}`);
-//     setSurveyResults({ status: "error", error: String(error) });
-//     return;
-//   }
-// }
-
 function arrayAverage(arr: number[]): number {
   if (arr.length === 0) return 0;
   const sum = arr.reduce((acc, val) => acc + val, 0);
@@ -144,6 +117,7 @@ export async function runSurveyTests(
     }
   }
 
+  // begin the survey
   try {
     const maxRetries = 1;
     let attempts = 0;
@@ -151,41 +125,45 @@ export async function runSurveyTests(
     let wifiData: WifiResults | null = null;
 
     // set the initial states, then send an event to the client
+    const startTime = Date.now();
     displayStates = { ...displayStates, ...initialStates };
     sendSSEMessage(getUpdatedMessage()); // immediately send initial values
     displayStates.header = "Measurement in progress...";
 
-    // scan the wifi environment for the best signal
-    console.log(`Seeking best Wi-Fi`);
-    displayStates.header = "Seeking best Wi-Fi";
-    sendSSEMessage(getUpdatedMessage());
-    const startTime = Date.now();
+    // should we "blink" the Wifi to find the best SSID?
+    if (settings.sameSSID == "best") {
+      // scan the wifi environment for the best signal
+      console.log(`Seeking best Wi-Fi`);
+      displayStates.header = "Seeking best Wi-Fi";
+      sendSSEMessage(getUpdatedMessage());
 
-    // get the array of candidates SSIDs, sorted by RSSI/signalStrength
-    const results: WifiScanResults = await wifiInfo.scanWifi(settings);
-    // if there's an error, return that as the status
-    if (results.reason != "") {
-      return { iperfData: null, wifiData: null, status: results.reason };
+      // get the array of candidates SSIDs, sorted by RSSI/signalStrength
+      const results: WifiScanResults = await wifiInfo.scanWifi(settings);
+      // if there's an error, return that as the status
+      if (results.reason != "") {
+        return { iperfData: null, wifiData: null, status: results.reason };
+      }
+      await logWifiResults(results); // display the results of the scan
+      // The first result is the strongest signal - use it
+      const theSSID = results.SSIDs[0].ssid;
+      displayStates.header = `Measuring Wi-Fi (${theSSID})`;
+      sendSSEMessage(getUpdatedMessage());
+
+      try {
+        const wifiStatus = await wifiInfo.setWifi(settings, results.SSIDs[0]);
+        console.log(`wifiInfo.setWifi returns: ${JSON.stringify(wifiStatus)}`);
+      } catch (err) {
+        console.log(`wifiInfo.setWifi error: ${JSON.stringify(err)}`);
+
+        return {
+          iperfData: null,
+          wifiData: null,
+          status: `${err}`, // just use the status string that was thrown
+        };
+      }
     }
-    await logWifiResults(results); // display the results of the scan
-    // The first result is the strongest signal - use it
-    const theSSID = results.SSIDs[0].ssid;
-    displayStates.header = `Measuring Wi-Fi (${theSSID})`;
-    sendSSEMessage(getUpdatedMessage());
 
-    try {
-      const wifiStatus = await wifiInfo.setWifi(settings, results.SSIDs[0]);
-      console.log(`wifiInfo.setWifi returns: ${JSON.stringify(wifiStatus)}`);
-    } catch (err) {
-      console.log(`wifiInfo.setWifi error: ${JSON.stringify(err)}`);
-
-      return {
-        iperfData: null,
-        wifiData: null,
-        status: `${err}`, // just use the status string that was thrown
-      };
-    }
-
+    // We are now associated with the correct SSID
     while (attempts < maxRetries && !iperfData) {
       try {
         const server = settings.iperfServerAdrs;

@@ -83,6 +83,7 @@ export default function ClickableFloorplan(): ReactNode {
         testDuration: settings.testDuration,
         sudoerPassword: settings.sudoerPassword,
         ignoredSSIDs: settings.ignoredSSIDs,
+        sameSSID: settings.sameSSID,
       },
     };
     // console.log(`PartialSettings: ${JSON.stringify(partialSettings)}`);

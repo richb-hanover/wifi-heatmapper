@@ -5,6 +5,7 @@ import { PopoverHelper } from "@/components/PopoverHelpText";
 import HeatmapAdvancedConfig from "./HeatmapAdvancedConfig";
 import MediaDropdown from "./MediaDropdown";
 import { NumberInput } from "./NumberInput";
+import { SsidStrategyPicker } from "./SsidStrategyPicker";
 
 export default function SettingsEditor() {
   const { settings, updateSettings, readNewSettingsFromFile } = useSettings();
@@ -87,7 +88,7 @@ export default function SettingsEditor() {
           </td>
         </tr>
 
-        {/* <tr>
+        <tr>
           <td className="text-right pr-4">
             <Label htmlFor="ssidToUse" className="font-bold text-lg">
               SSID to use&nbsp;
@@ -95,16 +96,12 @@ export default function SettingsEditor() {
             </Label>
           </td>
           <td>
-            <input
-              type="text"
-              className="w-full border border-gray-200 rounded-sm p-2 focus:outline-none focus:ring focus:ring-blue-300 focus:border-blue-400"
-              value={settings.iperfServerAdrs}
-              onChange={(e) =>
-                updateSettings({ iperfServerAdrs: e.target.value.trim() })
-              }
+            <SsidStrategyPicker
+              value={settings.sameSSID}
+              onChange={(e) => updateSettings({ sameSSID: e })}
             />
           </td>
-        </tr> */}
+        </tr>
 
         {/* <tr>
           <td>
