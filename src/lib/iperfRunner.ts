@@ -22,7 +22,7 @@ const wifiInfo = await createWifiInfo();
 
 const validateWifiDataConsistency = (
   wifiDataBefore: WifiResults,
-  wifiDataAfter: WifiResults,
+  wifiDataAfter: WifiResults
 ) => {
   if (
     wifiDataBefore.bssid === wifiDataAfter.bssid &&
@@ -86,7 +86,7 @@ function checkForCancel() {
  * @returns the WiFi and iperf results for this location
  */
 export async function runSurveyTests(
-  settings: PartialHeatmapSettings,
+  settings: PartialHeatmapSettings
 ): Promise<{
   iperfData: IperfResults | null;
   wifiData: WifiResults | null;
@@ -185,7 +185,7 @@ export async function runSurveyTests(
 
         const wifiDataBefore = await wifiInfo.getWifi(settings);
         console.log(
-          `Elapsed time for scan and switch: ${Date.now() - startTime}`,
+          `Elapsed time for scan and switch: ${Date.now() - startTime}`
         );
         wifiStrengths.push(wifiDataBefore.SSIDs[0].signalStrength);
         displayStates.strength = arrayAverage(wifiStrengths).toString();
@@ -224,7 +224,7 @@ export async function runSurveyTests(
         wifiStrengths.push(wifiDataAfter.SSIDs[0].signalStrength);
         displayStates.strength = arrayAverage(wifiStrengths).toString();
         checkForCancel();
-        console.log(`wifiStrengths: ${wifiStrengths}`);
+        // console.log(`wifiStrengths: ${wifiStrengths}`);
 
         // Send the final update - type is "done"
         displayStates.type = "done";
@@ -234,11 +234,11 @@ export async function runSurveyTests(
         if (
           !validateWifiDataConsistency(
             wifiDataBefore.SSIDs[0],
-            wifiDataAfter.SSIDs[0],
+            wifiDataAfter.SSIDs[0]
           )
         ) {
           throw new Error(
-            "Wifi configuration changed between scans! Cancelling instead of giving wrong results.",
+            "Wifi configuration changed between scans! Cancelling instead of giving wrong results."
           );
         }
 
@@ -289,7 +289,7 @@ async function runSingleTest(
   server: string,
   duration: number,
   testDir: TestDirection,
-  testType: TestType,
+  testType: TestType
 ): Promise<IperfTestProperty> {
   const logger = getLogger("runSingleTest");
 
@@ -335,7 +335,7 @@ export async function extractIperfData(
     };
     version?: string;
   },
-  isUdp: boolean,
+  isUdp: boolean
 ): Promise<IperfTestProperty> {
   const end = result.end;
 
@@ -365,7 +365,7 @@ export async function extractIperfData(
 
   if (!bitsPerSecond) {
     throw new Error(
-      "No bits per second found in iperf results. This is fatal.",
+      "No bits per second found in iperf results. This is fatal."
     );
   }
 

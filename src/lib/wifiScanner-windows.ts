@@ -33,7 +33,7 @@ export class WindowsWifiActions implements WifiActions {
    * @returns string - empty, or error message to display
    */
   async preflightSettings(
-    settings: PartialHeatmapSettings,
+    settings: PartialHeatmapSettings
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
@@ -61,16 +61,15 @@ export class WindowsWifiActions implements WifiActions {
    * @returns "" or error string
    */
   async checkIperfServer(
-    settings: PartialHeatmapSettings,
+    settings: PartialHeatmapSettings
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
       reason: "",
     };
     let reason: string = "";
-    const cmd = `$r=[System.Net.Sockets.TcpClient]::new();$r.ConnectAsync(${settings.iperfServerAdrs},5201).Wait(100);$r.Close();$r.Connected`;
-    // check that we can actually connect to the iperf3 server
-    // command throws if there is an error
+    const cmd = `powershell -NoProfile -Command "$r=[System.Net.Sockets.TcpClient]::new(); $r.ConnectAsync('${settings.iperfServerAdrs}',5201).Wait(2000) | Out-Null; $ok=$r.Connected; $r.Close(); if (-not $ok) { Write-Output 'Failed to connect to ${settings.iperfServerAdrs}:5201' }"`;
+
     try {
       await execAsync(cmd);
     } catch {
@@ -130,7 +129,7 @@ export class WindowsWifiActions implements WifiActions {
    */
   async setWifi(
     settings: PartialHeatmapSettings,
-    wifiSettings: WifiResults,
+    wifiSettings: WifiResults
   ): Promise<WifiScanResults> {
     const response: WifiScanResults = {
       SSIDs: [],
@@ -141,7 +140,7 @@ export class WindowsWifiActions implements WifiActions {
 
     try {
       await execAsync(
-        `netsh wlan connect name="${theProfile}" ssid="${wifiSettings.ssid}"`,
+        `netsh wlan connect name="${theProfile}" ssid="${wifiSettings.ssid}"`
       );
     } catch (err) {
       response.reason = `${err}`;
@@ -185,7 +184,7 @@ export class WindowsWifiActions implements WifiActions {
 function assignWindowsNetworkInfoValue<K extends keyof WifiResults>(
   networkInfo: WifiResults,
   label: K,
-  val: string,
+  val: string
 ) {
   const current = networkInfo[label];
   if (typeof current === "number") {
@@ -341,12 +340,12 @@ export function parseNetshInterfaces(output: string): WifiResults {
   ) {
     // console.log(`NetworkInfo: ${JSON.stringify(networkInfo, null, 2)}`);
     throw new Error(
-      `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`,
+      `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`
     );
   }
   if (!isValidMacAddress(networkInfo.bssid)) {
     throw new Error(
-      `Invalid BSSID when parsing netsh output: ${networkInfo.bssid}`,
+      `Invalid BSSID when parsing netsh output: ${networkInfo.bssid}`
     );
   }
   //set frequency band and rssi
@@ -395,12 +394,12 @@ export function parseProfiles(stdout: string): string[] {
 
 async function getProfileFromSSID(
   profiles: string[],
-  theSSID: string,
+  theSSID: string
 ): Promise<string> {
   for (const profile of profiles) {
     // netsh wlan show profile name="Profile 2"
     const { stdout } = await execAsync(
-      `netsh wlan show profile name="${profile}"`,
+      `netsh wlan show profile name="${profile}"`
     );
     const matchedProfile = findProfileFromSSID(stdout, theSSID);
     if (matchedProfile) return matchedProfile;
@@ -421,7 +420,7 @@ async function getProfileFromSSID(
  */
 export function findProfileFromSSID(
   stdout: string,
-  theSSID: string,
+  theSSID: string
 ): string | null {
   let profile = "";
   const profileLines = stdout.split("\n");
