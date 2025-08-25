@@ -4,13 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "check": "eslint src __tests__",
+    "dev": "next dev --turbopack",
     "lint": "eslint src __tests__ --fix",
-    "check": "eslint src __tests__"
+    "start": "next start",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "overrides": {
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.6"
   },
   "dependencies": {
     "@radix-ui/colors": "^3.0.0",
@@ -30,7 +34,6 @@
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lodash": "^4.17.21",
     "lucide-react": "^0.513.0",
     "nanoid": "^5.1.5",
     "next": "^15.3.3",
@@ -44,7 +47,6 @@
     "@eslint/js": "^9.28.0",
     "@next/eslint-plugin-next": "^15.3.3",
     "@types/eslint": "^9.6.1",
-    "@types/lodash": "^4.17.17",
     "@types/node": "^22",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.6",
@@ -59,9 +61,5 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.33.1",
     "vitest": "^3.2.2"
-  },
-  "overrides": {
-    "@types/react": "19.1.6",
-    "@types/react-dom": "19.1.6"
   }
 }

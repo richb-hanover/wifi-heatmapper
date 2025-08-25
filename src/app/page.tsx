@@ -1,10 +1,9 @@
 "use client";
 
-import { SettingsProvider } from "@/components/GlobalSettings";
 import TabPanel from "@/components/TabPanel";
 export default function App() {
   return (
-    <SettingsProvider>
+    <>
       <h1 className="text-3xl font-bold mb-8 text-center text-blue-600">
         WiFi Heatmapper
       </h1>
@@ -15,6 +14,6 @@ export default function App() {
         <br />
       </p>
       <TabPanel />
-    </SettingsProvider>
+    </>
   );
 }
