@@ -2,10 +2,27 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { useState } from "react";
 import { useSettings } from "./GlobalSettings";
 
-import SettingsEditor from "@/components/SettingsEditor";
-import ClickableFloorplan from "@/components/Floorplan";
-import { Heatmaps } from "@/components/Heatmaps";
-import PointsTable from "@/components/PointsTable";
+import dynamic from "next/dynamic";
+
+const SettingsEditor = dynamic(() => import("@/components/SettingsEditor"), {
+  ssr: false,
+  loading: () => <div>Loading settings…</div>,
+});
+const ClickableFloorplan = dynamic(() => import("@/components/Floorplan"), {
+  ssr: false,
+  loading: () => <div>Loading floor plan…</div>,
+});
+const Heatmaps = dynamic(
+  () => import("@/components/Heatmaps").then((m) => m.Heatmaps),
+  {
+    ssr: false,
+    loading: () => <div>Loading heat maps…</div>,
+  },
+);
+const PointsTable = dynamic(() => import("@/components/PointsTable"), {
+  ssr: false,
+  loading: () => <div>Loading survey points…</div>,
+});
 
 export default function TabPanel() {
   const [activeTab, setActiveTab] = useState("tab1"); // State to track the active tab

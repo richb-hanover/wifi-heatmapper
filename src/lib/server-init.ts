@@ -13,6 +13,7 @@ const loadJson = async (filePath: string) => {
 };
 
 const logger = getLogger("initServer");
+let initialized = false;
 
 async function logSystemInfo(): Promise<void> {
   try {
@@ -49,21 +50,13 @@ async function logSystemInfo(): Promise<void> {
  * - Copying the default background image to /media/ folder
  */
 export async function initServer() {
-  // one-time setup (e.g., DB pool, metrics, cache)
-  // logger.info("Initializing server...");
-
-  let initialized = false;
-
-  if (!initialized) {
-    // Run system info logging at module load time
-    logSystemInfo().catch((error) => {
-      logger.error("Failed to log system information:", error);
-    });
-
-    copyToMediaFolder("EmptyFloorPlan.png"); // seed with empty image
+  if (initialized) return;
+  try {
+    await logSystemInfo();
+    await copyToMediaFolder("EmptyFloorPlan.png"); // seed with empty image
     await initLocalization(); // load up the localization files
-
     initialized = true;
-    // logger.info(`Server initialization complete.`);
+  } catch (error) {
+    logger.error("Server initialization failed:", error);
   }
 }

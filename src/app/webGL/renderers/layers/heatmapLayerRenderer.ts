@@ -8,7 +8,7 @@ import {
   getUniformLocations,
 } from "../../utils/webGLUtils";
 import { fullscreenQuadVertexShaderFlipY } from "@/app/webGL/shaders/fullscreenQuadVertexShader";
-import _ from "lodash";
+// Replace lodash usage with native code to reduce bundle size
 import createGradientLUTTexture from "../textures/createGradientLUTTexture";
 
 export const createHeatmapLayerRenderer = (
@@ -26,7 +26,12 @@ export const createHeatmapLayerRenderer = (
   const uniforms = getUniformLocations(gl, program);
 
   const colorLUT = createGradientLUTTexture(gl, gradient);
-  const maxSignal = _.maxBy(points, "value")?.value ?? 0;
+  const maxSignal = points.length
+    ? points.reduce(
+        (max, p) => (p.value > max ? p.value : max),
+        points[0].value,
+      )
+    : 0;
   const flatData = Float32Array.from(
     points.flatMap(({ x, y, value }) => [x, y, value]),
   );

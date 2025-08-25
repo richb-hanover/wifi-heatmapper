@@ -12,7 +12,15 @@ import { PopoverHelper } from "@/components/PopoverHelpText";
 // import { HeatmapConfig } from "@/lib/types";
 import { useSettings } from "@/components/GlobalSettings";
 import { HeatmapSettings } from "@/lib/types";
-import { debounce } from "lodash";
+
+// Small debounce helper to avoid pulling lodash into the client bundle
+function debounce<T extends (...args: any[]) => void>(fn: T, waitMs: number) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return (...args: Parameters<T>) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), waitMs);
+  };
+}
 
 // const logger = getLogger("HeatmapAdvancedConfig");
 

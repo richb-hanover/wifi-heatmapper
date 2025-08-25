@@ -18,6 +18,8 @@ const HeatmapImage: React.FC<{
       <img
         src={src}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         className="w-full rounded-md shadow-sm cursor-pointer transition-transform hover:scale-105"
         onClick={onClick}
       />
