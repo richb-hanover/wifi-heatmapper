@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { PopoverHelper } from "@/components/PopoverHelpText";
 import HeatmapAdvancedConfig from "./HeatmapAdvancedConfig";
 import MediaDropdown from "./MediaDropdown";
+import { sanitizeFilename } from "@/lib/utils";
 
 export default function SettingsEditor() {
   const { settings, updateSettings, readNewSettingsFromFile } = useSettings();
@@ -18,7 +19,7 @@ export default function SettingsEditor() {
   }
 
   return (
-    <table className="w-auto">
+    <table className="w-full max-w-4xl">
       <tbody>
         <tr>
           <td className="text-right pr-4">
@@ -32,6 +33,12 @@ export default function SettingsEditor() {
               defaultValue={settings.floorplanImageName}
               onChange={(val) => handleNewImageFile(val)}
             />
+            {settings.floorplanImageName && (
+              <p className="text-xs text-gray-500 mt-1">
+                Data: data/surveys/
+                {sanitizeFilename(settings.floorplanImageName)}.json
+              </p>
+            )}
           </td>
         </tr>
 
@@ -39,12 +46,13 @@ export default function SettingsEditor() {
           <td className="text-right pr-4">
             <Label htmlFor="iperfServer" className="font-bold text-lg">
               iperfServer&nbsp;
-              <PopoverHelper text="Address of an iperf3 server. Set to 'localhost' to ignore." />
+              <PopoverHelper text="Address of an iperf3 server (e.g., 192.168.1.10 or 192.168.1.10:5201). Port 5201 is used by default. Set to 'localhost' to skip iperf tests." />
             </Label>{" "}
           </td>
           <td>
             <input
               type="text"
+              placeholder="e.g., 192.168.1.10 or 192.168.1.10:5201"
               className="w-full border border-gray-200 rounded-sm p-2 focus:outline-none focus:ring focus:ring-blue-300 focus:border-blue-400"
               value={settings.iperfServerAdrs}
               onChange={(e) =>

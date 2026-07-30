@@ -3,6 +3,7 @@ import {
   PartialHeatmapSettings,
   IperfResults,
   IperfTestProperty,
+  IperfCommands,
   WifiResults,
 } from "./types";
 // import { scanWifi, blinkWifi } from "./wifiScanner";
@@ -12,6 +13,7 @@ import { percentageToRssi, toMbps, getDefaultIperfResults } from "./utils";
 import { SSEMessageType } from "@/app/api/events/route";
 import { createWifiActions } from "./wifiScanner";
 import { getLogger } from "./logger";
+import { defaultIperfCommands, buildIperfCommand } from "./iperfUtils";
 const logger = getLogger("iperfRunner");
 
 type TestType = "TCP" | "UDP";
@@ -142,7 +144,7 @@ export async function runSurveyTests(
     logger.debug(`scanWifi returned: ${JSON.stringify(ssids)}`);
 
     const thisSSID = ssids.SSIDs.filter((item) => item.currentSSID);
-    const ssidName = thisSSID[0].ssid;
+    const ssidName = thisSSID[0]?.ssid ?? "";
 
     while (attempts < maxRetries) {
       attempts++;
@@ -168,18 +170,21 @@ export async function runSurveyTests(
         sendSSEMessage(getUpdatedMessage());
 
         // Run the TCP tests
+        const cmds = settings.iperfCommands ?? defaultIperfCommands;
         if (performIperfTest) {
           newIperfData.tcpDownload = await runSingleTest(
             server,
             duration,
             "Down",
             "TCP",
+            cmds,
           );
           newIperfData.tcpUpload = await runSingleTest(
             server,
             duration,
             "Up",
             "TCP",
+            cmds,
           );
           displayStates.tcp = `${toMbps(newIperfData.tcpDownload.bitsPerSecond)} / ${toMbps(newIperfData.tcpUpload.bitsPerSecond)} Mbps`;
         } else {
@@ -202,12 +207,14 @@ export async function runSurveyTests(
             duration,
             "Down",
             "UDP",
+            cmds,
           );
           newIperfData.udpUpload = await runSingleTest(
             server,
             duration,
             "Up",
             "UDP",
+            cmds,
           );
           displayStates.udp = `${toMbps(newIperfData.udpDownload.bitsPerSecond)} / ${toMbps(newIperfData.udpUpload.bitsPerSecond)} Mbps`;
         } else {
@@ -275,6 +282,7 @@ async function runSingleTest(
   duration: number,
   testDir: TestDirection,
   testType: TestType,
+  iperfCommands: IperfCommands,
 ): Promise<IperfTestProperty> {
   const logger = getLogger("runSingleTest");
 
@@ -286,9 +294,17 @@ async function runSingleTest(
   }
   const isUdp = testType == "UDP";
   const isDownload = testDir == "Down";
-  const command = `iperf3 -c ${server} ${
-    port ? `-p ${port}` : ""
-  } -t ${duration} ${isDownload ? "-R" : ""} ${isUdp ? "-u -b 0" : ""} -J`;
+
+  // Select the appropriate command template
+  let template: string;
+  if (testType === "TCP") {
+    template = isDownload ? iperfCommands.tcpDownload : iperfCommands.tcpUpload;
+  } else {
+    template = isDownload ? iperfCommands.udpDownload : iperfCommands.udpUpload;
+  }
+
+  const command = buildIperfCommand(template, server, port, duration);
+  logger.debug("Executing iperf command:", command);
   const { stdout } = await execAsync(command);
   const result = JSON.parse(stdout);
   logger.trace("Iperf JSON-parsed result:", result);

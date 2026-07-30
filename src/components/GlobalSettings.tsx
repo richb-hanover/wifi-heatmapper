@@ -5,9 +5,16 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { readSettingsFromFile, writeSettingsToFile } from "../lib/fileHandler";
+import {
+  hasLocalStorageData,
+  hasMigrated,
+  migrateLocalStorageToFiles,
+} from "../lib/localStorageMigration";
+import { toast } from "./ui/use-toast";
 import { HeatmapSettings, SurveyPoint, SurveyPointActions } from "../lib/types";
 import { join } from "path";
 
@@ -40,6 +47,12 @@ export const getDefaults = (floorPlan: string): HeatmapSettings => {
       0.9: "rgba(0, 255, 0, 0.6)", // 90%, -46 dBm
       1.0: "rgba(0, 255, 0, 0.6)", // 100%, -40 dBm
     },
+    iperfCommands: {
+      tcpDownload: "iperf3 -c {server} {port} -t {duration} -R -J",
+      tcpUpload: "iperf3 -c {server} {port} -t {duration} -J",
+      udpDownload: "iperf3 -c {server} {port} -t {duration} -R -u -b 100M -J",
+      udpUpload: "iperf3 -c {server} {port} -t {duration} -u -b 100M -J",
+    },
     // these two props were used for the "scan wifi" effort
     // that has been (temporarily?) abandoned
     // sameSSID: "same",
@@ -71,28 +84,48 @@ export function useSettings() {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<HeatmapSettings>(getDefaults(""));
   const [floorplanImage, setFloorplanImage] = useState<string>("");
+  const migrationDone = useRef(false);
   const defaultFloorPlan = "EmptyFloorPlan.png";
 
-  async function loadSettings(floorplanImage: string) {
-    let newHeatmapSettings: HeatmapSettings | null =
-      await readSettingsFromFile(floorplanImage);
-    if (newHeatmapSettings) {
-      // we read from a file, but that won't contain the password
-      newHeatmapSettings.sudoerPassword = "";
-      setSettings(newHeatmapSettings);
-    } else {
-      // use the provided floor plan image or the default
-      const floorPlanUsed =
-        floorplanImage == "" ? defaultFloorPlan : floorplanImage;
-      newHeatmapSettings = getDefaults(floorPlanUsed);
-      writeSettingsToFile(newHeatmapSettings);
-      setSettings(newHeatmapSettings);
-    }
-  }
-
-  // Load settings from file on mount, or whenever the floorplanImage changes
+  // Load settings (and migrate on first run)
   useEffect(() => {
-    loadSettings(floorplanImage);
+    async function loadSettings() {
+      // One-time migration from localStorage
+      if (!migrationDone.current) {
+        if (hasLocalStorageData() && !hasMigrated()) {
+          console.log("Migrating localStorage data to file-based storage...");
+          const count = await migrateLocalStorageToFiles();
+          console.log(`Migration complete. Migrated ${count} survey(s).`);
+          if (count > 0) {
+            toast({
+              title: "Survey data migrated",
+              description: `Migrated ${count} survey(s) from browser storage to data/surveys/. Your data is now stored as JSON files.`,
+            });
+          }
+        }
+        migrationDone.current = true;
+      }
+
+      // Load settings for current floorplan
+      const floorPlanToLoad = floorplanImage || defaultFloorPlan;
+      const newHeatmapSettings: HeatmapSettings | null =
+        await readSettingsFromFile(floorPlanToLoad);
+
+      // Merge with defaults to ensure all fields exist (handles old/incomplete files)
+      const defaults = getDefaults(floorPlanToLoad);
+      if (newHeatmapSettings) {
+        const mergedSettings = {
+          ...defaults,
+          ...newHeatmapSettings,
+          sudoerPassword: "",
+        };
+        setSettings(mergedSettings);
+      } else {
+        writeSettingsToFile(defaults);
+        setSettings(defaults);
+      }
+    }
+    loadSettings();
   }, [floorplanImage]);
 
   const readNewSettingsFromFile = (fileName: string) => {

@@ -2,7 +2,34 @@
 
 _This section follows the precepts of [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) so that future readers can understand the state and evolution of the project._
 
-## [Unreleased]
+## Version 0.4.0 - 2026-01-07
+
+### Changed
+
+* **Breaking:** Survey data is now stored as JSON files in `data/surveys/`
+  instead of browser localStorage. This provides:
+  - Persistent storage that survives browser cache clears
+  - Easy backup and version control of survey data
+  - Portability between machines and browsers
+  - No size limits
+
+* Existing localStorage data is automatically migrated on first load.
+  Users will see a toast notification confirming the migration.
+
+* New API endpoint `/api/settings` handles reading/writing survey files.
+
+* Floorplan dropdown is now scrollable when there are many images,
+  preventing the list from overflowing the screen.
+
+* Improved error logging for file storage operations.
+
+---
+
+## Version 0.3.6 - 2026-01-04
+
+* Enable debug logging for command execution in `execAsync()`.
+  Run with `LOG_LEVEL=2` to see commands and their output.
+  Helps diagnose issues like #65.
 
 ---
 
