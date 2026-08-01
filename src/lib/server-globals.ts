@@ -28,8 +28,7 @@ export function clearSSESender() {
 // the SSE_KEY element holds a function to call to send a SSE
 export function sendSSEMessage(msg: SSEMessageType) {
   const fn = (globalThis as any)[SSE_KEY] as
-    | ((msg: SSEMessageType) => void)
-    | null;
+    ((msg: SSEMessageType) => void) | null;
   setGlobalStatus(msg); // stash a global copy of the message
   if (fn) {
     fn(msg);

@@ -1,5 +1,5 @@
 "use server";
-import { exec, ExecOptions, spawn } from "child_process";
+import { exec, ExecOptionsWithStringEncoding, spawn } from "child_process";
 import { getLogger } from "./logger";
 const logger = getLogger("server-utils");
 
@@ -25,8 +25,11 @@ const logger = getLogger("server-utils");
 export const execAsync = async (
   command: string,
 ): Promise<{ stdout: string; stderr: string }> => {
-  // @ts-expect-error // "shell" is the name of the shell program, but prop must be boolean
-  const options: ExecOptions = { shell: true }; // Node.js finds the right binary for the OS
+  const options: ExecOptionsWithStringEncoding = {
+    // @ts-expect-error // "shell" is the name of the shell program, but prop must be boolean
+    shell: true, // Node.js finds the right binary for the OS
+    encoding: "utf8",
+  };
 
   return new Promise((resolve, reject) => {
     logger.debug("Executing command:", command);

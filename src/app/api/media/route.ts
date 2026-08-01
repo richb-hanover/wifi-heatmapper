@@ -7,14 +7,6 @@
 import { NextResponse } from "next/server";
 import { readdir, writeFile } from "fs/promises";
 import path from "path";
-// import { IncomingForm } from 'formidable';
-
-// Ensure body parsing is disabled so we can handle file uploads
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 
 export async function GET() {
   try {

@@ -2,6 +2,19 @@
 
 _This section follows the precepts of [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) so that future readers can understand the state and evolution of the project._
 
+## Version 0.4.1 - 2026-08-01
+
+* Update all the dependencies in _package.json_. No change to `wifi-heatmapper` functionality. Major changes:
+  * Upgrade Next to version 16. This required a change to _tsconfig.json_
+  * Upgrade Tailwind to version 4. This required adjusting _globals.css_, _tailwind.config.ts_, and _postcss.config.js_.
+  * Upgrade logger.ts to 5.0; requires an API change.
+* These packages were held back from upgrades because of conflicts:
+  * `typescript` pinned to ^6.0.3
+  * `eslint` and `@estlint.js` both pinned at ^9.39.5
+* `npm audit fix` found three high severity vulnerabilities. Override `postcss` and `sharp` to fix these
+* In _wifiScanner-windows.ts_, re-enable check for no-matching-labels so that `npm run test` passes
+* Fixed errors/warnings from typecheck and lint. All tests, typechecks, lints, & npm audit now pass
+
 ## Version 0.4.0 - 2026-01-07
 
 ### Changed

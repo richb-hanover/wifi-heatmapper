@@ -339,7 +339,6 @@ export function parseNetshInterfaces(output: string): WifiResults {
       assignWindowsNetworkInfoValue(networkInfo, key as keyof WifiResults, val);
     }
   }
-  /*
   // Check to see if we didn't get any of the important info
   // If not, ask if they could provide info...
   if (
@@ -351,7 +350,6 @@ export function parseNetshInterfaces(output: string): WifiResults {
       `Could not read Wi-Fi info. Perhaps wifi-heatmapper is not localized for your system. See https://github.com/hnykda/wifi-heatmapper/issues/26 for details.`,
     );
   }
-  */
   if (!isValidMacAddress(networkInfo.bssid)) {
     throw new Error(
       `Invalid BSSID when parsing netsh output: ${networkInfo.bssid}`,
